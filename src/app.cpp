@@ -28,18 +28,15 @@ Application::Application ()
         : Gtk::Application ("uk.co.realh.gnvim",
             Gio::APPLICATION_HANDLES_COMMAND_LINE)
 {
-    g_print ("Created Application\n");
 }
 
 void Application::on_activate ()
 {
-    g_print ("on_activate\n");
     open_window ();
 }
 
 int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
-    g_print ("on_command_line\n");
     int argc;
     char **argv = cl->get_arguments (argc);
     std::vector<const char *> args_vec (argv, argv + argc);

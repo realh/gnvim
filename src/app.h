@@ -27,9 +27,9 @@ namespace Gnvim
 {
 
 class Application : public Gtk::Application {
-public:
+protected:
     Application ();
-
+public:
     static RefPtr<Application> create ()
     {
         return RefPtr<Application> (new Application ());
