@@ -39,9 +39,9 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
     columns_ = (allocation.get_width () - borders_width) / cell_width_px_;
     rows_ = (allocation.get_height () - borders_height) / cell_height_px_;
 
-    g_debug ("allocation %dx%d, grid size %dx%d",
-            allocation.get_width (), allocation.get_height (),
-            columns_, rows_);
+    // g_debug ("allocation %dx%d, grid size %dx%d",
+    //         allocation.get_width (), allocation.get_height (),
+    //         columns_, rows_);
 }
 
 void View::calculate_metrics ()
@@ -57,7 +57,7 @@ void View::calculate_metrics ()
             + get_pixels_above_lines () + get_pixels_below_lines ())
             / PANGO_SCALE;
 
-    g_debug ("Cell size %dx%d", cell_width_px_, cell_height_px_);
+    // g_debug ("Cell size %dx%d", cell_width_px_, cell_height_px_);
 }
 
 void View::get_preferred_size (int &width, int &height)
@@ -67,7 +67,7 @@ void View::get_preferred_size (int &width, int &height)
     height = cell_height_px_ * rows_
             + get_margin_top () + get_margin_bottom ();
 
-    g_debug ("Preferred size %dx%d", width, height);
+    // g_debug ("Preferred size %dx%d", width, height);
 }
 
 }

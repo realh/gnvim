@@ -30,7 +30,9 @@ class Window : public Gtk::ApplicationWindow {
 public:
     Window (std::vector<const char *> args);
 private:
-    void set_geometry_hints ();
+    // Geometry hints have a history of breakage and serve almost no useful
+    // purpose in current desktops
+    void set_geometry_hints () {}
 
     // This is just a convenience pointer, view is managed by super class
     View *view_;

@@ -37,6 +37,7 @@ Window::Window (std::vector<const char *>)
     present ();
 }
 
+#if 0
 void Window::set_geometry_hints ()
 {
     Gdk::Geometry geom;
@@ -57,5 +58,6 @@ void Window::set_geometry_hints ()
     Gtk::ApplicationWindow::set_geometry_hints (*view_, geom,
             Gdk::HINT_MIN_SIZE | Gdk::HINT_RESIZE_INC | Gdk::HINT_BASE_SIZE);
 }
+#endif
 
 }
