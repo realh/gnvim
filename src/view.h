@@ -1,4 +1,4 @@
-/* window.cpp
+/* view.h
  *
  * Copyright (C) 2017 Tony Houghton
  *
@@ -16,24 +16,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "defns.h"
+#ifndef GNVIM_VIEW_H
+#define GNVIM_VIEW_H
 
-#include "view.h"
-#include "window.h"
+#include "defns.h"
 
 namespace Gnvim
 {
 
-Window::Window (std::vector<const char *>)
-{
-    auto view = new View (80, 36);
-    int width, height;
-    view->get_preferred_size (width, height);
-    set_default_size (width, height);
+class View : public Gtk::TextView {
+public:
+    View (int columns, int rows);
 
-    view->show_all ();
-    add (*view);
-    present ();
+    // Height includes spacing
+    void get_cell_size_in_pixels (int &width, int &height) const
+    {
+        width = cell_width_px_;
+        height = cell_height_px_;
+    }
+
+    void get_allocation_in_cells (int &columns, int &rows) const
+    {
+        columns = columns_;
+        rows = rows_;
+    }
+
+    void get_preferred_size (int &width, int &height);
+protected:
+    virtual void on_size_allocate (Gtk::Allocation &) override;
+private:
+    void calculate_metrics ();
+
+    int cell_width_px_, cell_height_px_;
+    int columns_, rows_;
+};
+
 }
 
-}
+#endif // GNVIM_VIEW_H

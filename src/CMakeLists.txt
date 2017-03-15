@@ -1,12 +1,14 @@
 set(GNVIM_SOURCES
     app.cpp
     main.cpp
+    view.cpp
     window.cpp
 )
 
 set(GNVIM_HEADERS
     app.h
     defns.h
+    view.h
     window.h
 )
 
