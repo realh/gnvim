@@ -29,7 +29,11 @@ namespace Gnvim
 class Window : public Gtk::ApplicationWindow {
 public:
     Window (std::vector<const char *> args);
+private:
+    void set_geometry_hints ();
 
+    // This is just a convenience pointer, view is managed by super class
+    View *view_;
 };
 
 }
