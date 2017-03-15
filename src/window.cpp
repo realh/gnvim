@@ -55,7 +55,7 @@ void Window::set_geometry_hints ()
             geom.base_width, geom.base_height,
             geom.width_inc, geom.height_inc);
     Gtk::ApplicationWindow::set_geometry_hints (*view_, geom,
-            Gdk::HINT_MAX_SIZE | Gdk::HINT_RESIZE_INC | Gdk::HINT_BASE_SIZE);
+            Gdk::HINT_MIN_SIZE | Gdk::HINT_RESIZE_INC | Gdk::HINT_BASE_SIZE);
 }
 
 }
