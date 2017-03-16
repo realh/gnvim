@@ -48,6 +48,8 @@ public:
 
     MsgpackRpc (int pipe_to_nvim, int pipe_from_nvim);
 
+    virtual ~MsgpackRpc ();
+
     template<class R> R request (const char *method)
     {
         std::ostringstream s;
@@ -182,17 +184,20 @@ private:
 
     void send (std::string &&s);
 
+    void run_send_thread ();
+
     template<class T> void wait_for_response (guint32 msgid, T &response);
 
     RefPtr<Gio::OutputStream> strm_to_nvim_;
     RefPtr<Gio::InputStream> strm_from_nvim_;
 
-    bool stop;
+    std::atomic_bool stop_;
 
     using deque_t = std::deque<std::string>;
     deque_t send_queue_;
     std::mutex send_mutex_;
     std::condition_variable send_cond_;
+    std::thread send_thread_;
 
     static guint32 msgid_;
 };
