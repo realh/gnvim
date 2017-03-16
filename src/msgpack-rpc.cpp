@@ -84,11 +84,24 @@ void MsgpackRpc::run_send_thread ()
             std::string msg = send_queue_.front ();
             send_queue_.pop_front ();
             lock.unlock ();
-            gsize nwritten;
-            if (!strm_to_nvim_->write_all (msg, nwritten))
+            gsize nwritten = 0;
+            Glib::ustring error_msg;
+            try
+            {
+                if (!strm_to_nvim_->write_all (msg, nwritten))
+                    nwritten = 0;
+            }
+            catch (Glib::Exception &e)
+            {
+                error_msg = e.what ();
+                nwritten = 0;
+            }
+            if (!nwritten)
             {
                 stop_.store (true);
-                // FIXME: Notify other threads
+                Glib::signal_idle ().connect_once (
+                        [this, error_msg] ()
+                            { send_error_signal_.emit (error_msg); });
                 break;
             }
             else

@@ -113,6 +113,11 @@ public:
         aa.pack (packer);
         send (s.str());
     }
+
+    sigc::signal<void, Glib::ustring> &send_error_signal ()
+    {
+        return send_error_signal_;
+    }
 private:
     template<class S> class PackableBase {
     public:
@@ -198,6 +203,7 @@ private:
     std::mutex send_mutex_;
     std::condition_variable send_cond_;
     std::thread send_thread_;
+    sigc::signal<void, Glib::ustring> send_error_signal_;
 
     static guint32 msgid_;
 };
