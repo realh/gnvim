@@ -23,9 +23,14 @@
 
 #include "defns.h"
 
+#include <condition_variable>
 #include <cstdint>
+#include <deque>
 #include <memory>
+#include <mutex>
 #include <sstream>
+#include <thread>
+#include <utility>
 #include <vector>
 
 #include <giomm.h>
@@ -75,6 +80,7 @@ public:
         create_response (packer, msgid);
         packer.pack_nil ();
         packer.pack (result);
+        send (s.str());
     }
 
     template<class T> void response_error (guint32 msgid, const T &result)
@@ -84,6 +90,7 @@ public:
         create_response (packer, msgid);
         packer.pack (result);
         packer.pack_nil ();
+        send (s.str());
     }
 
     void notify (const char *method)
@@ -179,6 +186,13 @@ private:
 
     RefPtr<Gio::OutputStream> strm_to_nvim_;
     RefPtr<Gio::InputStream> strm_from_nvim_;
+
+    bool stop;
+
+    using deque_t = std::deque<std::string>;
+    deque_t send_queue_;
+    std::mutex send_mutex_;
+    std::condition_variable send_cond_;
 
     static guint32 msgid_;
 };

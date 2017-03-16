@@ -1,6 +1,7 @@
 set(GNVIM_SOURCES
     app.cpp
     main.cpp
+    msgpack-rpc.cpp
     view.cpp
     window.cpp
 )
@@ -8,6 +9,7 @@ set(GNVIM_SOURCES
 set(GNVIM_HEADERS
     app.h
     defns.h
+    msgpack-rpc.h
     view.h
     window.h
 )
