@@ -23,6 +23,8 @@
 
 #include <gtkmm.h>
 
+#define _(s) (s)
+
 namespace Gnvim
 {
 

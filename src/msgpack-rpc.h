@@ -28,6 +28,7 @@
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <sstream>
 #include <thread>
 #include <utility>
@@ -40,13 +41,19 @@
 namespace Gnvim
 {
 
-class MsgpackRpc {
+// Derived from GObject so we can hold extra references while waiting for idle
+// to emit signals
+class MsgpackRpc: public Glib::Object {
 public:
     constexpr static int REQUEST = 0;
     constexpr static int RESPONSE = 1;
     constexpr static int NOTIFY = 2;
 
-    MsgpackRpc (int pipe_to_nvim, int pipe_from_nvim);
+    static RefPtr<MsgpackRpc> create (int pipe_to_nvim, int pipe_from_nvim)
+    {
+        return RefPtr<MsgpackRpc> (
+                new MsgpackRpc (pipe_to_nvim, pipe_from_nvim));
+    }
 
     virtual ~MsgpackRpc ();
 
@@ -118,6 +125,24 @@ public:
     {
         return send_error_signal_;
     }
+
+    sigc::signal<void, guint32, std::string, msgpack::object_array>
+            request_signal ()
+    {
+        return request_signal_;
+    }
+
+    sigc::signal<void, std::string, msgpack::object_array> notify_signal ()
+    {
+        return notify_signal_;
+    }
+
+    sigc::signal<void, Glib::ustring> rcv_error_signal ()
+    {
+        return rcv_error_signal_;
+    }
+protected:
+    MsgpackRpc (int pipe_to_nvim, int pipe_from_nvim);
 private:
     template<class S> class PackableBase {
     public:
@@ -191,12 +216,24 @@ private:
 
     void run_send_thread ();
 
+    void run_rcv_thread ();
+
+    bool object_received (const msgpack::object &);
+
+    bool object_error (char *raw_msg);
+
     template<class T> void wait_for_response (guint32 msgid, T &response);
+
+    bool dispatch_request (const msgpack::object_array &msg);
+
+    bool dispatch_response (const msgpack::object_array &msg);
+
+    bool dispatch_notify (const msgpack::object_array &msg);
 
     RefPtr<Gio::OutputStream> strm_to_nvim_;
     RefPtr<Gio::InputStream> strm_from_nvim_;
 
-    std::atomic_bool stop_;
+    std::atomic_bool stop_ {false};
 
     using deque_t = std::deque<std::string>;
     deque_t send_queue_;
@@ -204,6 +241,22 @@ private:
     std::condition_variable send_cond_;
     std::thread send_thread_;
     sigc::signal<void, Glib::ustring> send_error_signal_;
+    RefPtr<Gio::Cancellable> send_cancellable_ { Gio::Cancellable::create () };
+
+    std::set<guint32> pending_responses_;
+    std::mutex response_mutex_;
+    std::condition_variable response_cond_;
+    std::thread rcv_thread_;
+    sigc::signal<void, guint32, std::string, msgpack::object_array>
+            request_signal_;
+    sigc::signal<void, std::string, msgpack::object_array> notify_signal_;
+    sigc::signal<void, Glib::ustring> rcv_error_signal_;
+    guint32 response_msgid_;
+    msgpack::object *response_ {nullptr};
+    msgpack::object *response_error_ {nullptr};
+    RefPtr<Gio::Cancellable> rcv_cancellable_ { Gio::Cancellable::create () };
+
+    constexpr static gsize BUFLEN = 100;
 
     static guint32 msgid_;
 };
