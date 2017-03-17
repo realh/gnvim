@@ -57,6 +57,12 @@ public:
 
     virtual ~MsgpackRpc ();
 
+    // Signals may still be raised after calling stop () because they're called
+    // from idle handlers. Although sigc is not generally thread-safe,
+    // the connect_once () methods are, so it's better here than
+    // Glib::Dispatcher because our signals have arguments.
+    void stop ();
+
     template<class R> R request (const char *method)
     {
         std::ostringstream s;

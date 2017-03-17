@@ -33,12 +33,19 @@ MsgpackRpc::MsgpackRpc (int pipe_to_nvim, int pipe_from_nvim)
 
 MsgpackRpc::~MsgpackRpc ()
 {
+    stop ();
+}
+
+void MsgpackRpc::stop ()
+{
     stop_.store (true);
     send_cancellable_->cancel ();
-    send_cond_.notify_one ();
+    send_cond_.notify_all ();
     rcv_cancellable_->cancel ();
-    send_thread_.join ();
-    rcv_thread_.join ();
+    if (send_thread_.joinable ())
+        send_thread_.join ();
+    if (rcv_thread_.joinable ())
+        rcv_thread_.join ();
 }
 
 guint32 MsgpackRpc::create_request (packer_t &packer, const char *method)
