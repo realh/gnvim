@@ -23,10 +23,14 @@
 namespace Gnvim
 {
 
+Glib::ustring MsgpackRpc::Error::what () const
+{
+    return desc_;
+}
+
 MsgpackRpc::MsgpackRpc (int pipe_to_nvim, int pipe_from_nvim)
         : strm_to_nvim_ (Gio::UnixOutputStream::create (pipe_to_nvim, TRUE)),
         strm_from_nvim_ (Gio::UnixInputStream::create (pipe_from_nvim, TRUE)),
-        send_thread_ ([this] () { this->run_send_thread (); }),
         rcv_thread_ ([this] () { this->run_rcv_thread (); })
 {
 }
@@ -39,11 +43,7 @@ MsgpackRpc::~MsgpackRpc ()
 void MsgpackRpc::stop ()
 {
     stop_.store (true);
-    send_cancellable_->cancel ();
-    send_cond_.notify_all ();
     rcv_cancellable_->cancel ();
-    if (send_thread_.joinable ())
-        send_thread_.join ();
     if (rcv_thread_.joinable ())
         rcv_thread_.join ();
 }
@@ -73,65 +73,17 @@ void MsgpackRpc::create_notify (packer_t &packer, const char *method)
 
 void MsgpackRpc::send (std::string &&s)
 {
-    std::lock_guard<std::mutex> lock (send_mutex_);
-    send_queue_.push_back (s);
-    send_cond_.notify_one ();
-}
-
-void MsgpackRpc::run_send_thread ()
-{
-    std::unique_lock<std::mutex> lock (send_mutex_);
-
-    while (!stop_.load ())
+    gsize nwritten;
+    if (strm_to_nvim_->write_all (s, nwritten))
     {
-        if (!send_queue_.size ())
-        {
-            send_cond_.wait (lock);
-        }
-        // May be woken even if no message has been pushed
-        if (send_queue_.size () && !stop_.load ())
-        {
-            std::string msg = send_queue_.front ();
-            send_queue_.pop_front ();
-            lock.unlock ();
-            gsize nwritten = 0;
-            Glib::ustring error_msg;
-            try
-            {
-                if (strm_to_nvim_->write_all (msg,
-                            nwritten, send_cancellable_))
-                {
-                    strm_to_nvim_->flush (send_cancellable_);
-                }
-                else
-                {
-                    nwritten = 0;
-                }
-            }
-            catch (Glib::Exception &e)
-            {
-                error_msg = e.what ();
-                nwritten = 0;
-            }
-            if (!nwritten)
-            {
-                if (!stop_.load ())
-                {
-                    stop_.store (true);
-                    reference ();
-                    Glib::signal_idle ().connect_once ([this, error_msg] ()
-                    {
-                        send_error_signal_.emit (error_msg);
-                        unreference ();
-                    });
-                }
-                break;
-            }
-            else
-            {
-                lock.lock ();
-            }
-        }
+        strm_to_nvim_->flush ();
+    }
+    else
+    {
+        nwritten = 0;
+    }
+    if (!nwritten)
+    {
     }
 }
 
@@ -292,13 +244,8 @@ bool MsgpackRpc::dispatch_response (const msgpack::object_array &msg)
     }
 
     std::lock_guard<std::mutex> lock (response_mutex_);
-    response_msgid_ = msg.ptr[1].via.i64;
-    if (pending_responses_.find (response_msgid_) == pending_responses_.end ())
-    {
-        g_warning (_("Response to unknown msgid %d"), response_msgid_);
-        return true;
-    }
-
+    guint32 mid = msg.ptr[1].via.i64;
+    response_msgid_.store (mid);
     if (!msg.ptr[2].is_nil ())
         response_ = new msgpack::object (msg.ptr[2]);
     if (!msg.ptr[3].is_nil ())
@@ -341,6 +288,36 @@ bool MsgpackRpc::dispatch_notify (const msgpack::object_array &msg)
         unreference ();
     });
     return true;
+}
+
+msgpack::object *MsgpackRpc::wait_for_response (guint32 msgid)
+{
+    std::unique_lock<std::mutex> lock (response_mutex_);
+    while (!stop_.load () && msgid != response_msgid_)
+    {
+        response_cond_.wait (lock);
+        guint32 rmid = response_msgid_.load ();
+        if (rmid && rmid != msgid)
+        {
+            g_warning (_("Response with msgid %d, expected %d"), rmid, msgid);
+        }
+    }
+    response_msgid_.store (0);
+    if (response_error_)
+    {
+        std::ostringstream s;
+        s << *response_error_;
+        delete response_error_;
+        response_error_ = nullptr;
+        delete response_;
+        response_ = nullptr;
+        lock.unlock ();
+        throw ResponseError (s.str ().c_str ());
+    }
+
+    msgpack::object *result = response_;
+    response_ = nullptr;
+    return result;
 }
 
 guint32 MsgpackRpc::msgid_ = 0;
