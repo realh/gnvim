@@ -46,6 +46,8 @@ void MsgpackRpc::stop ()
     rcv_cancellable_->cancel ();
     if (rcv_thread_.joinable ())
         rcv_thread_.join ();
+    strm_from_nvim_->close ();
+    strm_to_nvim_->close ();
 }
 
 guint32 MsgpackRpc::create_request (packer_t &packer, const char *method)
