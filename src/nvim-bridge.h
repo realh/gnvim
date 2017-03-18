@@ -33,9 +33,26 @@ public:
     NvimBridge ();
 
     ~NvimBridge ();
+
+    void start ();
+
+    void stop ();
+
+    sigc::signal<void, Glib::ustring> &error_signal ()
+    {
+        return error_signal_;
+    }
 private:
+    void on_request (guint32 msgid, std::string method, msgpack::object args);
+
+    void on_notify (std::string method, msgpack::object args);
+
+    void on_error (Glib::ustring);
+
+    sigc::signal<void, Glib::ustring> error_signal_;
+
     RefPtr<MsgpackRpc> rpc_;
-    Glib::Pid pid_;
+    Glib::Pid nvim_pid_;
 };
 
 }

@@ -45,10 +45,22 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
     return 0;
 }
 
-void Application::open_window (const std::vector<const char *> &args)
+bool Application::open_window (const std::vector<const char *> &args)
 {
-    auto win  = new Window (args);
-    add_window (*win);
+    try {
+        auto win = new Window (args);
+        add_window (*win);
+        return true;
+    }
+    catch (Glib::Exception &e)
+    {
+        g_critical ("Failed to start new nvim instance: %s", e.what ().c_str());
+    }
+    catch (std::exception &e)
+    {
+        g_critical ("Failed to start new nvim instance: %s", e.what ());
+    }
+    return false;
 }
 
 }

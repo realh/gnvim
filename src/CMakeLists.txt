@@ -1,7 +1,9 @@
 set(GNVIM_SOURCES
     app.cpp
     main.cpp
+    msgpack-adapter.cpp
     msgpack-rpc.cpp
+    nvim-bridge.cpp
     view.cpp
     window.cpp
 )
@@ -9,7 +11,9 @@ set(GNVIM_SOURCES
 set(GNVIM_HEADERS
     app.h
     defns.h
+    msgpack-adapter.h
     msgpack-rpc.h
+    nvim-bridge.h
     view.h
     window.h
 )

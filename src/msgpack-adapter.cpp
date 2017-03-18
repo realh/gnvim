@@ -18,7 +18,7 @@
 
 #include "defns.h"
 
-#include "adapter.h"
+#include "msgpack-adapter.h"
 #include "msgpack-error.h"
 
 namespace Gnvim

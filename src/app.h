@@ -40,13 +40,13 @@ public:
     virtual int on_command_line (const RefPtr<Gio::ApplicationCommandLine> &)
             override;
 
-    void open_window ()
+    bool open_window ()
     {
         std::vector<const char *> no_args;
-        open_window (no_args);
+        return open_window (no_args);
     }
 
-    void open_window (const std::vector<const char *> &args);
+    bool open_window (const std::vector<const char *> &args);
 };
 
 }

@@ -31,6 +31,8 @@ Window::Window (std::vector<const char *>)
     view_->get_preferred_size (width, height);
     set_default_size (width, height);
 
+    nvim_.start ();
+
     view_->show_all ();
     add (*view_);
     set_geometry_hints ();

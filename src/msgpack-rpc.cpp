@@ -86,6 +86,7 @@ void MsgpackRpc::send (std::string &&s)
     }
     if (!nwritten)
     {
+        throw SendError ("No bytes written to nvim");
     }
 }
 
@@ -103,9 +104,12 @@ void MsgpackRpc::run_rcv_thread ()
         {
             do
             {
+                std::cout << "Trying to read " << BUFLEN << " bytes"
+                        << std::endl;
                 nread = strm_from_nvim_->read (
                         const_cast<char *> (buf.data ()), BUFLEN, 
                         rcv_cancellable_);
+                std::cout << "Read " << nread << std::endl;
             } while (!nread && !rcv_cancellable_->is_cancelled () &&
                     !stop_.load ());
         }
@@ -116,12 +120,15 @@ void MsgpackRpc::run_rcv_thread ()
         }
         if (!nread)
         {
+            if (!error_msg.length ())
+                error_msg = _("No bytes read");
             if (!stop_.load())
             {
                 stop_.store (true);
                 reference ();
                 Glib::signal_idle ().connect_once ([this, error_msg] ()
                 {
+                    std::cout << "Raising error " << error_msg << std::endl;
                     rcv_error_signal_.emit (error_msg);
                     unreference ();
                 });
@@ -131,19 +138,25 @@ void MsgpackRpc::run_rcv_thread ()
         unpacker.buffer_consumed (nread);
 
         msgpack::unpacked unpacked;
-        while (!stop_.load() && unpacker.next (unpacked))
+        while (!stop_.load () && unpacker.next (unpacked))
         {
             object_received (unpacked.get ());
         }
+        if (!stop_.load ())
+            std::cout << "Need more input" << std::endl;
     }
+    std::cout << "rcv thread stopped" << std::endl;
 }
 
 bool MsgpackRpc::object_error (char *raw_msg)
 {
+    std::cerr << "object_error: " << raw_msg << std::endl;
     stop_.store (true);
     auto msg = Glib::ustring (raw_msg);
     g_free (raw_msg);
+    std::cerr << "object_error emitting signal " << std::endl;
     rcv_error_signal ().emit (msg);
+    std::cerr << "object_error emitted signal " << std::endl;
     return false;
 }
 
@@ -154,6 +167,7 @@ static std::string msgpack_to_str (const msgpack::object &o)
 
 bool MsgpackRpc::object_received (const msgpack::object &mob)
 {
+    std::cout << "Received object " << mob << std::endl;
     if (mob.type != msgpack::type::ARRAY)
     {
         return object_error (g_strdup_printf (
@@ -223,7 +237,7 @@ bool MsgpackRpc::dispatch_request (const msgpack::object_array &msg)
         request_signal_.emit (
                 msg.ptr[1].via.i64,
                 msgpack_to_str (msg.ptr[2]),
-                msg.ptr[3].via.array);
+                msg.ptr[3]);
         unreference ();
     });
     return true;
@@ -286,7 +300,7 @@ bool MsgpackRpc::dispatch_notify (const msgpack::object_array &msg)
     Glib::signal_idle ().connect_once ([this, msg] () {
         notify_signal_.emit (
                 msgpack_to_str (msg.ptr[1]),
-                msg.ptr[2].via.array);
+                msg.ptr[2]);
         unreference ();
     });
     return true;

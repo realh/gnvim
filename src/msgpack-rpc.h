@@ -26,6 +26,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <deque>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -70,19 +71,22 @@ public:
     // Glib::Dispatcher because our signals have arguments.
     void stop ();
 
-    template<class R> R request (const char *method)
+    template<class R> R &request (const char *method, R &result)
     {
         std::ostringstream s;
         packer_t packer (s);
         auto msgid = create_request (packer, method);
+        std::cout << "Created request with msgid " << msgid
+                << " for request " << method << std::endl;
         packer.pack_array (0);
         send (s.str());
-        R result;
+        std::cout << "Sent request, waiting for response" << std::endl;
         wait_for_response (msgid, result);
         return result;
     }
 
-    template<class R, class... T> R request (const char *method, T... args)
+    template<class R, class... T> R &request (const char *method,
+            R &result, T... args)
     {
         std::ostringstream s;
         packer_t packer (s);
@@ -90,7 +94,6 @@ public:
         ArgArray<std::ostringstream> aa (args...);
         aa.pack (packer);
         send (s.str());
-        R result;
         wait_for_response (msgid, result);
         return result;
     }
@@ -134,13 +137,12 @@ public:
         send (s.str());
     }
 
-    sigc::signal<void, guint32, std::string, msgpack::object_array>
-            request_signal ()
+    sigc::signal<void, guint32, std::string, msgpack::object> request_signal ()
     {
         return request_signal_;
     }
 
-    sigc::signal<void, std::string, msgpack::object_array> notify_signal ()
+    sigc::signal<void, std::string, msgpack::object> notify_signal ()
     {
         return notify_signal_;
     }
@@ -235,6 +237,12 @@ private:
         delete ro;
     }
 
+    // You must delete the response object if you use this
+    void wait_for_response (guint32 msgid, msgpack::object *&response)
+    {
+        response = wait_for_response (msgid);
+    }
+
     msgpack::object *wait_for_response (guint32 msgid);
 
     bool dispatch_request (const msgpack::object_array &msg);
@@ -252,9 +260,8 @@ private:
     std::mutex response_mutex_;
     std::condition_variable response_cond_;
     std::thread rcv_thread_;
-    sigc::signal<void, guint32, std::string, msgpack::object_array>
-            request_signal_;
-    sigc::signal<void, std::string, msgpack::object_array> notify_signal_;
+    sigc::signal<void, guint32, std::string, msgpack::object> request_signal_;
+    sigc::signal<void, std::string, msgpack::object> notify_signal_;
     sigc::signal<void, Glib::ustring> rcv_error_signal_;
     msgpack::object *response_ {nullptr};
     msgpack::object *response_error_ {nullptr};
