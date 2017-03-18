@@ -38,38 +38,23 @@
 
 #include <msgpack.hpp>
 
+#include "msgpack-error.h"
+
 namespace Gnvim
 {
 
 // Derived from GObject so we can hold extra references while waiting for idle
-// to emit signals. Sending to nvim is all done on main thread, callbacks and responses
+// to emit signals. Sending to nvim is all done on main thread, callbacks and
+// responses have their own thread
 class MsgpackRpc: public Glib::Object {
 public:
     constexpr static int REQUEST = 0;
     constexpr static int RESPONSE = 1;
     constexpr static int NOTIFY = 2;
 
-    class Error: public Glib::Exception {
-    public:
-        template<class T> Error (T &&desc) : desc_ (desc)
-        {}
-
-        virtual Glib::ustring what () const override;
-    private:
-        Glib::ustring desc_;
-    };
-
-    class SendError: public Error {
-    public:
-        template<class T> SendError (T &&desc) : Error (desc)
-        {}
-    };
-
-    class ResponseError: public Error {
-    public:
-        template<class T> ResponseError (T &&desc) : Error (desc)
-        {}
-    };
+    using Error = MsgpackError;
+    using SendError = MsgpackSendError;
+    using ResponseError = MsgpackResponseError;
 
     static RefPtr<MsgpackRpc> create (int pipe_to_nvim, int pipe_from_nvim)
     {
