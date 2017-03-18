@@ -43,7 +43,7 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
     g_strfreev(argv);
     if (!open_window (args_vec))
     {
-        g_critical ("Failed to open window, exiting this instance");
+        g_warning ("Failed to open window, exiting this instance");
         return 1;
     }
     return 0;
