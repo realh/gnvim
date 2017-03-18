@@ -57,11 +57,12 @@ public:
     using SendError = MsgpackSendError;
     using ResponseError = MsgpackResponseError;
 
-    static RefPtr<MsgpackRpc> create (int pipe_to_nvim, int pipe_from_nvim)
+    static RefPtr<MsgpackRpc> create ()
     {
-        return RefPtr<MsgpackRpc> (
-                new MsgpackRpc (pipe_to_nvim, pipe_from_nvim));
+        return RefPtr<MsgpackRpc> (new MsgpackRpc ());
     }
+
+    void start (int pipe_to_nvim, int pipe_from_nvim);
 
     virtual ~MsgpackRpc ();
 
@@ -71,7 +72,7 @@ public:
     // Glib::Dispatcher because our signals have arguments.
     void stop ();
 
-    template<class R> R &request (const char *method, R &result)
+    template<class R> bool request (const char *method, R &result)
     {
         std::ostringstream s;
         packer_t packer (s);
@@ -81,11 +82,10 @@ public:
         packer.pack_array (0);
         send (s.str());
         std::cout << "Sent request, waiting for response" << std::endl;
-        wait_for_response (msgid, result);
-        return result;
+        return wait_for_response (msgid, result);
     }
 
-    template<class R, class... T> R &request (const char *method,
+    template<class R, class... T> bool request (const char *method,
             R &result, T... args)
     {
         std::ostringstream s;
@@ -94,8 +94,7 @@ public:
         ArgArray<std::ostringstream> aa (args...);
         aa.pack (packer);
         send (s.str());
-        wait_for_response (msgid, result);
-        return result;
+        return wait_for_response (msgid, result);
     }
 
     template<class T> void response (guint32 msgid, const T &result)
@@ -152,7 +151,7 @@ public:
         return rcv_error_signal_;
     }
 protected:
-    MsgpackRpc (int pipe_to_nvim, int pipe_from_nvim);
+    MsgpackRpc ();
 private:
     template<class S> class PackableBase {
     public:
@@ -230,19 +229,27 @@ private:
 
     bool object_error (char *raw_msg);
 
-    template<class T> void wait_for_response (guint32 msgid, T &response)
+    template<class T> bool wait_for_response (guint32 msgid, T &response)
     {
         msgpack::object *ro = wait_for_response (msgid);
-        ro->convert (response);
-        delete ro;
+        if (ro)
+        {
+            ro->convert (response);
+            delete ro;
+            return true;
+        }
+        return false;
     }
 
-    // You must delete the response object if you use this
-    void wait_for_response (guint32 msgid, msgpack::object *&response)
+    // You must delete the response object if you use this; if null it means
+    // there was an error, hopefully signalled somewhere
+    bool wait_for_response (guint32 msgid, msgpack::object *&response)
     {
         response = wait_for_response (msgid);
+        return response != nullptr;
     }
 
+    // return of null means there was an error
     msgpack::object *wait_for_response (guint32 msgid);
 
     bool dispatch_request (const msgpack::object_array &msg);

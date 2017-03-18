@@ -47,6 +47,8 @@ public:
     }
 
     bool open_window (const std::vector<const char *> &args);
+protected:
+    virtual void on_window_removed (Gtk::Window *) override;
 };
 
 }

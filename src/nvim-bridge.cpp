@@ -36,7 +36,14 @@ NvimBridge::NvimBridge ()
             Glib::SlotSpawnChildSetup (), &nvim_pid_,
             &to_nvim_stdin, &from_nvim_stdout);
 
-    rpc_ = MsgpackRpc::create (to_nvim_stdin, from_nvim_stdout);
+    rpc_ = MsgpackRpc::create ();
+    rpc_->notify_signal ().connect (
+            sigc::mem_fun (*this, &NvimBridge::on_notify));
+    rpc_->request_signal ().connect (
+            sigc::mem_fun (*this, &NvimBridge::on_request));
+    rpc_->rcv_error_signal ().connect (
+            sigc::mem_fun (*this, &NvimBridge::on_error));
+    rpc_->start (to_nvim_stdin, from_nvim_stdout);
 }
 
 NvimBridge::~NvimBridge ()
@@ -52,7 +59,8 @@ void NvimBridge::start ()
 {
     msgpack::object *response;
     rpc_->request ("nvim_get_api_info", response);
-    std::cout << "nvim_get_api_info response:\n" << *response << std::endl;
+    if (response)
+        std::cout << "nvim_get_api_info response:\n" << *response << std::endl;
     delete response;
 }
 

@@ -31,12 +31,31 @@ Window::Window (std::vector<const char *>)
     view_->get_preferred_size (width, height);
     set_default_size (width, height);
 
+    nvim_.error_signal ().connect (
+            sigc::mem_fun (*this, &Window::on_nvim_error));
     nvim_.start ();
 
     view_->show_all ();
     add (*view_);
     set_geometry_hints ();
-    present ();
+    if (!force_close_)
+        present ();
+    else
+        g_warning ("Window closed before it opened");
+}
+
+void Window::force_close ()
+{
+    force_close_ = true;
+    if (is_visible ())
+        close ();
+}
+
+void Window::on_nvim_error (Glib::ustring desc)
+{
+    g_critical ("Closing window due to nvim communication error: %s",
+            desc.c_str ());
+    force_close ();
 }
 
 #if 0

@@ -28,16 +28,20 @@ Glib::ustring MsgpackRpc::Error::what () const
     return desc_;
 }
 
-MsgpackRpc::MsgpackRpc (int pipe_to_nvim, int pipe_from_nvim)
-        : strm_to_nvim_ (Gio::UnixOutputStream::create (pipe_to_nvim, TRUE)),
-        strm_from_nvim_ (Gio::UnixInputStream::create (pipe_from_nvim, TRUE)),
-        rcv_thread_ ([this] () { this->run_rcv_thread (); })
+MsgpackRpc::MsgpackRpc ()
 {
 }
 
 MsgpackRpc::~MsgpackRpc ()
 {
     stop ();
+}
+
+void MsgpackRpc::start (int pipe_to_nvim, int pipe_from_nvim)
+{
+    strm_to_nvim_ = Gio::UnixOutputStream::create (pipe_to_nvim, TRUE);
+    strm_from_nvim_ = Gio::UnixInputStream::create (pipe_from_nvim, TRUE);
+    rcv_thread_ = std::thread([this] () { this->run_rcv_thread (); });
 }
 
 void MsgpackRpc::stop ()
@@ -146,6 +150,7 @@ void MsgpackRpc::run_rcv_thread ()
             std::cout << "Need more input" << std::endl;
     }
     std::cout << "rcv thread stopped" << std::endl;
+    response_cond_.notify_all ();
 }
 
 bool MsgpackRpc::object_error (char *raw_msg)
@@ -331,6 +336,8 @@ msgpack::object *MsgpackRpc::wait_for_response (guint32 msgid)
         throw ResponseError (s.str ().c_str ());
     }
 
+    if (!response_)
+        g_warning ("Received null response");
     msgpack::object *result = response_;
     response_ = nullptr;
     return result;

@@ -31,10 +31,16 @@ namespace Gnvim
 class Window : public Gtk::ApplicationWindow {
 public:
     Window (std::vector<const char *> args);
+
+    void force_close ();
 private:
+    void on_nvim_error (Glib::ustring desc);
+
     // Geometry hints have a history of breakage and serve almost no useful
     // purpose in current desktops
     void set_geometry_hints () {}
+
+    bool force_close_ {false};
 
     NvimBridge nvim_;
 

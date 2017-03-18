@@ -40,8 +40,12 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
     int argc;
     char **argv = cl->get_arguments (argc);
     std::vector<const char *> args_vec (argv, argv + argc);
-    open_window (args_vec);
     g_strfreev(argv);
+    if (!open_window (args_vec))
+    {
+        g_critical ("Failed to open window, exiting this instance");
+        return 1;
+    }
     return 0;
 }
 
@@ -49,8 +53,16 @@ bool Application::open_window (const std::vector<const char *> &args)
 {
     try {
         auto win = new Window (args);
-        add_window (*win);
-        return true;
+        if (win->is_visible ())
+        {
+            g_debug ("Adding window");
+            add_window (*win);
+            return true;
+        }
+        else
+        {
+            g_debug ("Window was never opened");
+        }
     }
     catch (Glib::Exception &e)
     {
@@ -61,6 +73,15 @@ bool Application::open_window (const std::vector<const char *> &args)
         g_critical ("Failed to start new nvim instance: %s", e.what ());
     }
     return false;
+}
+
+void Application::on_window_removed (Gtk::Window *)
+{
+    if (!get_windows ().size ())
+    {
+        g_debug ("No open windows, quitting");
+        // quit ();
+    }
 }
 
 }
