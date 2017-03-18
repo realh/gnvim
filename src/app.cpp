@@ -66,11 +66,11 @@ bool Application::open_window (const std::vector<const char *> &args)
     }
     catch (Glib::Exception &e)
     {
-        g_critical ("Failed to start new nvim instance: %s", e.what ().c_str());
+        g_warning ("Failed to start new nvim instance: %s", e.what ().c_str());
     }
     catch (std::exception &e)
     {
-        g_critical ("Failed to start new nvim instance: %s", e.what ());
+        g_warning ("Failed to start new nvim instance: %s", e.what ());
     }
     return false;
 }
