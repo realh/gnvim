@@ -1,4 +1,4 @@
-/* adapter.cpp
+/* msgpack-adapter.cpp
  *
  * Copyright (C) 2017 Tony Houghton
  *
@@ -24,7 +24,7 @@
 namespace Gnvim
 {
 
-void Adapter::emit (const msgpack::object_array &mp_args)
+void MsgpackAdapter::emit (const msgpack::object_array &mp_args)
 {
     if (!adapter_->check_args (mp_args))
     {

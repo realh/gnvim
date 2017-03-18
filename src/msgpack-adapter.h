@@ -1,4 +1,4 @@
-/* adapter.h
+/* msgpack-adapter.h
  *
  * Copyright (C) 2017 Tony Houghton
  *
@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GNVIM_ADAPTER_H
-#define GNVIM_ADAPTER_H
+#ifndef GNVIM_MSGPACK_ADAPTER_H
+#define GNVIM_MSGPACK_ADAPTER_H
 
 // Adapts msg-pack rpc calls into signals with arguments. Return types
 // aren't supported, it's more straightforward for response handlers
@@ -30,9 +30,9 @@
 namespace Gnvim
 {
 
-class AdapterBase {
+class MsgpackAdapterBase {
 public:
-    virtual ~AdapterBase()
+    virtual ~MsgpackAdapterBase()
     {}
 
     bool check_args (const msgpack::object_array &mp_args)
@@ -45,9 +45,9 @@ public:
     virtual void emit (const msgpack::object_array &mp_args) = 0;
 };
 
-class Adapter0: public AdapterBase {
+class MsgpackAdapter0: public MsgpackAdapterBase {
 public:
-    Adapter0 (sigc::signal<void> &signal) : signal_ (signal)
+    MsgpackAdapter0 (sigc::signal<void> &signal) : signal_ (signal)
     {}
 
     virtual guint32 num_args () override
@@ -63,9 +63,9 @@ private:
     sigc::signal<void> &signal_;
 };
 
-template<class T1> class Adapter1: public AdapterBase {
+template<class T1> class MsgpackAdapter1: public MsgpackAdapterBase {
 public:
-    Adapter1 (sigc::signal<void, T1> &signal) : signal_ (signal)
+    MsgpackAdapter1 (sigc::signal<void, T1> &signal) : signal_ (signal)
     {}
 
     virtual guint32 num_args () override
@@ -83,9 +83,9 @@ private:
     sigc::signal<void, T1> signal_;
 };
 
-template<class T1, class T2> class Adapter2: public AdapterBase {
+template<class T1, class T2> class MsgpackAdapter2: public MsgpackAdapterBase {
 public:
-    Adapter2 (sigc::signal<void, T1, T2> &signal) : signal_ (signal)
+    MsgpackAdapter2 (sigc::signal<void, T1, T2> &signal) : signal_ (signal)
     {}
 
     virtual guint32 num_args () override
@@ -105,9 +105,10 @@ private:
     sigc::signal<void, T1, T2> signal_;
 };
 
-template<class T1, class T2, class T3> class Adapter3: public AdapterBase {
+template<class T1, class T2, class T3> class MsgpackAdapter3
+        : public MsgpackAdapterBase {
 public:
-    Adapter3 (sigc::signal<void, T1, T2, T3> &signal) : signal_ (signal)
+    MsgpackAdapter3 (sigc::signal<void, T1, T2, T3> &signal) : signal_ (signal)
     {}
 
     virtual guint32 num_args () override
@@ -129,11 +130,12 @@ private:
     sigc::signal<void, T1, T2, T3> signal_;
 };
 
-template<class T1, class T2, class T3, class T4> class Adapter4
-        : public AdapterBase
+template<class T1, class T2, class T3, class T4> class MsgpackAdapter4
+        : public MsgpackAdapterBase
 {
 public:
-    Adapter4 (sigc::signal<void, T1, T2, T3, T4> &signal) : signal_ (signal)
+    MsgpackAdapter4 (sigc::signal<void, T1, T2, T3, T4> &signal)
+            : signal_ (signal)
     {}
 
     virtual guint32 num_args () override
@@ -157,22 +159,22 @@ private:
     sigc::signal<void, T1, T2, T3, T4> signal_;
 };
 
-class Adapter {
+class MsgpackAdapter {
 public:
-    Adapter (sigc::signal<void> &signal)
-            : adapter_ (new Adapter0 (signal))
+    MsgpackAdapter (sigc::signal<void> &signal)
+            : adapter_ (new MsgpackAdapter0 (signal))
     {}
 
-    ~Adapter ()
+    ~MsgpackAdapter ()
     {
         delete adapter_;
     }
 
     void emit (const msgpack::object_array &mp_args);
 private:
-    AdapterBase *adapter_;
+    MsgpackAdapterBase *adapter_;
 };
 
 }
 
-#endif // GNVIM_ADAPTER_H
+#endif // GNVIM_MSGPACK_ADAPTER_H
