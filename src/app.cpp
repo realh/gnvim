@@ -57,6 +57,7 @@ bool Application::open_window (const std::vector<const char *> &args)
         {
             g_debug ("Adding window");
             add_window (*win);
+            g_debug ("Window added, now have %ld", get_windows ().size ());
             return true;
         }
         else
@@ -77,10 +78,14 @@ bool Application::open_window (const std::vector<const char *> &args)
 
 void Application::on_window_removed (Gtk::Window *)
 {
-    if (!get_windows ().size ())
+    if (get_windows ().size () <= 1)
     {
         g_debug ("No open windows, quitting");
-        // quit ();
+        quit ();
+    }
+    else
+    {
+        g_debug ("Window removed, but %ld left", get_windows ().size ());
     }
 }
 

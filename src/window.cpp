@@ -47,8 +47,7 @@ Window::Window (std::vector<const char *>)
 void Window::force_close ()
 {
     force_close_ = true;
-    if (is_visible ())
-        close ();
+    close ();
 }
 
 void Window::on_nvim_error (Glib::ustring desc)
