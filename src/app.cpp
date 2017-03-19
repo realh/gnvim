@@ -78,6 +78,8 @@ bool Application::open_window (const std::vector<const char *> &args)
 
 void Application::on_window_removed (Gtk::Window *)
 {
+    // Apparently this is called before the window is actually removed, so
+    // size still includes the window being removed
     if (get_windows ().size () <= 1)
     {
         g_debug ("No open windows, quitting");
