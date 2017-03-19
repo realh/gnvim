@@ -68,7 +68,7 @@ void MsgpackRpc::stop ()
 
 guint32 MsgpackRpc::create_request (packer_t &packer, const char *method)
 {
-    packer.pack_array (4);
+    //packer.pack_array (4);
     packer.pack_int (REQUEST);
     packer.pack_uint32 (++msgid_);
     packer.pack (method);
@@ -79,14 +79,14 @@ guint32 MsgpackRpc::create_request (packer_t &packer, const char *method)
 
 void MsgpackRpc::create_response (packer_t &packer, guint32 msgid)
 {
-    packer.pack_array (3);
+    //packer.pack_array (3);
     packer.pack_int (RESPONSE);
     packer.pack_uint32 (msgid);
 }
 
 void MsgpackRpc::create_notify (packer_t &packer, const char *method)
 {
-    packer.pack_array (3);
+    //packer.pack_array (3);
     packer.pack_int (NOTIFY);
     packer.pack (method);
 }
