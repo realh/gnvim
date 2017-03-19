@@ -27,9 +27,9 @@
 #include <cstdint>
 #include <deque>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
-#include <set>
 #include <sstream>
 #include <thread>
 #include <utility>
@@ -40,6 +40,7 @@
 #include <msgpack.hpp>
 
 #include "msgpack-error.h"
+#include "msgpack-promise.h"
 
 namespace Gnvim
 {
@@ -72,29 +73,21 @@ public:
     // Glib::Dispatcher because our signals have arguments.
     void stop ();
 
-    template<class R> bool request (const char *method, R &result)
-    {
-        std::ostringstream s;
-        packer_t packer (s);
-        auto msgid = create_request (packer, method);
-        std::cout << "Created request with msgid " << msgid
-                << " for request " << method << std::endl;
-        packer.pack_array (0);
-        send (s.str());
-        std::cout << "Sent request, waiting for response" << std::endl;
-        return wait_for_response (msgid, result);
-    }
+    void request (const char *method,
+            std::shared_ptr<MsgpackPromise> promise);
 
-    template<class R, class... T> bool request (const char *method,
-            R &result, T... args)
+    template<class... T> void request (const char *method,
+            std::shared_ptr<MsgpackPromise> promise,
+            T... args)
     {
         std::ostringstream s;
         packer_t packer (s);
         auto msgid = create_request (packer, method);
         ArgArray<std::ostringstream> aa (args...);
         aa.pack (packer);
+        response_promises_[msgid] = promise;
         send (s.str());
-        return wait_for_response (msgid, result);
+        std::cout << "Sent request" << std::endl;
     }
 
     template<class T> void response (guint32 msgid, const T &result)
@@ -229,32 +222,10 @@ private:
 
     bool object_error (char *raw_msg);
 
-    template<class T> bool wait_for_response (guint32 msgid, T &response)
-    {
-        msgpack::object *ro = wait_for_response (msgid);
-        if (ro)
-        {
-            ro->convert (response);
-            delete ro;
-            return true;
-        }
-        return false;
-    }
-
-    // You must delete the response object if you use this; if null it means
-    // there was an error, hopefully signalled somewhere
-    bool wait_for_response (guint32 msgid, msgpack::object *&response)
-    {
-        response = wait_for_response (msgid);
-        return response != nullptr;
-    }
-
-    // return of null means there was an error
-    msgpack::object *wait_for_response (guint32 msgid);
-
     bool dispatch_request (const msgpack::object_array &msg);
 
-    bool dispatch_response (const msgpack::object_array &msg);
+    bool dispatch_response (guint32 msgid,
+            msgpack::object response, msgpack::object error);
 
     bool dispatch_notify (const msgpack::object_array &msg);
 
@@ -263,9 +234,8 @@ private:
 
     std::atomic_bool stop_ {false};
 
-    std::atomic<guint32> response_msgid_ {0};
-    std::mutex response_mutex_;
-    std::condition_variable response_cond_;
+    std::map<guint32, std::shared_ptr<MsgpackPromise>> response_promises_;
+
     std::thread rcv_thread_;
     sigc::signal<void, guint32, std::string, msgpack::object> request_signal_;
     sigc::signal<void, std::string, msgpack::object> notify_signal_;

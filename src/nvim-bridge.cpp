@@ -57,11 +57,16 @@ NvimBridge::~NvimBridge ()
 
 void NvimBridge::start ()
 {
-    msgpack::object *response;
+    std::shared_ptr<MsgpackPromise> response (new MsgpackPromise);
+    response->value_signal ().connect ([] (const msgpack::object &o)
+    {
+        std::cout << "nvim_get_api_info response:\n" << o << std::endl;
+    });
+    response->error_signal ().connect ([] (const msgpack::object &o)
+    {
+        std::cout << "nvim_get_api_info error response:\n" << o << std::endl;
+    });
     rpc_->request ("nvim_get_api_info", response);
-    if (response)
-        std::cout << "nvim_get_api_info response:\n" << *response << std::endl;
-    delete response;
 }
 
 void NvimBridge::stop ()

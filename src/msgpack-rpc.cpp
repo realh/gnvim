@@ -44,6 +44,18 @@ void MsgpackRpc::start (int pipe_to_nvim, int pipe_from_nvim)
     rcv_thread_ = std::thread([this] () { this->run_rcv_thread (); });
 }
 
+void MsgpackRpc::request (const char *method,
+            std::shared_ptr<MsgpackPromise> promise)
+{
+    std::ostringstream s;
+    packer_t packer (s);
+    auto msgid = create_request (packer, method);
+    packer.pack_array (0);
+    response_promises_[msgid] = promise;
+    send (s.str());
+    std::cout << "Sent request" << std::endl;
+}
+
 void MsgpackRpc::stop ()
 {
     stop_.store (true);
@@ -60,6 +72,8 @@ guint32 MsgpackRpc::create_request (packer_t &packer, const char *method)
     packer.pack_int (REQUEST);
     packer.pack_uint32 (++msgid_);
     packer.pack (method);
+    std::cout << "Created request with msgid " << msgid_
+            << " for request " << method << std::endl;
     return msgid_;
 }
 
@@ -150,18 +164,17 @@ void MsgpackRpc::run_rcv_thread ()
             std::cout << "Need more input" << std::endl;
     }
     std::cout << "rcv thread stopped" << std::endl;
-    response_cond_.notify_all ();
 }
 
 bool MsgpackRpc::object_error (char *raw_msg)
 {
-    std::cerr << "object_error: " << raw_msg << std::endl;
     stop_.store (true);
     auto msg = Glib::ustring (raw_msg);
     g_free (raw_msg);
-    std::cerr << "object_error emitting signal " << std::endl;
-    rcv_error_signal ().emit (msg);
-    std::cerr << "object_error emitted signal " << std::endl;
+    reference ();
+    Glib::signal_idle ().connect_once ([this, msg] () {
+        rcv_error_signal ().emit (msg);
+    });
     return false;
 }
 
@@ -194,7 +207,8 @@ bool MsgpackRpc::object_received (const msgpack::object &mob)
         case REQUEST:
             return dispatch_request (array);
         case RESPONSE:
-            return dispatch_response (array);
+            return dispatch_response (array.ptr[1].via.i64,
+                    array.ptr[2], array.ptr[3]);
         case NOTIFY:
             return dispatch_notify (array);
         default:
@@ -248,31 +262,31 @@ bool MsgpackRpc::dispatch_request (const msgpack::object_array &msg)
     return true;
 }
 
-bool MsgpackRpc::dispatch_response (const msgpack::object_array &msg)
+bool MsgpackRpc::dispatch_response (guint32 msgid,
+            msgpack::object response, msgpack::object error)
 {
-    if (msg.size != 4)
+    auto it = response_promises_.find (msgid);
+    if (it == response_promises_.end ())
     {
-        return object_error (g_strdup_printf (
-                    _("msgpack response should have 4 elements, got %d"),
-                        msg.size));
+        g_critical ("Response with unexpected msgid %d", msgid);
+        return false;
     }
-    if (msg.ptr[1].type != msgpack::type::POSITIVE_INTEGER)
+    std::shared_ptr<MsgpackPromise> promise = it->second;
+
+    reference ();
+    Glib::signal_idle ().connect_once (
+            [this, msgid, promise, response, error] ()
     {
-        return object_error (g_strdup_printf (
-                    _("msgpack response msgid field should be "
-                        "POSITIVE_INTEGER, received type %d"),
-                        msg.ptr[1].type));
-    }
-
-    std::lock_guard<std::mutex> lock (response_mutex_);
-    guint32 mid = msg.ptr[1].via.i64;
-    response_msgid_.store (mid);
-    if (!msg.ptr[2].is_nil ())
-        response_ = new msgpack::object (msg.ptr[2]);
-    if (!msg.ptr[3].is_nil ())
-        response_error_ = new msgpack::object (msg.ptr[3]);
-
-    response_cond_.notify_all ();
+        if (!this->stop_.load ())
+        {
+            if (!error.is_nil ())
+                promise->emit_error (error);
+            else
+                promise->emit_value (response);
+            this->response_promises_.erase (msgid);
+        }
+        unreference ();
+    });
 
     return true;
 }
@@ -309,38 +323,6 @@ bool MsgpackRpc::dispatch_notify (const msgpack::object_array &msg)
         unreference ();
     });
     return true;
-}
-
-msgpack::object *MsgpackRpc::wait_for_response (guint32 msgid)
-{
-    std::unique_lock<std::mutex> lock (response_mutex_);
-    while (!stop_.load () && msgid != response_msgid_)
-    {
-        response_cond_.wait (lock);
-        guint32 rmid = response_msgid_.load ();
-        if (rmid && rmid != msgid)
-        {
-            g_warning (_("Response with msgid %d, expected %d"), rmid, msgid);
-        }
-    }
-    response_msgid_.store (0);
-    if (response_error_)
-    {
-        std::ostringstream s;
-        s << *response_error_;
-        delete response_error_;
-        response_error_ = nullptr;
-        delete response_;
-        response_ = nullptr;
-        lock.unlock ();
-        throw ResponseError (s.str ().c_str ());
-    }
-
-    if (!response_)
-        g_warning ("Received null response");
-    msgpack::object *result = response_;
-    response_ = nullptr;
-    return result;
 }
 
 guint32 MsgpackRpc::msgid_ = 0;
