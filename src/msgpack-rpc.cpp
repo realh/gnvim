@@ -253,10 +253,13 @@ bool MsgpackRpc::dispatch_request (const msgpack::object_array &msg)
     }
     reference ();
     Glib::signal_idle ().connect_once ([this, msg] () {
-        request_signal_.emit (
-                msg.ptr[1].via.i64,
-                msgpack_to_str (msg.ptr[2]),
-                msg.ptr[3]);
+        if (!this->stop_.load ())
+        {
+            request_signal_.emit (
+                    msg.ptr[1].via.i64,
+                    msgpack_to_str (msg.ptr[2]),
+                    msg.ptr[3]);
+        }
         unreference ();
     });
     return true;
@@ -317,9 +320,12 @@ bool MsgpackRpc::dispatch_notify (const msgpack::object_array &msg)
     }
     reference ();
     Glib::signal_idle ().connect_once ([this, msg] () {
-        notify_signal_.emit (
-                msgpack_to_str (msg.ptr[1]),
-                msg.ptr[2]);
+        if (!this->stop_.load ())
+        {
+            notify_signal_.emit (
+                    msgpack_to_str (msg.ptr[1]),
+                    msg.ptr[2]);
+        }
         unreference ();
     });
     return true;
