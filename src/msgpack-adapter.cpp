@@ -24,17 +24,17 @@
 namespace Gnvim
 {
 
-void MsgpackAdapter::emit (const msgpack::object_array &mp_args)
+void MsgpackAdapterBase::emit (const msgpack::object_array &mp_args)
 {
-    if (!adapter_->check_args (mp_args))
+    if (!check_args (mp_args))
     {
         char *s = g_strdup_printf ("Wrong number of args in msgpack callback; "
-                "expected %d, got %d", adapter_->num_args (), mp_args.size);
+                "expected %d, got %d", num_args () + skip_arg0_, mp_args.size);
         Glib::ustring us (s);
         g_free (s);
         throw MsgpackArgsError (us);
     }
-    adapter_->emit (mp_args);
+    do_emit (mp_args);
 }
 
 }

@@ -55,6 +55,10 @@ NvimBridge::~NvimBridge ()
     }
 }
 
+void NvimBridge::map_adapters ()
+{
+}
+
 void NvimBridge::start_gui (int width, int height)
 {
     std::map<std::string, bool> options;
@@ -71,6 +75,7 @@ void NvimBridge::stop ()
 void NvimBridge::on_request (guint32 msgid, std::string method,
         msgpack::object args)
 {
+    if (method == "redraw")
     std::cout << "nvim sent request " << msgid << " '" << method << "' ("
             << args << ")" << std::endl;
 }

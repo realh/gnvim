@@ -23,6 +23,9 @@
 
 #include "defns.h"
 
+#include <map>
+#include <memory>
+
 #include "msgpack-rpc.h"
 
 namespace Gnvim
@@ -43,11 +46,18 @@ public:
         return error_signal_;
     }
 private:
+    void map_adapters ();
+
     void on_request (guint32 msgid, std::string method, msgpack::object args);
 
     void on_notify (std::string method, msgpack::object args);
 
     void on_error (Glib::ustring);
+
+    using adapter_ptr_t = std::unique_ptr<MsgpackAdapterBase>;
+    using map_t = std::map<std::string, adapter_ptr_t>;
+    map_t request_adapters_;
+    map_t notify_adapters_;
 
     sigc::signal<void, Glib::ustring> error_signal_;
 
