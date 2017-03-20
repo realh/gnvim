@@ -47,7 +47,7 @@ public:
 
 class MsgpackAdapter0: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter0 (sigc::signal<void> &signal) : signal_ (signal)
+    MsgpackAdapter0 ()
     {}
 
     virtual guint32 num_args () override
@@ -59,13 +59,18 @@ public:
     {
         signal_.emit ();
     }
+
+    sigc::signal<void> &get_signal ()
+    {
+        return signal_;
+    }
 private:
-    sigc::signal<void> &signal_;
+    sigc::signal<void> signal_;
 };
 
 template<class T1> class MsgpackAdapter1: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter1 (sigc::signal<void, T1> &signal) : signal_ (signal)
+    MsgpackAdapter1 ()
     {}
 
     virtual guint32 num_args () override
@@ -79,13 +84,18 @@ public:
         mp_args.ptr[0].convert (a1);
         signal_.emit (a1);
     }
+
+    sigc::signal<void, T1> &get_signal ()
+    {
+        return signal_;
+    }
 private:
     sigc::signal<void, T1> signal_;
 };
 
 template<class T1, class T2> class MsgpackAdapter2: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter2 (sigc::signal<void, T1, T2> &signal) : signal_ (signal)
+    MsgpackAdapter2 ()
     {}
 
     virtual guint32 num_args () override
@@ -101,6 +111,11 @@ public:
         mp_args.ptr[1].convert (a2);
         signal_.emit (a1, a2);
     }
+
+    sigc::signal<void, T1, T2> &get_signal ()
+    {
+        return signal_;
+    }
 private:
     sigc::signal<void, T1, T2> signal_;
 };
@@ -108,7 +123,7 @@ private:
 template<class T1, class T2, class T3> class MsgpackAdapter3
         : public MsgpackAdapterBase {
 public:
-    MsgpackAdapter3 (sigc::signal<void, T1, T2, T3> &signal) : signal_ (signal)
+    MsgpackAdapter3 ()
     {}
 
     virtual guint32 num_args () override
@@ -126,6 +141,11 @@ public:
         mp_args.ptr[2].convert (a3);
         signal_.emit (a1, a2, a3);
     }
+
+    sigc::signal<void, T1, T2, T3> &get_signal ()
+    {
+        return signal_;
+    }
 private:
     sigc::signal<void, T1, T2, T3> signal_;
 };
@@ -134,8 +154,7 @@ template<class T1, class T2, class T3, class T4> class MsgpackAdapter4
         : public MsgpackAdapterBase
 {
 public:
-    MsgpackAdapter4 (sigc::signal<void, T1, T2, T3, T4> &signal)
-            : signal_ (signal)
+    MsgpackAdapter4 ()
     {}
 
     virtual guint32 num_args () override
@@ -155,24 +174,13 @@ public:
         mp_args.ptr[3].convert (a4);
         signal_.emit (a1, a2, a3, a4);
     }
+
+    sigc::signal<void, T1, T2, T3, T4> &get_signal ()
+    {
+        return signal_;
+    }
 private:
     sigc::signal<void, T1, T2, T3, T4> signal_;
-};
-
-class MsgpackAdapter {
-public:
-    MsgpackAdapter (sigc::signal<void> &signal)
-            : adapter_ (new MsgpackAdapter0 (signal))
-    {}
-
-    ~MsgpackAdapter ()
-    {
-        delete adapter_;
-    }
-
-    void emit (const msgpack::object_array &mp_args);
-private:
-    MsgpackAdapterBase *adapter_;
 };
 
 }
