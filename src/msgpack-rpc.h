@@ -129,12 +129,13 @@ public:
         send (s.str());
     }
 
-    sigc::signal<void, guint32, std::string, msgpack::object> request_signal ()
+    sigc::signal<void, guint32, std::string, const msgpack::object &>
+    request_signal ()
     {
         return request_signal_;
     }
 
-    sigc::signal<void, std::string, msgpack::object> notify_signal ()
+    sigc::signal<void, std::string, const msgpack::object &> notify_signal ()
     {
         return notify_signal_;
     }
@@ -148,7 +149,12 @@ protected:
 private:
     template<class S> class PackableBase {
     public:
-        virtual void pack(msgpack::packer<S> &) = 0;
+        void msgpack_pack(msgpack::packer<S> &packer) const
+        {
+            pack (packer);
+        }
+
+        virtual void pack(msgpack::packer<S> &) const = 0;
 
         virtual ~PackableBase ()
         {}
@@ -162,7 +168,7 @@ private:
         Packable (T &&value) : value_ (value)
         {}
 
-        void pack(msgpack::packer<S> &packer)
+        virtual void pack(msgpack::packer<S> &packer) const override
         {
             packer.pack (value_);
         }
@@ -179,10 +185,10 @@ private:
             add_args (args...);
         }
 
-        void pack(msgpack::packer<S> &packer)
+        void pack(msgpack::packer<S> &packer) const
         {
-            packer.pack_array (args_.length());
-            for (auto i: args_)
+            packer.pack_array (args_.size ());
+            for (const auto &i: args_)
             {
                 packer.pack (*i);
             }
@@ -218,16 +224,15 @@ private:
 
     void run_rcv_thread ();
 
-    bool object_received (const msgpack::object &);
+    bool object_received (const msgpack::object &msg);
 
     bool object_error (char *raw_msg);
 
-    bool dispatch_request (const msgpack::object_array &msg);
+    bool dispatch_request (const msgpack::object &msg);
 
-    bool dispatch_response (guint32 msgid,
-            msgpack::object error, msgpack::object response);
+    bool dispatch_response (const msgpack::object &msg);
 
-    bool dispatch_notify (const msgpack::object_array &msg);
+    bool dispatch_notify (const msgpack::object &msg);
 
     RefPtr<Gio::OutputStream> strm_to_nvim_;
     RefPtr<Gio::InputStream> strm_from_nvim_;
@@ -237,8 +242,9 @@ private:
     std::map<guint32, std::shared_ptr<MsgpackPromise>> response_promises_;
 
     std::thread rcv_thread_;
-    sigc::signal<void, guint32, std::string, msgpack::object> request_signal_;
-    sigc::signal<void, std::string, msgpack::object> notify_signal_;
+    sigc::signal<void, guint32, std::string, const msgpack::object &>
+            request_signal_;
+    sigc::signal<void, std::string, const msgpack::object &> notify_signal_;
     sigc::signal<void, Glib::ustring> rcv_error_signal_;
     msgpack::object *response_ {nullptr};
     msgpack::object *response_error_ {nullptr};

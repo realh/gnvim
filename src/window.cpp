@@ -33,15 +33,19 @@ Window::Window (std::vector<const char *>)
 
     nvim_.error_signal ().connect (
             sigc::mem_fun (*this, &Window::on_nvim_error));
-    nvim_.start ();
 
     view_->show_all ();
     add (*view_);
     set_geometry_hints ();
     if (!force_close_)
+    {
         present ();
+        nvim_.start_gui (80, 36);
+    }
     else
+    {
         g_warning ("Window closed before it opened");
+    }
 }
 
 void Window::force_close ()

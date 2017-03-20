@@ -55,18 +55,11 @@ NvimBridge::~NvimBridge ()
     }
 }
 
-void NvimBridge::start ()
+void NvimBridge::start_gui (int width, int height)
 {
-    std::shared_ptr<MsgpackPromise> response (new MsgpackPromise);
-    response->value_signal ().connect ([] (const msgpack::object &o)
-    {
-        std::cout << "nvim_get_api_info response:\n" << o << std::endl;
-    });
-    response->error_signal ().connect ([] (const msgpack::object &o)
-    {
-        std::cout << "nvim_get_api_info error response:\n" << o << std::endl;
-    });
-    rpc_->request ("nvim_get_api_info", response);
+    std::map<std::string, bool> options;
+    // Don't actually need to set any options
+    rpc_->notify ("nvim_ui_attach", width, height, options);
 }
 
 void NvimBridge::stop ()

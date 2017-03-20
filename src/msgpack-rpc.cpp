@@ -169,11 +169,6 @@ bool MsgpackRpc::object_error (char *raw_msg)
     return false;
 }
 
-static std::string msgpack_to_str (const msgpack::object &o)
-{
-    return std::string(o.via.str.ptr, o.via.str.ptr + o.via.str.size);
-}
-
 bool MsgpackRpc::object_received (const msgpack::object &mob)
 {
     if (mob.type != msgpack::type::ARRAY)
@@ -195,12 +190,14 @@ bool MsgpackRpc::object_received (const msgpack::object &mob)
     switch (type)
     {
         case REQUEST:
-            return dispatch_request (array);
+            //g_debug ("Received request");
+            return dispatch_request (mob);
         case RESPONSE:
-            return dispatch_response (array.ptr[1].via.i64,
-                    array.ptr[2], array.ptr[3]);
+            //g_debug ("Received response");
+            return dispatch_response (mob);
         case NOTIFY:
-            return dispatch_notify (array);
+            //g_debug ("Received notify");
+            return dispatch_notify (mob);
         default:
             return object_error (g_strdup_printf (
                     _("unknown msgpack message type %d"), type));
@@ -208,55 +205,67 @@ bool MsgpackRpc::object_received (const msgpack::object &mob)
     return false;
 }
 
-bool MsgpackRpc::dispatch_request (const msgpack::object_array &msg)
+// Need some shenanigans so we can pass cloned objects to lambdas, otherwise
+// they'll get deleted before the idle callback
+struct MsgpackHandle {
+    msgpack::object_handle handle;
+};
+
+bool MsgpackRpc::dispatch_request (const msgpack::object &msg)
 {
-    if (msg.size != 4)
+    const msgpack::object_array ar = msg.via.array;
+    if (ar.size != 4)
     {
         return object_error (g_strdup_printf (
                     _("msgpack request should have 4 elements, got %d"),
-                        msg.size));
+                        ar.size));
     }
-    if (msg.ptr[1].type != msgpack::type::POSITIVE_INTEGER)
+    if (ar.ptr[1].type != msgpack::type::POSITIVE_INTEGER)
     {
         return object_error (g_strdup_printf (
                     _("msgpack request msgid field should be "
                         "POSITIVE_INTEGER, received type %d"),
-                        msg.ptr[1].type));
+                        ar.ptr[1].type));
         return false;
     }
-    if (msg.ptr[2].type != msgpack::type::STR)
+    if (ar.ptr[2].type != msgpack::type::STR)
     {
         return object_error (g_strdup_printf (
                     _("msgpack request method field should be "
                         "STR, received type %d"),
-                        msg.ptr[2].type));
+                        ar.ptr[2].type));
         return false;
     }
-    if (msg.ptr[3].type != msgpack::type::ARRAY)
+    if (ar.ptr[3].type != msgpack::type::ARRAY)
     {
         return object_error (g_strdup_printf (
                     _("msgpack request args field should be "
                         "ARRAY, received type %d"),
-                        msg.ptr[3].type));
+                        ar.ptr[3].type));
         return false;
     }
+
+    auto handle = new MsgpackHandle { msgpack::clone (msg) };
     reference ();
-    Glib::signal_idle ().connect_once ([this, msg] () {
+    Glib::signal_idle ().connect_once ([this, handle] () {
         if (!this->stop_.load ())
         {
-            request_signal_.emit (
-                    msg.ptr[1].via.i64,
-                    msgpack_to_str (msg.ptr[2]),
-                    msg.ptr[3]);
+            const auto &ar = handle->handle.get ().via.array;
+            guint32 msgid = ar.ptr[1].via.i64;
+            std::string method;
+            ar.ptr[2].convert (method);
+            request_signal_.emit (msgid, method, ar.ptr[3]);
         }
+        delete handle;
         unreference ();
     });
     return true;
 }
 
-bool MsgpackRpc::dispatch_response (guint32 msgid,
-            msgpack::object error, msgpack::object response)
+bool MsgpackRpc::dispatch_response (const msgpack::object &msg)
 {
+    const auto &ar = msg.via.array;
+    guint32 msgid = ar.ptr[1].via.i64;
     auto it = response_promises_.find (msgid);
     if (it == response_promises_.end ())
     {
@@ -265,56 +274,65 @@ bool MsgpackRpc::dispatch_response (guint32 msgid,
     }
     std::shared_ptr<MsgpackPromise> promise = it->second;
 
+    auto error = new MsgpackHandle { msgpack::clone (ar.ptr[2]) };
+    auto response = new MsgpackHandle { msgpack::clone (ar.ptr[3]) };
     reference ();
     Glib::signal_idle ().connect_once (
             [this, msgid, promise, error, response] ()
     {
         if (!this->stop_.load ())
         {
-            if (!error.is_nil ())
-                promise->emit_error (error);
+            if (!error->handle.get ().is_nil ())
+                promise->emit_error (error->handle.get ());
             else
-                promise->emit_value (response);
+                promise->emit_value (response->handle.get ());
             this->response_promises_.erase (msgid);
         }
+        delete error;
+        delete response;
         unreference ();
     });
 
     return true;
 }
 
-bool MsgpackRpc::dispatch_notify (const msgpack::object_array &msg)
+bool MsgpackRpc::dispatch_notify (const msgpack::object &msg)
 {
-    if (msg.size != 3)
+    const auto &ar = msg.via.array;
+    if (ar.size != 3)
     {
         return object_error (g_strdup_printf (
                     _("msgpack notify should have 3 elements, got %d"),
-                        msg.size));
+                        ar.size));
     }
-    if (msg.ptr[1].type != msgpack::type::STR)
+    if (ar.ptr[1].type != msgpack::type::STR)
     {
         return object_error (g_strdup_printf (
                     _("msgpack notify method field should be "
                         "STR, received type %d"),
-                        msg.ptr[1].type));
+                        ar.ptr[1].type));
         return false;
     }
-    if (msg.ptr[2].type != msgpack::type::ARRAY)
+    if (ar.ptr[2].type != msgpack::type::ARRAY)
     {
         return object_error (g_strdup_printf (
                     _("msgpack request args field should be "
                         "ARRAY, received type %d"),
-                        msg.ptr[2].type));
+                        ar.ptr[2].type));
         return false;
     }
+
+    auto handle = new MsgpackHandle { msgpack::clone (msg) };
     reference ();
-    Glib::signal_idle ().connect_once ([this, msg] () {
+    Glib::signal_idle ().connect_once ([this, handle] () {
         if (!this->stop_.load ())
         {
-            notify_signal_.emit (
-                    msgpack_to_str (msg.ptr[1]),
-                    msg.ptr[2]);
+            const auto &ar = handle->handle.get ().via.array;
+            std::string method;
+            ar.ptr[1].convert (method);
+            notify_signal_.emit (method, ar.ptr[2]);
         }
+        delete handle;
         unreference ();
     });
     return true;

@@ -34,7 +34,7 @@ public:
 
     ~NvimBridge ();
 
-    void start ();
+    void start_gui (int width, int height);
 
     void stop ();
 
