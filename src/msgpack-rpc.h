@@ -225,7 +225,7 @@ private:
     bool dispatch_request (const msgpack::object_array &msg);
 
     bool dispatch_response (guint32 msgid,
-            msgpack::object response, msgpack::object error);
+            msgpack::object error, msgpack::object response);
 
     bool dispatch_notify (const msgpack::object_array &msg);
 

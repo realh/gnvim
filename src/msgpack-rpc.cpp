@@ -255,7 +255,7 @@ bool MsgpackRpc::dispatch_request (const msgpack::object_array &msg)
 }
 
 bool MsgpackRpc::dispatch_response (guint32 msgid,
-            msgpack::object response, msgpack::object error)
+            msgpack::object error, msgpack::object response)
 {
     auto it = response_promises_.find (msgid);
     if (it == response_promises_.end ())
@@ -267,7 +267,7 @@ bool MsgpackRpc::dispatch_response (guint32 msgid,
 
     reference ();
     Glib::signal_idle ().connect_once (
-            [this, msgid, promise, response, error] ()
+            [this, msgid, promise, error, response] ()
     {
         if (!this->stop_.load ())
         {
