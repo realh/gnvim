@@ -118,14 +118,14 @@ void MsgpackRpc::run_rcv_thread ()
         gsize nread;
         Glib::ustring error_msg;
 
+        unpacker.reserve_buffer (BUFLEN);
         try
         {
             do
             {
                 std::cout << "Trying to read " << BUFLEN << " bytes"
                         << std::endl;
-                nread = strm_from_nvim_->read (
-                        const_cast<char *> (buf.data ()), BUFLEN, 
+                nread = strm_from_nvim_->read (unpacker.buffer (), BUFLEN, 
                         rcv_cancellable_);
                 std::cout << "Read " << nread << std::endl;
             } while (!nread && !rcv_cancellable_->is_cancelled () &&
