@@ -53,7 +53,6 @@ void MsgpackRpc::request (const char *method,
     packer.pack_array (0);
     response_promises_[msgid] = promise;
     send (s.str());
-    std::cout << "Sent request" << std::endl;
 }
 
 void MsgpackRpc::stop ()
@@ -72,8 +71,6 @@ guint32 MsgpackRpc::create_request (packer_t &packer, const char *method)
     packer.pack_int (REQUEST);
     packer.pack_uint32 (++msgid_);
     packer.pack (method);
-    std::cout << "Created request with msgid " << msgid_
-            << " for request " << method << std::endl;
     return msgid_;
 }
 
@@ -123,11 +120,8 @@ void MsgpackRpc::run_rcv_thread ()
         {
             do
             {
-                std::cout << "Trying to read " << BUFLEN << " bytes"
-                        << std::endl;
                 nread = strm_from_nvim_->read (unpacker.buffer (), BUFLEN, 
                         rcv_cancellable_);
-                std::cout << "Read " << nread << std::endl;
             } while (!nread && !rcv_cancellable_->is_cancelled () &&
                     !stop_.load ());
         }
@@ -146,7 +140,6 @@ void MsgpackRpc::run_rcv_thread ()
                 reference ();
                 Glib::signal_idle ().connect_once ([this, error_msg] ()
                 {
-                    std::cout << "Raising error " << error_msg << std::endl;
                     rcv_error_signal_.emit (error_msg);
                     unreference ();
                 });
@@ -160,10 +153,8 @@ void MsgpackRpc::run_rcv_thread ()
         {
             object_received (unpacked.get ());
         }
-        if (!stop_.load ())
-            std::cout << "Need more input" << std::endl;
     }
-    std::cout << "rcv thread stopped" << std::endl;
+    g_debug ("rcv thread stopped");
 }
 
 bool MsgpackRpc::object_error (char *raw_msg)
@@ -185,7 +176,6 @@ static std::string msgpack_to_str (const msgpack::object &o)
 
 bool MsgpackRpc::object_received (const msgpack::object &mob)
 {
-    std::cout << "Received object " << mob << std::endl;
     if (mob.type != msgpack::type::ARRAY)
     {
         return object_error (g_strdup_printf (
@@ -214,7 +204,6 @@ bool MsgpackRpc::object_received (const msgpack::object &mob)
         default:
             return object_error (g_strdup_printf (
                     _("unknown msgpack message type %d"), type));
-            
     }
     return false;
 }
