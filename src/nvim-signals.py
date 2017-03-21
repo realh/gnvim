@@ -31,7 +31,7 @@ def list_signal (mname, skip0, name, args):
         else:
             sig_template_args = 'void, ' \
             + ', '.join ("const %s &" % a for a in args)
-        signals_list += "    sigc::signal<void, %s> nvim_%s;\n" \
+        signals_list += "    sigc::signal<%s> nvim_%s;\n" \
         % (sig_template_args, name)
     elif sys.argv[1].startswith ("reg"):
         class_template_args = ', '.join (args)
@@ -72,6 +72,6 @@ r ("popupmenu_show, msgpack::object, int, int, int")
 r ("popupmenu_select, int")
 r ("popupmenu_hide, void")
 
-code = open (sys.argv[2] + ".in", 'r').read ()
+code = open (sys.argv[2], 'r').read ()
 code = code.replace("#define GNVIM_SIGNALS\n", signals_list)
-open (sys.argv[2], 'w').write (code)
+open (sys.argv[3], 'w').write (code)
