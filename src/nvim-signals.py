@@ -69,5 +69,5 @@ r ("popupmenu_select, int")
 r ("popupmenu_hide, void")
 
 code = open (sys.argv[2] + ".in", 'r').read ()
-code.replace("#define NVIM_SIGNALS\n", signals_list)
+code.replace("#define GNVIM_SIGNALS\n", signals_list)
 open (sys.argv[2], 'w').write (code)
