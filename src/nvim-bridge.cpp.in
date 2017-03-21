@@ -57,6 +57,7 @@ NvimBridge::~NvimBridge ()
 
 void NvimBridge::map_adapters ()
 {
+#define GNVIM_SIGNALS
 }
 
 void NvimBridge::start_gui (int width, int height)

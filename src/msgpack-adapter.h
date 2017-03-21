@@ -32,16 +32,13 @@ namespace Gnvim
 
 class MsgpackAdapterBase {
 public:
+    // If skip_arg0 is true, this is a redraw message and the first member of
+    // mp_args is the redraw method name
     MsgpackAdapterBase (bool skip_arg0 = true) : skip_arg0_ (skip_arg0 ? 1 : 0)
     {}
 
     virtual ~MsgpackAdapterBase()
     {}
-
-    bool check_args (const msgpack::object_array &mp_args)
-    {
-        return mp_args.size == num_args () + skip_arg0_;
-    }
 
     virtual guint32 num_args () = 0;
 
@@ -52,43 +49,42 @@ protected:
     int skip_arg0_;
 };
 
-class MsgpackAdapter0: public MsgpackAdapterBase {
+template<class... T> class MsgpackAdapter: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter0 (bool skip_arg0 = true) : MsgpackAdapterBase(skip_arg0)
+    MsgpackAdapter (sigc::signal<void, T...> &sig, bool skip_arg0 = true)
+            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override
-    {
-        return 0;
-    }
+    virtual guint32 num_args () override;
+protected:
+    virtual void do_emit (const msgpack::object_array &mp_args) override;
+private:
+    sigc::signal<void, T...> signal_;
+};
 
-    sigc::signal<void> &get_signal ()
-    {
-        return signal_;
-    }
+template<> class MsgpackAdapter<void>: public MsgpackAdapterBase {
+public:
+    MsgpackAdapter (sigc::signal<void, void> &sig, bool skip_arg0 = true)
+            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
+    {}
+
+    virtual guint32 num_args () override { return 1; }
 protected:
     virtual void do_emit (const msgpack::object_array &) override
     {
         signal_.emit ();
     }
 private:
-    sigc::signal<void> signal_;
+    sigc::signal<void, void> signal_;
 };
 
-template<class T1> class MsgpackAdapter1: public MsgpackAdapterBase {
+template<class T1> class MsgpackAdapter<T1>: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter1 (bool skip_arg0 = true) : MsgpackAdapterBase(skip_arg0)
+    MsgpackAdapter (sigc::signal<void, const T1 &> &sig, bool skip_arg0 = true)
+            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override
-    {
-        return 1;
-    }
-
-    sigc::signal<void, T1> &get_signal ()
-    {
-        return signal_;
-    }
+    virtual guint32 num_args () override { return 1; }
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
@@ -100,20 +96,15 @@ private:
     sigc::signal<void, T1> signal_;
 };
 
-template<class T1, class T2> class MsgpackAdapter2: public MsgpackAdapterBase {
+template<class T1, class T2> class MsgpackAdapter<T1, T2>:
+        public MsgpackAdapterBase {
 public:
-    MsgpackAdapter2 (bool skip_arg0 = true) : MsgpackAdapterBase(skip_arg0)
+    MsgpackAdapter (sigc::signal<void, const T1 &, const T2 &> &sig,
+                    bool skip_arg0 = true)
+            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override
-    {
-        return 2;
-    }
-
-    sigc::signal<void, T1, T2> &get_signal ()
-    {
-        return signal_;
-    }
+    virtual guint32 num_args () override { return 2; }
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
@@ -124,24 +115,18 @@ protected:
         signal_.emit (a1, a2);
     }
 private:
-    sigc::signal<void, T1, T2> signal_;
+    sigc::signal<void, const T1 &, const T2 &> signal_;
 };
 
-template<class T1, class T2, class T3> class MsgpackAdapter3
-        : public MsgpackAdapterBase {
+template<class T1, class T2, class T3> class MsgpackAdapter<T1, T2, T3>:
+        public MsgpackAdapterBase {
 public:
-    MsgpackAdapter3 (bool skip_arg0 = true) : MsgpackAdapterBase(skip_arg0)
+    MsgpackAdapter (sigc::signal<void, const T1 &, const T2 &, const T3 &> &sig,
+                bool skip_arg0 = true)
+            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override
-    {
-        return 3;
-    }
-
-    sigc::signal<void, T1, T2, T3> &get_signal ()
-    {
-        return signal_;
-    }
+    virtual guint32 num_args () override { return 3; }
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
@@ -157,22 +142,16 @@ private:
     sigc::signal<void, T1, T2, T3> signal_;
 };
 
-template<class T1, class T2, class T3, class T4> class MsgpackAdapter4
-        : public MsgpackAdapterBase
-{
+template<class T1, class T2, class T3, class T4>
+class MsgpackAdapter<T1, T2, T3, T4>: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter4 (bool skip_arg0 = true) : MsgpackAdapterBase(skip_arg0)
+    MsgpackAdapter (
+        sigc::signal<void, const T1 &, const T2 &, const T3&, const T4 &> &sig,
+        bool skip_arg0 = true)
+            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override
-    {
-        return 4;
-    }
-
-    sigc::signal<void, T1, T2, T3, T4> &get_signal ()
-    {
-        return signal_;
-    }
+    virtual guint32 num_args () override { return 4; }
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
@@ -187,7 +166,7 @@ protected:
         signal_.emit (a1, a2, a3, a4);
     }
 private:
-    sigc::signal<void, T1, T2, T3, T4> signal_;
+    sigc::signal<void, const T1 &, const T2 &, const T3 &, const T4 &> signal_;
 };
 
 }
