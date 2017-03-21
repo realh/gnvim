@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # nvim-signals.py
 #
 # Copyright (C) 2017 Tony Houghton
@@ -23,24 +23,27 @@ import sys
 
 signals_list = ""
 
-def list_signal (mname, skip0, name, *args):
+def list_signal (mname, skip0, name, args):
     global signals_list
     if sys.argv[1].startswith ("def"):
         if len(args) == 1 and args[0] == "void":
             sig_template_args = "void"
         else:
-            sig_template_args = ', '.join ("%" % a for a in args)
+            sig_template_args = ', '.join ("const %s &" % a for a in args)
         signals_list += "    sigc::signal<void, %s> nvim_%s;\n" \
-        % (name, sig_template_args)
+        % (sig_template_args, name)
     elif sys.argv[1].startswith ("reg"):
         class_template_args = ', '.join (args)
         signals_list += \
-                '    %s.emplace ("%s", MsgpackAdapter<%s> (nvim_%s, %s));\n' \
+                ('    %s.emplace ("%s",\n' \
+                + '        MsgpackAdapter<%s> (nvim_%s, %s));\n') \
                 % (mname, name, class_template_args, name, skip0)
 
 # Redraw methods
 def r (s):
-    list_signal ("redraw_adapters_", "true", s.split(', '))
+    name, args = s.split(', ', 1)
+    args = args.split(', ')
+    list_signal ("redraw_adapters_", "true", name, args)
                 
 r ("resize, int, int")
 r ("clear, void")
@@ -69,5 +72,5 @@ r ("popupmenu_select, int")
 r ("popupmenu_hide, void")
 
 code = open (sys.argv[2] + ".in", 'r').read ()
-code.replace("#define GNVIM_SIGNALS\n", signals_list)
+code = code.replace("#define GNVIM_SIGNALS\n", signals_list)
 open (sys.argv[2], 'w').write (code)
