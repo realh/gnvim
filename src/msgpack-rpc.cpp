@@ -29,6 +29,7 @@ Glib::ustring MsgpackRpc::Error::what () const
 }
 
 MsgpackRpc::MsgpackRpc ()
+        : async_read_slot_ (sigc::mem_fun (this, &MsgpackRpc::async_read))
 {
 }
 
@@ -41,7 +42,7 @@ void MsgpackRpc::start (int pipe_to_nvim, int pipe_from_nvim)
 {
     strm_to_nvim_ = Gio::UnixOutputStream::create (pipe_to_nvim, TRUE);
     strm_from_nvim_ = Gio::UnixInputStream::create (pipe_from_nvim, TRUE);
-    rcv_thread_ = std::thread([this] () { this->run_rcv_thread (); });
+    start_async_read ();
 }
 
 void MsgpackRpc::request (const char *method,
@@ -57,10 +58,8 @@ void MsgpackRpc::request (const char *method,
 
 void MsgpackRpc::stop ()
 {
-    stop_.store (true);
+    stop_ = true;
     rcv_cancellable_->cancel ();
-    if (rcv_thread_.joinable ())
-        rcv_thread_.join ();
     strm_from_nvim_->close ();
     strm_to_nvim_->close ();
 }
@@ -105,67 +104,47 @@ void MsgpackRpc::send (std::string &&s)
     }
 }
 
-void MsgpackRpc::run_rcv_thread ()
+void MsgpackRpc::start_async_read ()
 {
-    msgpack::unpacker unpacker;
+    if (stop_)
+        return;
+    unpacker_.reserve_buffer (BUFLEN);
+    reference ();
+    strm_from_nvim_->read_async (unpacker_.buffer (), BUFLEN,
+            async_read_slot_, rcv_cancellable_);
+}
 
-    while (!stop_.load ())
+void MsgpackRpc::async_read (RefPtr<Gio::AsyncResult> &result)
+{
+    if (!stop_)
     {
-        std::string buf (BUFLEN, 0);
-        gsize nread;
-        Glib::ustring error_msg;
-
-        unpacker.reserve_buffer (BUFLEN);
-        try
+        auto nread = strm_from_nvim_->read_finish (result);
+        if (nread < 0)
         {
-            do
-            {
-                nread = strm_from_nvim_->read (unpacker.buffer (), BUFLEN, 
-                        rcv_cancellable_);
-            } while (!nread && !rcv_cancellable_->is_cancelled () &&
-                    !stop_.load ());
+            stop ();
+            rcv_error_signal_.emit (_("I/O error reading from nvim"));
+            return;
         }
-        catch (Glib::Exception &e)
+        else
         {
-            error_msg = e.what ();
-            nread = 0;
-        }
-        if (!nread)
-        {
-            if (!error_msg.length ())
-                error_msg = _("No bytes read");
-            if (!stop_.load())
+            unpacker_.buffer_consumed (nread);
+            msgpack::unpacked unpacked;
+            while (!stop_ && unpacker_.next (unpacked))
             {
-                stop_.store (true);
-                reference ();
-                Glib::signal_idle ().connect_once ([this, error_msg] ()
-                {
-                    rcv_error_signal_.emit (error_msg);
-                    unreference ();
-                });
+                object_received (unpacked.get ());
             }
-            break;
-        }
-        unpacker.buffer_consumed (nread);
-
-        msgpack::unpacked unpacked;
-        while (!stop_.load () && unpacker.next (unpacked))
-        {
-            object_received (unpacked.get ());
+            start_async_read ();
         }
     }
-    g_debug ("rcv thread stopped");
+    unreference ();
 }
 
 bool MsgpackRpc::object_error (char *raw_msg)
 {
-    stop_.store (true);
+    stop_ = true;
     auto msg = Glib::ustring (raw_msg);
     g_free (raw_msg);
-    reference ();
-    Glib::signal_idle ().connect_once ([this, msg] () {
-        rcv_error_signal ().emit (msg);
-    });
+    rcv_error_signal ().emit (msg);
     return false;
 }
 
@@ -205,12 +184,6 @@ bool MsgpackRpc::object_received (const msgpack::object &mob)
     return false;
 }
 
-// Need some shenanigans so we can pass cloned objects to lambdas, otherwise
-// they'll get deleted before the idle callback
-struct MsgpackHandle {
-    msgpack::object_handle handle;
-};
-
 bool MsgpackRpc::dispatch_request (const msgpack::object &msg)
 {
     const msgpack::object_array ar = msg.via.array;
@@ -245,20 +218,14 @@ bool MsgpackRpc::dispatch_request (const msgpack::object &msg)
         return false;
     }
 
-    auto handle = new MsgpackHandle { msgpack::clone (msg) };
-    reference ();
-    Glib::signal_idle ().connect_once ([this, handle] () {
-        if (!this->stop_.load ())
-        {
-            const auto &ar = handle->handle.get ().via.array;
-            guint32 msgid = ar.ptr[1].via.i64;
-            std::string method;
-            ar.ptr[2].convert (method);
-            request_signal_.emit (msgid, method, ar.ptr[3]);
-        }
-        delete handle;
-        unreference ();
-    });
+    if (!this->stop_)
+    {
+        guint32 msgid = ar.ptr[1].via.i64;
+        std::string method;
+        ar.ptr[2].convert (method);
+        request_signal_.emit (msgid, method, ar.ptr[3]);
+    }
+
     return true;
 }
 
@@ -274,24 +241,16 @@ bool MsgpackRpc::dispatch_response (const msgpack::object &msg)
     }
     std::shared_ptr<MsgpackPromise> promise = it->second;
 
-    auto error = new MsgpackHandle { msgpack::clone (ar.ptr[2]) };
-    auto response = new MsgpackHandle { msgpack::clone (ar.ptr[3]) };
-    reference ();
-    Glib::signal_idle ().connect_once (
-            [this, msgid, promise, error, response] ()
+    const auto &error = ar.ptr[2];
+    const auto &response = ar.ptr[3];
+    if (!this->stop_)
     {
-        if (!this->stop_.load ())
-        {
-            if (!error->handle.get ().is_nil ())
-                promise->emit_error (error->handle.get ());
-            else
-                promise->emit_value (response->handle.get ());
-            this->response_promises_.erase (msgid);
-        }
-        delete error;
-        delete response;
-        unreference ();
-    });
+        if (error.is_nil ())
+            promise->emit_error (error);
+        else
+            promise->emit_value (response);
+        this->response_promises_.erase (msgid);
+    }
 
     return true;
 }
@@ -322,19 +281,13 @@ bool MsgpackRpc::dispatch_notify (const msgpack::object &msg)
         return false;
     }
 
-    auto handle = new MsgpackHandle { msgpack::clone (msg) };
-    reference ();
-    Glib::signal_idle ().connect_once ([this, handle] () {
-        if (!this->stop_.load ())
-        {
-            const auto &ar = handle->handle.get ().via.array;
-            std::string method;
-            ar.ptr[1].convert (method);
-            notify_signal_.emit (method, ar.ptr[2]);
-        }
-        delete handle;
-        unreference ();
-    });
+    if (!this->stop_)
+    {
+        std::string method;
+        ar.ptr[1].convert (method);
+        notify_signal_.emit (method, ar.ptr[2]);
+    }
+
     return true;
 }
 

@@ -26,6 +26,7 @@
 #include <map>
 #include <memory>
 
+#include "msgpack-adapter.h"
 #include "msgpack-rpc.h"
 
 namespace Gnvim

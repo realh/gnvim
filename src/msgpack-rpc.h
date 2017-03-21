@@ -23,13 +23,11 @@
 
 #include "defns.h"
 
-#include <condition_variable>
 #include <cstdint>
 #include <deque>
 #include <iostream>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <sstream>
 #include <thread>
 #include <utility>
@@ -67,10 +65,6 @@ public:
 
     virtual ~MsgpackRpc ();
 
-    // Signals may still be raised after calling stop () because they're called
-    // from idle handlers. Although sigc is not generally thread-safe,
-    // the connect_once () methods are, so it's better here than
-    // Glib::Dispatcher because our signals have arguments.
     void stop ();
 
     void request (const char *method,
@@ -222,7 +216,9 @@ private:
 
     void send (std::string &&s);
 
-    void run_rcv_thread ();
+    void start_async_read ();
+
+    void async_read (RefPtr<Gio::AsyncResult> &result);
 
     bool object_received (const msgpack::object &msg);
 
@@ -237,11 +233,12 @@ private:
     RefPtr<Gio::OutputStream> strm_to_nvim_;
     RefPtr<Gio::InputStream> strm_from_nvim_;
 
-    std::atomic_bool stop_ {false};
+    bool stop_ {false};
+    Gio::SlotAsyncReady async_read_slot_;
+    msgpack::unpacker unpacker_;
 
     std::map<guint32, std::shared_ptr<MsgpackPromise>> response_promises_;
 
-    std::thread rcv_thread_;
     sigc::signal<void, guint32, std::string, const msgpack::object &>
             request_signal_;
     sigc::signal<void, std::string, const msgpack::object &> notify_signal_;
