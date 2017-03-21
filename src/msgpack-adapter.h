@@ -64,7 +64,7 @@ private:
 
 template<> class MsgpackAdapter<void>: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter (sigc::signal<void, void> &sig, bool skip_arg0 = true)
+    MsgpackAdapter (sigc::signal<void> &sig, bool skip_arg0 = true)
             : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
 

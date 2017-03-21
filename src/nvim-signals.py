@@ -29,7 +29,8 @@ def list_signal (mname, skip0, name, args):
         if len(args) == 1 and args[0] == "void":
             sig_template_args = "void"
         else:
-            sig_template_args = ', '.join ("const %s &" % a for a in args)
+            sig_template_args = 'void, ' \
+            + ', '.join ("const %s &" % a for a in args)
         signals_list += "    sigc::signal<void, %s> nvim_%s;\n" \
         % (sig_template_args, name)
     elif sys.argv[1].startswith ("reg"):
