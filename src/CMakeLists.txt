@@ -27,7 +27,7 @@ add_custom_command(OUTPUT nvim-bridge.cpp
     COMMAND ${GNVIM_SIGNALS} reg ${NVIM_BRIDGE_CPP_IN} ${NVIM_BRIDGE_CPP} 
     MAIN_DEPENDENCY ${NVIM_BRIDGE_CPP_IN})
 add_custom_command(OUTPUT nvim-bridge.h
-    COMMAND ${GNVIM_SIGNALS} reg ${NVIM_BRIDGE_H_IN} ${NVIM_BRIDGE_H} 
+    COMMAND ${GNVIM_SIGNALS} def ${NVIM_BRIDGE_H_IN} ${NVIM_BRIDGE_H} 
     MAIN_DEPENDENCY ${NVIM_BRIDGE_H_IN})
 
 add_executable(gnvim ${GNVIM_SOURCES} ${GNVIM_HEADERS})

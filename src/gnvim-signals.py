@@ -26,7 +26,7 @@ signals_list = ""
 def list_signal (mname, skip0, name, args):
     global signals_list
     if sys.argv[1].startswith ("def"):
-        if len(args) == 1 and args[0] == "void":
+        if not args:
             sig_template_args = "void"
         else:
             sig_template_args = 'void, ' \
@@ -34,21 +34,28 @@ def list_signal (mname, skip0, name, args):
         signals_list += "    sigc::signal<%s> nvim_%s;\n" \
         % (sig_template_args, name)
     elif sys.argv[1].startswith ("reg"):
-        class_template_args = ', '.join (args)
+        if not args:
+            class_template_args = "void"
+        else:
+            class_template_args = ', '.join ("const %s &" % a for a in args)
         signals_list += \
                 ('    %s.emplace ("%s",\n' \
-                + '        MsgpackAdapter<%s> (nvim_%s, %s));\n') \
+                + '        new MsgpackAdapter<%s> (nvim_%s, %s));\n') \
                 % (mname, name, class_template_args, name, skip0)
 
 # Redraw methods
 def r (s):
-    name, args = s.split(', ', 1)
-    args = args.split(', ')
+    if ',' in s:
+        name, args = s.split(', ', 1)
+        args = args.split(', ')
+    else:
+        name = s
+        args = None
     list_signal ("redraw_adapters_", "true", name, args)
                 
 r ("resize, int, int")
-r ("clear, void")
-r ("eol_clear, void")
+r ("clear")
+r ("eol_clear")
 r ("cursor_goto, int, int")
 r ("update_fg, int")
 r ("update_bg, int")
@@ -59,18 +66,18 @@ r ("set_scroll_region, int, int, int, int")
 r ("scroll, int")
 r ("set_title, std::string")
 r ("set_icon, std::string")
-r ("mouse_on, void")
-r ("mouse_off, void")
-r ("busy_on, void")
-r ("busy_off, void")
-r ("suspend, void")
-r ("bell, void")
-r ("visual_bell, void")
-r ("update_menu, void")
+r ("mouse_on")
+r ("mouse_off")
+r ("busy_on")
+r ("busy_off")
+r ("suspend")
+r ("bell")
+r ("visual_bell")
+r ("update_menu")
 r ("mode_change, std::string")
 r ("popupmenu_show, msgpack::object, int, int, int")
 r ("popupmenu_select, int")
-r ("popupmenu_hide, void")
+r ("popupmenu_hide")
 
 code = open (sys.argv[2], 'r').read ()
 code = code.replace("#define GNVIM_SIGNALS\n", signals_list)

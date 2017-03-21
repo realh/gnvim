@@ -26,7 +26,7 @@ namespace Gnvim
 
 void MsgpackAdapterBase::emit (const msgpack::object_array &mp_args)
 {
-    if (!check_args (mp_args))
+    if (mp_args.size != num_args () + skip_arg0_)
     {
         char *s = g_strdup_printf ("Wrong number of args in msgpack callback; "
                 "expected %d, got %d", num_args () + skip_arg0_, mp_args.size);

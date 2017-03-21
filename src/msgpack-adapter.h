@@ -30,6 +30,11 @@
 namespace Gnvim
 {
 
+template<class T> struct RemoveConstRef             { typedef T type; };
+template<class T> struct RemoveConstRef<const T>    { typedef T type; };
+template<class T> struct RemoveConstRef<T &>        { typedef T type; };
+template<class T> struct RemoveConstRef<const T &>  { typedef T type; };
+
 class MsgpackAdapterBase {
 public:
     // If skip_arg0 is true, this is a redraw message and the first member of
@@ -75,12 +80,12 @@ protected:
         signal_.emit ();
     }
 private:
-    sigc::signal<void, void> signal_;
+    sigc::signal<void> signal_;
 };
 
 template<class T1> class MsgpackAdapter<T1>: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter (sigc::signal<void, const T1 &> &sig, bool skip_arg0 = true)
+    MsgpackAdapter (sigc::signal<void, T1> &sig, bool skip_arg0 = true)
             : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
 
@@ -88,7 +93,7 @@ public:
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
-        T1 a1;
+        typename RemoveConstRef<T1>::type a1;
         mp_args.ptr[skip_arg0_].convert (a1);
         signal_.emit (a1);
     }
@@ -99,7 +104,7 @@ private:
 template<class T1, class T2> class MsgpackAdapter<T1, T2>:
         public MsgpackAdapterBase {
 public:
-    MsgpackAdapter (sigc::signal<void, const T1 &, const T2 &> &sig,
+    MsgpackAdapter (sigc::signal<void, T1, T2> &sig,
                     bool skip_arg0 = true)
             : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
@@ -108,20 +113,20 @@ public:
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
-        T1 a1;
-        T2 a2;
+        typename RemoveConstRef<T1>::type a1;
+        typename RemoveConstRef<T2>::type a2;
         mp_args.ptr[skip_arg0_].convert (a1);
         mp_args.ptr[1 + skip_arg0_].convert (a2);
         signal_.emit (a1, a2);
     }
 private:
-    sigc::signal<void, const T1 &, const T2 &> signal_;
+    sigc::signal<void, T1, T2> signal_;
 };
 
 template<class T1, class T2, class T3> class MsgpackAdapter<T1, T2, T3>:
         public MsgpackAdapterBase {
 public:
-    MsgpackAdapter (sigc::signal<void, const T1 &, const T2 &, const T3 &> &sig,
+    MsgpackAdapter (sigc::signal<void, T1, T2, T3> &sig,
                 bool skip_arg0 = true)
             : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
@@ -130,9 +135,9 @@ public:
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
-        T1 a1;
-        T2 a2;
-        T3 a3;
+        typename RemoveConstRef<T1>::type a1;
+        typename RemoveConstRef<T2>::type a2;
+        typename RemoveConstRef<T3>::type a3;
         mp_args.ptr[skip_arg0_].convert (a1);
         mp_args.ptr[1 + skip_arg0_].convert (a2);
         mp_args.ptr[2 + skip_arg0_].convert (a3);
@@ -146,7 +151,7 @@ template<class T1, class T2, class T3, class T4>
 class MsgpackAdapter<T1, T2, T3, T4>: public MsgpackAdapterBase {
 public:
     MsgpackAdapter (
-        sigc::signal<void, const T1 &, const T2 &, const T3&, const T4 &> &sig,
+        sigc::signal<void, T1, T2, T3, T4> &sig,
         bool skip_arg0 = true)
             : MsgpackAdapterBase (skip_arg0), signal_ (sig)
     {}
@@ -155,10 +160,10 @@ public:
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
-        T1 a1;
-        T2 a2;
-        T3 a3;
-        T4 a4;
+        typename RemoveConstRef<T1>::type a1;
+        typename RemoveConstRef<T2>::type a2;
+        typename RemoveConstRef<T3>::type a3;
+        typename RemoveConstRef<T4>::type a4;
         mp_args.ptr[skip_arg0_].convert (a1);
         mp_args.ptr[1 + skip_arg0_].convert (a2);
         mp_args.ptr[2 + skip_arg0_].convert (a3);
@@ -166,7 +171,7 @@ protected:
         signal_.emit (a1, a2, a3, a4);
     }
 private:
-    sigc::signal<void, const T1 &, const T2 &, const T3 &, const T4 &> signal_;
+    sigc::signal<void, T1, T2, T3, T4> signal_;
 };
 
 }
