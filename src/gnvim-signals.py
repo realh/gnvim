@@ -23,6 +23,12 @@ import sys
 
 signals_list = ""
 
+def const_ref (a):
+    if a == "int":
+        return a
+    else:
+        return "const " + a + " &"
+
 def list_signal (mname, skip0, name, args):
     global signals_list
     if sys.argv[1].startswith ("def"):
@@ -30,14 +36,14 @@ def list_signal (mname, skip0, name, args):
             sig_template_args = "void"
         else:
             sig_template_args = 'void, ' \
-            + ', '.join ("const %s &" % a for a in args)
+            + ', '.join (const_ref (a) for a in args)
         signals_list += "    sigc::signal<%s> nvim_%s;\n" \
         % (sig_template_args, name)
     elif sys.argv[1].startswith ("reg"):
         if not args:
             class_template_args = "void"
         else:
-            class_template_args = ', '.join ("const %s &" % a for a in args)
+            class_template_args = ', '.join (const_ref (a) for a in args)
         signals_list += \
                 ('    %s.emplace ("%s",\n' \
                 + '        new MsgpackAdapter<%s> (nvim_%s, %s));\n') \
