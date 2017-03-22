@@ -123,14 +123,13 @@ void NvimBridge::stop ()
 }
 
 void NvimBridge::on_request (guint32 msgid, std::string method,
-        msgpack::object args)
+        const msgpack::object &args)
 {
-    if (method == "redraw")
     std::cout << "nvim sent request " << msgid << " '" << method << "' ("
             << args << ")" << std::endl;
 }
 
-void NvimBridge::on_notify (std::string method, msgpack::object args)
+void NvimBridge::on_notify (std::string method, const msgpack::object &args)
 {
     std::cout << "nvim sent notification '" << method << "' (" << args << ")"
             << std::endl;

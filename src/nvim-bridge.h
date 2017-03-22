@@ -69,16 +69,18 @@ public:
     sigc::signal<void> nvim_visual_bell;
     sigc::signal<void> nvim_update_menu;
     sigc::signal<void, const std::string &> nvim_mode_change;
-    sigc::signal<void, const msgpack::object &, int, int, int> nvim_popupmenu_show;
+    sigc::signal<void, const msgpack::object &, int, int, int>
+            nvim_popupmenu_show;
     sigc::signal<void, int> nvim_popupmenu_select;
     sigc::signal<void> nvim_popupmenu_hide;
 
 private:
     void map_adapters ();
 
-    void on_request (guint32 msgid, std::string method, msgpack::object args);
+    void on_request (guint32 msgid, std::string method,
+            const msgpack::object &args);
 
-    void on_notify (std::string method, msgpack::object args);
+    void on_notify (std::string method, const msgpack::object &args);
 
     void on_error (Glib::ustring);
 
