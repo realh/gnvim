@@ -44,7 +44,7 @@ private:
 
     NvimBridge nvim_;
 
-    // This is just a convenience pointer, view is managed by super class
+    // These are just convenience pointers, view is managed by GTK
     View *view_;
 };
 
