@@ -23,8 +23,10 @@
 namespace Gnvim
 {
 
-View::View (int columns, int rows) : columns_ (columns), rows_ (rows)
+View::View (Buffer *buffer) : Gtk::TextView (RefPtr<Gtk::TextBuffer> (buffer)),
+        buffer_ (buffer)
 {
+    buffer->get_size (columns_, rows_);
     set_monospace ();
     calculate_metrics ();
 }
@@ -42,6 +44,9 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
     // g_debug ("allocation %dx%d, grid size %dx%d",
     //         allocation.get_width (), allocation.get_height (),
     //         columns_, rows_);
+
+    // Does nothing if size hasn't changed
+    buffer_->resize (columns_, rows_);
 }
 
 void View::calculate_metrics ()

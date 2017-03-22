@@ -23,6 +23,7 @@
 
 #include <vector>
 
+#include "buffer.h"
 #include "nvim-bridge.h"
 
 namespace Gnvim
@@ -44,8 +45,10 @@ private:
 
     NvimBridge nvim_;
 
-    // These are just convenience pointers, view is managed by GTK
+    // These is just a convenience pointer, view is managed by GTK
     View *view_;
+
+    Buffer *buffer_;
 };
 
 }

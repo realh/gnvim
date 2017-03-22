@@ -1,4 +1,4 @@
-/* view.h
+/* buffer.h
  *
  * Copyright (C) 2017 Tony Houghton
  *
@@ -16,47 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GNVIM_VIEW_H
-#define GNVIM_VIEW_H
+#ifndef GNVIM_BUFFER_H
+#define GNVIM_BUFFER_H
 
 #include "defns.h"
-
-#include "buffer.h"
 
 namespace Gnvim
 {
 
-class View : public Gtk::TextView {
+class Buffer : public Gtk::TextBuffer {
 public:
-    // Want to be passed an unrefed pointer because super takes a ref, but
-    // it's a ref to Gtk::TextBuffer
-    View (Buffer *buffer);
-
-    // Height includes spacing
-    void get_cell_size_in_pixels (int &width, int &height) const
+    static Buffer *create (int columns, int rows)
     {
-        width = cell_width_px_;
-        height = cell_height_px_;
+        return new Buffer (columns, rows);
     }
 
-    void get_allocation_in_cells (int &columns, int &rows) const
+    void get_size (int &columns, int &rows)
     {
         columns = columns_;
         rows = rows_;
     }
 
-    void get_preferred_size (int &width, int &height);
+    void resize (int columns, int rows);
 protected:
-    virtual void on_size_allocate (Gtk::Allocation &) override;
+    Buffer (int columns, int rows);
 private:
-    void calculate_metrics ();
+    void init_content ();
 
-    int cell_width_px_, cell_height_px_;
     int columns_, rows_;
-
-    Buffer *buffer_;
 };
 
 }
 
-#endif // GNVIM_VIEW_H
+#endif // GNVIM_BUFFER_H

@@ -1,5 +1,6 @@
 set(GNVIM_SOURCES
     app.cpp
+    buffer.cpp
     main.cpp
     msgpack-adapter.cpp
     msgpack-rpc.cpp
@@ -10,6 +11,7 @@ set(GNVIM_SOURCES
 
 set(GNVIM_HEADERS
     app.h
+    buffer.h
     defns.h
     msgpack-adapter.h
     msgpack-rpc.h
