@@ -37,6 +37,8 @@ public:
 private:
     void on_nvim_error (Glib::ustring desc);
 
+    void on_nvim_resize (int columns, int rows);
+
     // Geometry hints have a history of breakage and serve almost no useful
     // purpose in current desktops
     void set_geometry_hints () {}

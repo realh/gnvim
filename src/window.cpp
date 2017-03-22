@@ -47,6 +47,8 @@ Window::Window (std::vector<const char *>)
     {
         g_warning ("Window closed before it opened");
     }
+
+    nvim_.nvim_resize.connect (sigc::mem_fun (this, &Window::on_nvim_resize));
 }
 
 void Window::force_close ()
@@ -60,6 +62,19 @@ void Window::on_nvim_error (Glib::ustring desc)
     g_critical ("Closing window due to nvim communication error: %s",
             desc.c_str ());
     force_close ();
+}
+
+void Window::on_nvim_resize (int columns, int rows)
+{
+    g_debug ("nvim requested resize to %dx%d", columns, rows);
+    if (!buffer_->resize (columns, rows))
+        return;
+    int pad_x = get_allocated_width () - view_->get_allocated_width ();
+    int pad_y = get_allocated_height () - view_->get_allocated_height ();
+    view_->set_grid_size (columns, rows);
+    int vw, vh;
+    view_->get_preferred_size (vw, vh);
+    resize (vw + pad_x, vh + pad_y);
 }
 
 #if 0

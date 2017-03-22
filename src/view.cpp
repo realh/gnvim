@@ -70,11 +70,17 @@ void View::calculate_metrics ()
 
 void View::get_preferred_size (int &width, int &height)
 {
-    width = cell_width_px_ * columns_
-            + get_margin_left () + get_margin_right ();
-    height = cell_height_px_ * rows_
-            + get_margin_top () + get_margin_bottom ();
+    width = columns_;
+    height = rows_;
+    get_preferred_size_for (width, height);
+}
 
+void View::get_preferred_size_for (int &width, int &height)
+{
+    width = cell_width_px_ * width
+            + get_margin_left () + get_margin_right ();
+    height = cell_height_px_ * height
+            + get_margin_top () + get_margin_bottom ();
     // g_debug ("Preferred size %dx%d", width, height);
 }
 

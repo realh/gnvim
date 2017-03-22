@@ -41,10 +41,10 @@ void Buffer::init_content ()
     set_text (s);
 }
 
-void Buffer::resize (int columns, int rows)
+bool Buffer::resize (int columns, int rows)
 {
     if (columns == columns_ && rows == rows_)
-        return;
+        return false;
     if (rows_ > rows)
     {
         // Delete superfluous lines
@@ -86,6 +86,10 @@ void Buffer::resize (int columns, int rows)
             erase (start_it, end_it);
         }
     }
+
+    columns_ = columns;
+    rows_ = rows;
+    return true;
 }
 
 }

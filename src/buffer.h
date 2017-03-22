@@ -39,7 +39,8 @@ public:
         rows = rows_;
     }
 
-    void resize (int columns, int rows);
+    // Retruns false if the size hasn't changed
+    bool resize (int columns, int rows);
 protected:
     Buffer (int columns, int rows);
 private:

@@ -45,7 +45,19 @@ public:
         rows = rows_;
     }
 
+    // width and height are out parameters
     void get_preferred_size (int &width, int &height);
+
+    // width and height are columns and rows in, pixels out
+    void get_preferred_size_for (int &width, int &height);
+
+    // Sets (supposed) size passively. Actual widget resizing should be done
+    // separately eg by resizing parent window
+    void set_grid_size (int columns, int rows)
+    {
+        columns_ = columns;
+        rows_ = rows;
+    }
 protected:
     virtual void on_size_allocate (Gtk::Allocation &) override;
 private:
