@@ -26,10 +26,15 @@ namespace Gnvim
 
 void MsgpackAdapterBase::emit (const msgpack::object_array &mp_args)
 {
-    if (mp_args.size != num_args () + skip_arg0_)
+    int na =  num_args ();
+    int nmpa = (int) mp_args.size;
+    // When emitting a method with no args, mp_args is the entire notification,
+    // including the method name. It may have an empty array as its second
+    // member, so its size should be 1 or 2
+    if (nmpa != na && (na > 0 || (na == 0 && nmpa > 2)))
     {
         char *s = g_strdup_printf ("Wrong number of args in msgpack callback; "
-                "expected %d, got %d", num_args () + skip_arg0_, mp_args.size);
+                "expected %d, got %d", num_args (), mp_args.size);
         Glib::ustring us (s);
         g_free (s);
         throw MsgpackArgsError (us);

@@ -29,7 +29,7 @@ def const_ref (a):
     else:
         return "const " + a + " &"
 
-def list_signal (mname, skip0, name, args):
+def list_signal (mname, name, args):
     global signals_list
     if sys.argv[1].startswith ("def"):
         if not args:
@@ -46,8 +46,8 @@ def list_signal (mname, skip0, name, args):
             class_template_args = ', '.join (const_ref (a) for a in args)
         signals_list += \
                 ('    %s.emplace ("%s",\n' \
-                + '        new MsgpackAdapter<%s> (nvim_%s, %s));\n') \
-                % (mname, name, class_template_args, name, skip0)
+                + '        new MsgpackAdapter<%s> (nvim_%s));\n') \
+                % (mname, name, class_template_args, name)
 
 # Redraw methods
 def r (s):
@@ -57,7 +57,7 @@ def r (s):
     else:
         name = s
         args = None
-    list_signal ("redraw_adapters_", "true", name, args)
+    list_signal ("redraw_adapters_", name, args)
                 
 r ("resize, int, int")
 r ("clear")
@@ -67,7 +67,7 @@ r ("update_fg, int")
 r ("update_bg, int")
 r ("update_sp, int")
 r ("highlight_set, msgpack::object")
-r ("put, std::string")
+r ("put, msgpack::object_array")
 r ("set_scroll_region, int, int, int, int")
 r ("scroll, int")
 r ("set_title, std::string")

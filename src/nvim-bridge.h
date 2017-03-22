@@ -55,7 +55,8 @@ public:
     sigc::signal<void, int> nvim_update_bg;
     sigc::signal<void, int> nvim_update_sp;
     sigc::signal<void, const msgpack::object &> nvim_highlight_set;
-    sigc::signal<void, const std::string &> nvim_put;
+    // Note that first member of array is method name
+    sigc::signal<void, const msgpack::object_array &> nvim_put;
     sigc::signal<void, int, int, int, int> nvim_set_scroll_region;
     sigc::signal<void, int> nvim_scroll;
     sigc::signal<void, const std::string &> nvim_set_title;

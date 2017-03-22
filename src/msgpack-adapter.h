@@ -37,30 +37,27 @@ template<class T> struct RemoveConstRef<const T &>  { typedef T type; };
 
 class MsgpackAdapterBase {
 public:
-    // If skip_arg0 is true, this is a redraw message and the first member of
-    // mp_args is the redraw method name
-    MsgpackAdapterBase (bool skip_arg0 = true) : skip_arg0_ (skip_arg0 ? 1 : 0)
+    MsgpackAdapterBase ()
     {}
 
     virtual ~MsgpackAdapterBase()
     {}
 
-    virtual guint32 num_args () = 0;
+    // -1 means varargs
+    virtual int num_args () = 0;
 
     void emit (const msgpack::object_array &mp_args);
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) = 0;
-
-    int skip_arg0_;
 };
 
 template<class... T> class MsgpackAdapter: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter (sigc::signal<void, T...> &sig, bool skip_arg0 = true)
-            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
+    MsgpackAdapter (sigc::signal<void, T...> &sig)
+            : MsgpackAdapterBase (), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override;
+    virtual int num_args () override;
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override;
 private:
@@ -69,11 +66,11 @@ private:
 
 template<> class MsgpackAdapter<void>: public MsgpackAdapterBase {
 public:
-    MsgpackAdapter (sigc::signal<void> &sig, bool skip_arg0 = true)
-            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
+    MsgpackAdapter (sigc::signal<void> &sig)
+            : MsgpackAdapterBase (), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override { return 1; }
+    virtual int num_args () override { return 0; }
 protected:
     virtual void do_emit (const msgpack::object_array &) override
     {
@@ -83,18 +80,35 @@ private:
     sigc::signal<void> signal_;
 };
 
-template<class T1> class MsgpackAdapter<T1>: public MsgpackAdapterBase {
+template<> class MsgpackAdapter<const msgpack::object_array &> :
+        public MsgpackAdapterBase {
 public:
-    MsgpackAdapter (sigc::signal<void, T1> &sig, bool skip_arg0 = true)
-            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
+    MsgpackAdapter (sigc::signal<void, const msgpack::object_array &> &sig)
+            : MsgpackAdapterBase (), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override { return 1; }
+    virtual int num_args () override { return -1; }
+protected:
+    virtual void do_emit (const msgpack::object_array &mp_args) override
+    {
+        signal_.emit (mp_args);
+    }
+private:
+    sigc::signal<void, const msgpack::object_array &> signal_;
+};
+
+template<class T1> class MsgpackAdapter<T1>: public MsgpackAdapterBase {
+public:
+    MsgpackAdapter (sigc::signal<void, T1> &sig)
+            : MsgpackAdapterBase (), signal_ (sig)
+    {}
+
+    virtual int num_args () override { return 1; }
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
         typename RemoveConstRef<T1>::type a1;
-        mp_args.ptr[skip_arg0_].convert (a1);
+        mp_args.ptr[0].convert (a1);
         signal_.emit (a1);
     }
 private:
@@ -104,19 +118,18 @@ private:
 template<class T1, class T2> class MsgpackAdapter<T1, T2>:
         public MsgpackAdapterBase {
 public:
-    MsgpackAdapter (sigc::signal<void, T1, T2> &sig,
-                    bool skip_arg0 = true)
-            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
+    MsgpackAdapter (sigc::signal<void, T1, T2> &sig)
+            : MsgpackAdapterBase (), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override { return 2; }
+    virtual int num_args () override { return 2; }
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
         typename RemoveConstRef<T1>::type a1;
         typename RemoveConstRef<T2>::type a2;
-        mp_args.ptr[skip_arg0_].convert (a1);
-        mp_args.ptr[1 + skip_arg0_].convert (a2);
+        mp_args.ptr[0].convert (a1);
+        mp_args.ptr[1].convert (a2);
         signal_.emit (a1, a2);
     }
 private:
@@ -126,21 +139,20 @@ private:
 template<class T1, class T2, class T3> class MsgpackAdapter<T1, T2, T3>:
         public MsgpackAdapterBase {
 public:
-    MsgpackAdapter (sigc::signal<void, T1, T2, T3> &sig,
-                bool skip_arg0 = true)
-            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
+    MsgpackAdapter (sigc::signal<void, T1, T2, T3> &sig)
+            : MsgpackAdapterBase (), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override { return 3; }
+    virtual int num_args () override { return 3; }
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
         typename RemoveConstRef<T1>::type a1;
         typename RemoveConstRef<T2>::type a2;
         typename RemoveConstRef<T3>::type a3;
-        mp_args.ptr[skip_arg0_].convert (a1);
-        mp_args.ptr[1 + skip_arg0_].convert (a2);
-        mp_args.ptr[2 + skip_arg0_].convert (a3);
+        mp_args.ptr[0].convert (a1);
+        mp_args.ptr[1].convert (a2);
+        mp_args.ptr[2].convert (a3);
         signal_.emit (a1, a2, a3);
     }
 private:
@@ -151,12 +163,11 @@ template<class T1, class T2, class T3, class T4>
 class MsgpackAdapter<T1, T2, T3, T4>: public MsgpackAdapterBase {
 public:
     MsgpackAdapter (
-        sigc::signal<void, T1, T2, T3, T4> &sig,
-        bool skip_arg0 = true)
-            : MsgpackAdapterBase (skip_arg0), signal_ (sig)
+        sigc::signal<void, T1, T2, T3, T4> &sig)
+            : MsgpackAdapterBase (), signal_ (sig)
     {}
 
-    virtual guint32 num_args () override { return 4; }
+    virtual int num_args () override { return 4; }
 protected:
     virtual void do_emit (const msgpack::object_array &mp_args) override
     {
@@ -164,10 +175,10 @@ protected:
         typename RemoveConstRef<T2>::type a2;
         typename RemoveConstRef<T3>::type a3;
         typename RemoveConstRef<T4>::type a4;
-        mp_args.ptr[skip_arg0_].convert (a1);
-        mp_args.ptr[1 + skip_arg0_].convert (a2);
-        mp_args.ptr[2 + skip_arg0_].convert (a3);
-        mp_args.ptr[3 + skip_arg0_].convert (a4);
+        mp_args.ptr[0].convert (a1);
+        mp_args.ptr[1].convert (a2);
+        mp_args.ptr[2].convert (a3);
+        mp_args.ptr[3].convert (a4);
         signal_.emit (a1, a2, a3, a4);
     }
 private:
