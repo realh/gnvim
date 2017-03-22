@@ -24,6 +24,8 @@
 namespace Gnvim
 {
 
+// The buffer is kept filled, using spaces as padding, with each line being
+// columns long plus a terminator (\n). The last line doesn't have a terminator.
 class Buffer : public Gtk::TextBuffer {
 public:
     static Buffer *create (int columns, int rows)

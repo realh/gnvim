@@ -26,6 +26,9 @@ namespace Gnvim
 View::View (Buffer *buffer) : Gtk::TextView (RefPtr<Gtk::TextBuffer> (buffer)),
         buffer_ (buffer)
 {
+    // Disabling wrapping should minimise nasty things happening during
+    // asynchronous size changes
+    set_wrap_mode (Gtk::WRAP_NONE);
     buffer->get_size (columns_, rows_);
     set_monospace ();
     calculate_metrics ();
