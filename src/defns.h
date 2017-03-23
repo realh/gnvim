@@ -31,6 +31,7 @@ namespace Gnvim
 template<class T> using RefPtr = Glib::RefPtr<T>;
 
 class Application;
+class NvimBridge;
 class View;
 class Window;
 

@@ -28,7 +28,7 @@ namespace Gnvim
 
 class View : public Gtk::TextView {
 public:
-    // Want to be passed an unrefed pointer because super takes a ref, but
+    // Want to be passed an unref'd pointer because super takes a ref, but
     // it's a ref to Gtk::TextBuffer
     View (Buffer *buffer);
 
@@ -63,10 +63,10 @@ protected:
 private:
     void calculate_metrics ();
 
+    Buffer *buffer_;
+
     int cell_width_px_, cell_height_px_;
     int columns_, rows_;
-
-    Buffer *buffer_;
 };
 
 }

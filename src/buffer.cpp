@@ -19,13 +19,26 @@
 #include "defns.h"
 
 #include "buffer.h"
+#include "nvim-bridge.h"
 
 namespace Gnvim
 {
 
-Buffer::Buffer (int columns, int rows) : columns_ (columns), rows_ (rows)
+Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
+        : nvim_ (nvim), columns_ (columns), rows_ (rows)
 {
+    current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ();
     init_content ();
+    cursor_ = begin ();
+
+    nvim.nvim_update_bg.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_update_bg));
+    nvim.nvim_update_fg.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_update_fg));
+    nvim.nvim_update_sp.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_update_sp));
+    nvim.nvim_cursor_goto.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_cursor_goto));
 }
 
 void Buffer::init_content ()
@@ -34,11 +47,15 @@ void Buffer::init_content ()
 
     for (int y = 0; y < rows_; ++y)
     {
-        s += Glib::ustring (columns_, ' ');
+        s = Glib::ustring (columns_, ' ');
         if (y < rows_ - 1)
             s += '\n';
+        if (y == 0)
+            set_text (s);
+        else
+            insert (end (), s);
     }
-    set_text (s);
+    apply_tag (default_attr_tag_, begin (), end ());
 }
 
 bool Buffer::resize (int columns, int rows)
@@ -90,6 +107,42 @@ bool Buffer::resize (int columns, int rows)
     columns_ = columns;
     rows_ = rows;
     return true;
+}
+
+static void set_colour_prop (Glib::PropertyProxy<Gdk::RGBA> prop, int colour)
+{
+    if (colour == -1)
+        prop.reset_value ();
+    else
+    {
+        static Gdk::RGBA rgba;
+
+        rgba.set_rgba_u ((colour & 0xff0000) >> 8,
+                colour & 0xff00,
+                (colour & 0xff) << 8);
+        prop.set_value (rgba);
+    }
+}
+
+void Buffer::on_nvim_update_fg (int colour)
+{
+    set_colour_prop (default_attr_tag_->property_foreground_rgba (), colour);
+}
+
+void Buffer::on_nvim_update_bg (int colour)
+{
+    set_colour_prop (default_attr_tag_->property_background_rgba (), colour);
+}
+
+void Buffer::on_nvim_update_sp (int colour)
+{
+    set_colour_prop (default_attr_tag_->property_underline_rgba (), colour);
+}
+
+void Buffer::on_nvim_cursor_goto (int row, int col)
+{
+    cursor_.set_line (row);
+    cursor_.set_line_offset (col);
 }
 
 }

@@ -141,6 +141,7 @@ void NvimBridge::on_notify (std::string method,
         const msgpack::object_array &ar = args.via.array;
         for (guint32 i = 0; i < ar.size; ++i)
         {
+            const auto &method_o = ar.ptr[i];
             const auto &method_ar = ar.ptr[i].via.array;
             std::string method_name;
             method_ar.ptr[0].convert (method_name);
@@ -148,6 +149,14 @@ void NvimBridge::on_notify (std::string method,
             if (it != redraw_adapters_.end ())
             {
                 g_debug ("Emitting redraw signal '%s'", method_name.c_str());
+                /*
+                if (method_name == "put")
+                {
+                    std::cout << "put message " << method_o << std::endl;
+                    std::cout << "type of 2nd arg " << method_ar.ptr[1].type << std::endl;
+                    std::cout << "type of 2nd arg[0] " << method_ar.ptr[1].via.array.ptr[0].type << std::endl;
+                }
+                */
                 const auto &emitter = it->second;
                 try {
                     if (emitter->num_args () <= 0)

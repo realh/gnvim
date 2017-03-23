@@ -26,7 +26,7 @@ namespace Gnvim
 
 Window::Window (std::vector<const char *>)
 {
-    buffer_ = Buffer::create (80, 36);
+    buffer_ = Buffer::create (nvim_, 80, 36);
     view_ = new View (buffer_);
     int width, height;
     view_->get_preferred_size (width, height);

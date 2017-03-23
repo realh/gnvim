@@ -18,12 +18,14 @@
 
 #include "defns.h"
 
+#include "nvim-bridge.h"
 #include "view.h"
 
 namespace Gnvim
 {
 
-View::View (Buffer *buffer) : Gtk::TextView (RefPtr<Gtk::TextBuffer> (buffer)),
+View::View (Buffer *buffer)
+        : Gtk::TextView (RefPtr<Gtk::TextBuffer> (buffer)),
         buffer_ (buffer)
 {
     // Disabling wrapping should minimise nasty things happening during
@@ -32,6 +34,7 @@ View::View (Buffer *buffer) : Gtk::TextView (RefPtr<Gtk::TextBuffer> (buffer)),
     buffer->get_size (columns_, rows_);
     set_monospace ();
     calculate_metrics ();
+
 }
 
 void View::on_size_allocate (Gtk::Allocation &allocation)

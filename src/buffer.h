@@ -28,9 +28,9 @@ namespace Gnvim
 // columns long plus a terminator (\n). The last line doesn't have a terminator.
 class Buffer : public Gtk::TextBuffer {
 public:
-    static Buffer *create (int columns, int rows)
+    static Buffer *create (NvimBridge &nvim, int columns, int rows)
     {
-        return new Buffer (columns, rows);
+        return new Buffer (nvim, columns, rows);
     }
 
     void get_size (int &columns, int &rows)
@@ -41,12 +41,24 @@ public:
 
     // Retruns false if the size hasn't changed
     bool resize (int columns, int rows);
+
+    void on_nvim_update_fg (int colour);
+    void on_nvim_update_bg (int colour);
+    void on_nvim_update_sp (int colour);
+    void on_nvim_cursor_goto (int row, int col);
+
 protected:
-    Buffer (int columns, int rows);
+    Buffer (NvimBridge &nvim, int columns, int rows);
 private:
     void init_content ();
 
+    NvimBridge &nvim_;
+
     int columns_, rows_;
+
+    RefPtr<Gtk::TextTag> default_attr_tag_;
+    RefPtr<Gtk::TextTag> current_attr_tag_;
+    Gtk::TextIter cursor_;
 };
 
 }
