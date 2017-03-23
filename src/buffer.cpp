@@ -39,6 +39,8 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
             (sigc::mem_fun (this, &Buffer::on_nvim_update_sp));
     nvim.nvim_cursor_goto.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_cursor_goto));
+    nvim.nvim_put.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_put));
 }
 
 void Buffer::init_content ()
@@ -143,6 +145,32 @@ void Buffer::on_nvim_cursor_goto (int row, int col)
 {
     cursor_.set_line (row);
     cursor_.set_line_offset (col);
+}
+
+void Buffer::on_nvim_put (const msgpack::object_array &text_ar)
+{
+    Glib::ustring s;
+
+    for (gsize i = 1; i < text_ar.size; ++i)
+    {
+        const auto &o = text_ar.ptr[i];
+        if (o.type == msgpack::type::STR)
+        {
+            const auto &ms = o.via.str;
+            s += std::string (ms.ptr, ms.ptr + ms.size);
+        }
+        else if (o.type == msgpack::type::ARRAY)
+        {
+            const auto &ma = o.via.array;
+            for (gsize j = 0; j < ma.size; ++j)
+            {
+                const auto &ms = ma.ptr[j].via.str;
+                s += std::string (ms.ptr, ms.ptr + ms.size);
+            }
+        }
+    }
+    //std::cout << "put (" << s << ")" << std::endl;
+    std::cout << s << std::endl;
 }
 
 }

@@ -21,6 +21,8 @@
 
 #include "defns.h"
 
+#include <msgpack.hpp>
+
 namespace Gnvim
 {
 
@@ -46,6 +48,7 @@ public:
     void on_nvim_update_bg (int colour);
     void on_nvim_update_sp (int colour);
     void on_nvim_cursor_goto (int row, int col);
+    void on_nvim_put (const msgpack::object_array &);
 
 protected:
     Buffer (NvimBridge &nvim, int columns, int rows);
