@@ -61,7 +61,7 @@ private:
 
     RefPtr<Gtk::TextTag> default_attr_tag_;
     RefPtr<Gtk::TextTag> current_attr_tag_;
-    Gtk::TextIter cursor_;
+    int cursor_row_, cursor_col_;
 };
 
 }

@@ -25,11 +25,11 @@ namespace Gnvim
 {
 
 Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
-        : nvim_ (nvim), columns_ (columns), rows_ (rows)
+        : nvim_ (nvim), columns_ (columns), rows_ (rows),
+        cursor_row_ (0), cursor_col_ (0)
 {
-    current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ();
     init_content ();
-    cursor_ = begin ();
+    current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ();
 
     nvim.nvim_update_bg.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_update_bg));
@@ -45,11 +45,9 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
 
 void Buffer::init_content ()
 {
-    Glib::ustring s;
-
     for (int y = 0; y < rows_; ++y)
     {
-        s = Glib::ustring (columns_, ' ');
+        auto s = Glib::ustring (columns_, ' ');
         if (y < rows_ - 1)
             s += '\n';
         if (y == 0)
@@ -57,7 +55,6 @@ void Buffer::init_content ()
         else
             insert (end (), s);
     }
-    apply_tag (default_attr_tag_, begin (), end ());
 }
 
 bool Buffer::resize (int columns, int rows)
@@ -143,8 +140,9 @@ void Buffer::on_nvim_update_sp (int colour)
 
 void Buffer::on_nvim_cursor_goto (int row, int col)
 {
-    cursor_.set_line (row);
-    cursor_.set_line_offset (col);
+    cursor_col_ = col;
+    cursor_row_ = row;
+//  std::cout << "Moving cursor to row " << row << ", col " << col << std::endl;
 }
 
 void Buffer::on_nvim_put (const msgpack::object_array &text_ar)
@@ -169,8 +167,19 @@ void Buffer::on_nvim_put (const msgpack::object_array &text_ar)
             }
         }
     }
-    //std::cout << "put (" << s << ")" << std::endl;
-    std::cout << s << std::endl;
+
+    // ustring length () returns number of UTF-8 chars, not length in bytes
+    auto len = s.length ();
+    Gtk::TextIter cursor = get_iter_at_line_offset (cursor_row_, cursor_col_);
+    Gtk::TextIter range_end = cursor;
+    range_end.forward_chars (len);
+    erase (cursor, range_end);
+    cursor = get_iter_at_line_offset (cursor_row_, cursor_col_);
+    insert (cursor, s);
+    cursor = get_iter_at_line_offset (cursor_row_, cursor_col_);
+    cursor.forward_chars (len);
+    cursor_col_ = cursor.get_line_offset ();
+    cursor_row_ = cursor.get_line ();
 }
 
 }

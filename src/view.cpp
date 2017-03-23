@@ -39,6 +39,7 @@ View::View (Buffer *buffer)
 
 void View::on_size_allocate (Gtk::Allocation &allocation)
 {
+    Gtk::TextView::on_size_allocate (allocation);
     // Size requests and allocations appear not to include margins
     auto borders_width = get_border_window_size (Gtk::TEXT_WINDOW_LEFT)
             + get_border_window_size (Gtk::TEXT_WINDOW_RIGHT);
@@ -47,9 +48,11 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
     columns_ = (allocation.get_width () - borders_width) / cell_width_px_;
     rows_ = (allocation.get_height () - borders_height) / cell_height_px_;
 
-    // g_debug ("allocation %dx%d, grid size %dx%d",
-    //         allocation.get_width (), allocation.get_height (),
-    //         columns_, rows_);
+    /*
+    g_debug ("allocation %dx%d, grid size %dx%d",
+            allocation.get_width (), allocation.get_height (),
+            columns_, rows_);
+    */
 
     // Does nothing if size hasn't changed
     buffer_->resize (columns_, rows_);

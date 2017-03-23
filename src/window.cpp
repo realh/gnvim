@@ -71,9 +71,18 @@ void Window::on_nvim_resize (int columns, int rows)
         return;
     int pad_x = get_allocated_width () - view_->get_allocated_width ();
     int pad_y = get_allocated_height () - view_->get_allocated_height ();
+    /*
+    g_debug ("Window size %dx%d", get_allocated_width (), get_allocated_height ());
+    g_debug ("View size %dx%d", view_->get_allocated_width (), view_->get_allocated_height ());
+    g_debug ("padding %d, %d", pad_x, pad_y);
+    */
     view_->set_grid_size (columns, rows);
     int vw, vh;
     view_->get_preferred_size (vw, vh);
+    /*
+    g_debug ("View wants size %dx%d", vw, vh);
+    g_debug ("Resizing to %dx%d", vw + pad_x, vh + pad_y);
+    */
     resize (vw + pad_x, vh + pad_y);
 }
 
