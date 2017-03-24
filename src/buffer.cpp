@@ -28,7 +28,7 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
         : nvim_ (nvim), columns_ (columns), rows_ (rows),
         cursor_row_ (0), cursor_col_ (0)
 {
-    init_content ();
+    on_nvim_clear ();
     current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ();
 
     nvim.nvim_update_bg.connect
@@ -43,9 +43,11 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
             (sigc::mem_fun (this, &Buffer::on_nvim_put));
     nvim.nvim_redraw_end.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_redraw_end));
+    nvim.nvim_clear.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_clear));
 }
 
-void Buffer::init_content ()
+void Buffer::on_nvim_clear ()
 {
     for (int y = 0; y < rows_; ++y)
     {
