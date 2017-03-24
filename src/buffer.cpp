@@ -18,6 +18,8 @@
 
 #include "defns.h"
 
+#include <utility>
+
 #include "buffer.h"
 #include "nvim-bridge.h"
 
@@ -26,10 +28,12 @@ namespace Gnvim
 
 Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
         : nvim_ (nvim), columns_ (columns), rows_ (rows),
+        fg_colour_ (-1), bg_colour_ (-1), sp_colour_ (-1),
         cursor_row_ (0), cursor_col_ (0)
 {
+    current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ("default");
+    get_tag_table ()->add (default_attr_tag_);
     on_nvim_clear ();
-    current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ();
 
     nvim.nvim_update_bg.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_update_bg));
@@ -41,12 +45,14 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
             (sigc::mem_fun (this, &Buffer::on_nvim_cursor_goto));
     nvim.nvim_put.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_put));
-    nvim.nvim_redraw_end.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_redraw_end));
     nvim.nvim_clear.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_clear));
     nvim.nvim_eol_clear.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_eol_clear));
+    nvim.nvim_highlight_set.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_highlight_set));
+    nvim.nvim_redraw_end.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_redraw_end));
 }
 
 bool Buffer::resize (int columns, int rows)
@@ -70,7 +76,7 @@ bool Buffer::resize (int columns, int rows)
         for (int y = 0; y < rows - rows_; ++y)
         {
             Gtk::TextIter end_it = end ();
-            insert (end_it, s);
+            this->insert_with_tag (end_it, s, current_attr_tag_);
         }
     }
     // rows_ is now the number of rows that (may) need their length changed
@@ -81,7 +87,7 @@ bool Buffer::resize (int columns, int rows)
         {
             Gtk::TextIter it = get_iter_at_line_offset (y, columns_ - 1);
             it.forward_char ();
-            insert (it, s);
+            this->insert_with_tag (it, s, current_attr_tag_);
         }
     }
     else if (columns < columns_)
@@ -103,7 +109,9 @@ bool Buffer::resize (int columns, int rows)
 static void set_colour_prop (Glib::PropertyProxy<Gdk::RGBA> prop, int colour)
 {
     if (colour == -1)
+    {
         prop.reset_value ();
+    }
     else
     {
         static Gdk::RGBA rgba;
@@ -125,7 +133,7 @@ void Buffer::on_nvim_clear ()
         if (y == 0)
             set_text (s);
         else
-            insert (end (), s);
+            this->insert_with_tag (end (), s, current_attr_tag_);
     }
 }
 
@@ -139,22 +147,25 @@ void Buffer::on_nvim_eol_clear ()
     auto len = range_end.get_line_offset () - cursor.get_line_offset ();
     erase (cursor, range_end);
     auto s = Glib::ustring (len, ' ');
-    insert (get_cursor_iter (), s);
+    this->insert_with_tag (get_cursor_iter (), s, current_attr_tag_);
 }
 
 void Buffer::on_nvim_update_fg (int colour)
 {
-    set_colour_prop (default_attr_tag_->property_foreground_rgba (), colour);
+    set_colour_prop (default_attr_tag_->property_foreground_rgba (),
+                fg_colour_ = colour);
 }
 
 void Buffer::on_nvim_update_bg (int colour)
 {
-    set_colour_prop (default_attr_tag_->property_background_rgba (), colour);
+    set_colour_prop (default_attr_tag_->property_background_rgba (),
+                bg_colour_ = colour);
 }
 
 void Buffer::on_nvim_update_sp (int colour)
 {
-    set_colour_prop (default_attr_tag_->property_underline_rgba (), colour);
+    set_colour_prop (default_attr_tag_->property_underline_rgba (),
+                sp_colour_ = colour);
 }
 
 void Buffer::on_nvim_cursor_goto (int row, int col)
@@ -193,12 +204,142 @@ void Buffer::on_nvim_put (const msgpack::object_array &text_ar)
     auto range_end = cursor;
     range_end.forward_chars (len);
     erase (cursor, range_end);
-    cursor = get_cursor_iter ();
-    insert (cursor, s);
+    this->insert_with_tag (get_cursor_iter (), s, current_attr_tag_);
     cursor = get_cursor_iter ();
     cursor.forward_chars (len);
     cursor_col_ = cursor.get_line_offset ();
     cursor_row_ = cursor.get_line ();
+}
+
+static Glib::ustring repr_colour (char prefix, int rgb)
+{
+    auto r = g_strdup_printf ("c%c%02x%02x%02x", prefix,
+            (rgb & 0xff0000) >> 16, (rgb & 0xff00) >> 8, rgb & 0xff);
+    auto s = Glib::ustring (r);
+    g_free (r);
+    return s;
+}
+
+/*
+static int int_from_rgba_prop (const Glib::PropertyProxy<Gdk::RGBA> &prop)
+{
+    auto rgba = prop.get_value ();
+    return (int(rgba.get_red_u () & 0xff00) << 8)
+        | int(rgba.get_green_u () & 0xff00)
+        | (int(rgba.get_blue_u () & 0xff00) >> 8);
+}
+*/
+
+void Buffer::on_nvim_highlight_set (const msgpack::object &map_o)
+{
+    // We could probably share tag tables between multiple windows, but
+    // different vim instances may have different themes with different default
+    // colours etc, which would make sharing harder
+    if (map_o.type != msgpack::type::MAP)
+    {
+        g_critical ("Got sent type %d as arg for highlight_set, expected MAP",
+                map_o.type);
+        return;
+    }
+    const auto &map_m = map_o.via.map;
+    int foreground = -1, background = -1, special = -1;
+    bool reverse = false;
+    bool italic = false;
+    bool bold = false;
+    bool underline = false;
+    bool undercurl = false;
+    for (guint n = 0; n < map_m.size; ++n)
+    {
+        const auto &kv = map_m.ptr[n];
+        std::string k;
+        kv.key.convert (k);
+        if (k == "foreground")
+            kv.val.convert (foreground);
+        else if (k == "background")
+            kv.val.convert (background);
+        else if (k == "special")
+            kv.val.convert (special);
+        else if (k == "reverse")
+            kv.val.convert (reverse);
+        else if (k == "italic")
+            kv.val.convert (italic);
+        else if (k == "bold")
+            kv.val.convert (bold);
+        else if (k == "underline")
+            kv.val.convert (underline);
+        else if (k == "undercurl")
+            kv.val.convert (undercurl);
+    }
+
+    if (foreground == -1)
+        foreground = fg_colour_;
+    if (background == -1)
+        background = bg_colour_;
+    if (special == -1)
+        special = sp_colour_;
+
+    Glib::ustring tag_name;
+    if (foreground != -1)
+        tag_name += repr_colour ('f', foreground);
+    if (background != -1)
+        tag_name += repr_colour ('b', background);
+    if (special != -1)
+        tag_name += repr_colour ('b', special);
+    if (reverse)
+        tag_name += 'r';
+    if (italic)
+        tag_name += 'i';
+    if (bold)
+        tag_name += 'b';
+    if (underline)
+        tag_name += 'l';
+    if (undercurl)
+        tag_name += 'w';
+
+    auto table = get_tag_table ();
+    auto tag = table->lookup (tag_name);
+    if (!tag)
+    {
+        tag = Gtk::TextTag::create (tag_name);
+        if (reverse)
+        {
+            if (background == -1)
+            {
+                tag->property_foreground_rgba ().set_value (
+                        default_attr_tag_->property_background_rgba
+                            ().get_value ());
+            }
+            else
+            {
+                set_colour_prop (tag->property_foreground_rgba (), background);
+            }
+            if (foreground == -1)
+            {
+                tag->property_background_rgba ().set_value (
+                        default_attr_tag_->property_foreground_rgba
+                            ().get_value ());
+            }
+            else
+            {
+                set_colour_prop (tag->property_background_rgba (), foreground);
+            }
+        }
+        else
+        {
+            set_colour_prop (tag->property_foreground_rgba (), foreground);
+            set_colour_prop (tag->property_background_rgba (), background);
+        }
+        set_colour_prop (tag->property_underline_rgba (), special);
+        tag->property_weight ().set_value (
+                bold ? Pango::WEIGHT_BOLD : Pango::WEIGHT_NORMAL);
+        tag->property_style ().set_value (
+                italic ? Pango::STYLE_ITALIC : Pango::STYLE_NORMAL);
+        tag->property_underline ().set_value (
+                undercurl ? Pango::UNDERLINE_ERROR :
+                (underline ? Pango::UNDERLINE_SINGLE : Pango::UNDERLINE_NONE));
+        table->add (tag);
+    }
+    current_attr_tag_ = tag;
 }
 
 void Buffer::on_nvim_redraw_end ()

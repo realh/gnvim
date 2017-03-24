@@ -41,7 +41,7 @@ public:
         rows = rows_;
     }
 
-    // Retruns false if the size hasn't changed
+    // Returns false if the size hasn't changed
     bool resize (int columns, int rows);
 
     void on_nvim_update_fg (int colour);
@@ -51,6 +51,7 @@ public:
     void on_nvim_put (const msgpack::object_array &);
     void on_nvim_clear ();
     void on_nvim_eol_clear ();
+    void on_nvim_highlight_set (const msgpack::object &map_o);
     void on_nvim_redraw_end ();
 
 protected:
@@ -65,6 +66,7 @@ private:
 
     int columns_, rows_;
 
+    int fg_colour_, bg_colour_, sp_colour_;
     RefPtr<Gtk::TextTag> default_attr_tag_;
     RefPtr<Gtk::TextTag> current_attr_tag_;
     int cursor_row_, cursor_col_;

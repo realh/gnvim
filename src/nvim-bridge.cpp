@@ -156,8 +156,18 @@ void NvimBridge::on_notify (std::string method,
                     {
                         emitter->emit (method_ar);
                     }
+                    // highlight_set is also weird, may be sent as
+                    // ["highlight_set", [{}], [{useful}]] in addition to
+                    // expected ["highlight_set", [{useful}]]
+                    else if (method_name == "highlight_set"
+                            && method_ar.size > 2)
+                    {
+                        emitter->emit (method_ar.ptr[2].via.array);
+                    }
                     else
+                    {
                         emitter->emit (method_ar.ptr[1].via.array);
+                    }
                 }
                 catch (std::exception &e)
                 {
