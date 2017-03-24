@@ -41,6 +41,8 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
             (sigc::mem_fun (this, &Buffer::on_nvim_cursor_goto));
     nvim.nvim_put.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_put));
+    nvim.nvim_redraw_end.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_redraw_end));
 }
 
 void Buffer::init_content ()
@@ -180,6 +182,11 @@ void Buffer::on_nvim_put (const msgpack::object_array &text_ar)
     cursor.forward_chars (len);
     cursor_col_ = cursor.get_line_offset ();
     cursor_row_ = cursor.get_line ();
+}
+
+void Buffer::on_nvim_redraw_end ()
+{
+    place_cursor (get_iter_at_line_offset (cursor_row_, cursor_col_));
 }
 
 }

@@ -49,6 +49,7 @@ public:
     void on_nvim_update_sp (int colour);
     void on_nvim_cursor_goto (int row, int col);
     void on_nvim_put (const msgpack::object_array &);
+    void on_nvim_redraw_end ();
 
 protected:
     Buffer (NvimBridge &nvim, int columns, int rows);

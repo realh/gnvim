@@ -74,6 +74,7 @@ public:
             nvim_popupmenu_show;
     sigc::signal<void, int> nvim_popupmenu_select;
     sigc::signal<void> nvim_popupmenu_hide;
+    sigc::signal<void> nvim_redraw_end;
 
 private:
     void map_adapters ();

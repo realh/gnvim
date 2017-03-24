@@ -176,6 +176,7 @@ void NvimBridge::on_notify (std::string method,
                         method_name.c_str());
             }
         }
+        nvim_redraw_end.emit ();
     }
     else
     {
