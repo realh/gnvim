@@ -50,12 +50,16 @@ public:
     void on_nvim_cursor_goto (int row, int col);
     void on_nvim_put (const msgpack::object_array &);
     void on_nvim_clear ();
+    void on_nvim_eol_clear ();
     void on_nvim_redraw_end ();
 
 protected:
     Buffer (NvimBridge &nvim, int columns, int rows);
 private:
-    void init_content ();
+    Gtk::TextIter get_cursor_iter ()
+    {
+        return get_iter_at_line_offset (cursor_row_, cursor_col_);
+    }
 
     NvimBridge &nvim_;
 

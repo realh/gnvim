@@ -45,20 +45,8 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
             (sigc::mem_fun (this, &Buffer::on_nvim_redraw_end));
     nvim.nvim_clear.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_clear));
-}
-
-void Buffer::on_nvim_clear ()
-{
-    for (int y = 0; y < rows_; ++y)
-    {
-        auto s = Glib::ustring (columns_, ' ');
-        if (y < rows_ - 1)
-            s += '\n';
-        if (y == 0)
-            set_text (s);
-        else
-            insert (end (), s);
-    }
+    nvim.nvim_eol_clear.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_eol_clear));
 }
 
 bool Buffer::resize (int columns, int rows)
@@ -127,6 +115,33 @@ static void set_colour_prop (Glib::PropertyProxy<Gdk::RGBA> prop, int colour)
     }
 }
 
+void Buffer::on_nvim_clear ()
+{
+    for (int y = 0; y < rows_; ++y)
+    {
+        auto s = Glib::ustring (columns_, ' ');
+        if (y < rows_ - 1)
+            s += '\n';
+        if (y == 0)
+            set_text (s);
+        else
+            insert (end (), s);
+    }
+}
+
+void Buffer::on_nvim_eol_clear ()
+{
+    auto cursor = get_cursor_iter ();
+    auto range_end = cursor;
+    if (range_end.ends_line ())
+        return;
+    range_end.forward_to_line_end ();
+    auto len = range_end.get_line_offset () - cursor.get_line_offset ();
+    erase (cursor, range_end);
+    auto s = Glib::ustring (len, ' ');
+    insert (get_cursor_iter (), s);
+}
+
 void Buffer::on_nvim_update_fg (int colour)
 {
     set_colour_prop (default_attr_tag_->property_foreground_rgba (), colour);
@@ -174,13 +189,13 @@ void Buffer::on_nvim_put (const msgpack::object_array &text_ar)
 
     // ustring length () returns number of UTF-8 chars, not length in bytes
     auto len = s.length ();
-    Gtk::TextIter cursor = get_iter_at_line_offset (cursor_row_, cursor_col_);
-    Gtk::TextIter range_end = cursor;
+    auto cursor = get_cursor_iter ();
+    auto range_end = cursor;
     range_end.forward_chars (len);
     erase (cursor, range_end);
-    cursor = get_iter_at_line_offset (cursor_row_, cursor_col_);
+    cursor = get_cursor_iter ();
     insert (cursor, s);
-    cursor = get_iter_at_line_offset (cursor_row_, cursor_col_);
+    cursor = get_cursor_iter ();
     cursor.forward_chars (len);
     cursor_col_ = cursor.get_line_offset ();
     cursor_row_ = cursor.get_line ();
@@ -188,7 +203,7 @@ void Buffer::on_nvim_put (const msgpack::object_array &text_ar)
 
 void Buffer::on_nvim_redraw_end ()
 {
-    place_cursor (get_iter_at_line_offset (cursor_row_, cursor_col_));
+    place_cursor (get_cursor_iter ());
 }
 
 }
