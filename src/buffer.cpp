@@ -305,22 +305,25 @@ void Buffer::on_nvim_highlight_set (const msgpack::object &map_o)
         {
             if (background == -1)
             {
-                tag->property_foreground_rgba ().set_value (
-                        default_attr_tag_->property_background_rgba
-                            ().get_value ());
+                // There's no future-proof way to read a widget's colours, and
+                // if we try to read a tag's colour that hasn't been set
+                // explicitly it crashes, so just assume black on white
+                g_debug ("reverse, fg = bg = assumed white");
+                tag->property_foreground ().set_value("#ffffff");
             }
             else
             {
+                g_debug ("reverse, bg = %06x", background);
                 set_colour_prop (tag->property_foreground_rgba (), background);
             }
             if (foreground == -1)
             {
-                tag->property_background_rgba ().set_value (
-                        default_attr_tag_->property_foreground_rgba
-                            ().get_value ());
+                g_debug ("reverse, bg = fg = assumed black");
+                tag->property_background ().set_value("#000000");
             }
             else
             {
+                g_debug ("reverse, fg = %06x", background);
                 set_colour_prop (tag->property_background_rgba (), foreground);
             }
         }
