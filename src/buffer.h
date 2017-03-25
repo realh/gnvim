@@ -52,6 +52,8 @@ public:
     void on_nvim_clear ();
     void on_nvim_eol_clear ();
     void on_nvim_highlight_set (const msgpack::object &map_o);
+    void on_nvim_set_scroll_region (int top, int bot, int left, int right);
+    void on_nvim_scroll (int count);
     void on_nvim_redraw_end ();
 
 protected:
@@ -70,6 +72,9 @@ private:
     RefPtr<Gtk::TextTag> default_attr_tag_;
     RefPtr<Gtk::TextTag> current_attr_tag_;
     int cursor_row_, cursor_col_;
+    struct {
+        int top, bot, left, right;
+    } scroll_region_;
 };
 
 }

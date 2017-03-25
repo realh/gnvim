@@ -51,6 +51,10 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
             (sigc::mem_fun (this, &Buffer::on_nvim_eol_clear));
     nvim.nvim_highlight_set.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_highlight_set));
+    nvim.nvim_set_scroll_region.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_set_scroll_region));
+    nvim.nvim_scroll.connect
+            (sigc::mem_fun (this, &Buffer::on_nvim_scroll));
     nvim.nvim_redraw_end.connect
             (sigc::mem_fun (this, &Buffer::on_nvim_redraw_end));
 }
@@ -343,6 +347,60 @@ void Buffer::on_nvim_highlight_set (const msgpack::object &map_o)
         table->add (tag);
     }
     current_attr_tag_ = tag;
+}
+
+void Buffer::on_nvim_set_scroll_region (int top, int bot, int left, int right)
+{
+    scroll_region_.top = top;
+    scroll_region_.bot = bot;
+    scroll_region_.left = left;
+    scroll_region_.right = right;
+}
+
+void Buffer::on_nvim_scroll (int count)
+{
+    int start, end, step;
+
+    if (count > 0)
+    {
+        start = scroll_region_.top;
+        end = scroll_region_.bot - count;
+        step = 1;
+    }
+    else
+    {
+        start = scroll_region_.bot;
+        end = scroll_region_.top + count;
+        step = -1;
+    }
+
+    for (int y = start; y != end; y += step)
+    {
+        // Remove old text from dst row
+        auto it1 = get_iter_at_line_offset (y, scroll_region_.left);
+        auto it2 = get_iter_at_line_offset (y, scroll_region_.right);
+        erase (it1, it2);
+        // Copy from src to dst row
+        it1 = get_iter_at_line_offset (y, scroll_region_.left);
+        it2 = get_iter_at_line_offset (y + count, scroll_region_.left);
+        auto it3 = get_iter_at_line_offset (y + count, scroll_region_.right);
+        insert (it1, it2, it3);
+        // Remove from src row
+        it2 = get_iter_at_line_offset (y + count, scroll_region_.left);
+        it3 = get_iter_at_line_offset (y + count, scroll_region_.right);
+        erase (it2, it3);
+    }
+    // Now count rows should have their scroll region cleared
+    auto blank = Glib::ustring (scroll_region_.right - scroll_region_.left,
+            ' ');
+    for (int y = end; y != end + count; y += step)
+    {
+        auto it1 = get_iter_at_line_offset (y, scroll_region_.left);
+        auto it2 = get_iter_at_line_offset (y, scroll_region_.right);
+        erase (it1, it2);
+        it1 = get_iter_at_line_offset (y, scroll_region_.left);
+        insert_with_tag (it1, blank, default_attr_tag_);
+    }
 }
 
 void Buffer::on_nvim_redraw_end ()
