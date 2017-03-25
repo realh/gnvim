@@ -48,7 +48,7 @@ Window::Window (std::vector<const char *>)
         g_warning ("Window closed before it opened");
     }
 
-    nvim_.nvim_resize.connect (sigc::mem_fun (this, &Window::on_nvim_resize));
+    nvim_.redraw_resize.connect (sigc::mem_fun (this, &Window::on_nvim_resize));
 }
 
 void Window::force_close ()

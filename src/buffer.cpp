@@ -33,30 +33,30 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
 {
     current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ("default");
     get_tag_table ()->add (default_attr_tag_);
-    on_nvim_clear ();
+    on_redraw_clear ();
 
-    nvim.nvim_update_bg.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_update_bg));
-    nvim.nvim_update_fg.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_update_fg));
-    nvim.nvim_update_sp.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_update_sp));
-    nvim.nvim_cursor_goto.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_cursor_goto));
-    nvim.nvim_put.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_put));
-    nvim.nvim_clear.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_clear));
-    nvim.nvim_eol_clear.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_eol_clear));
-    nvim.nvim_highlight_set.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_highlight_set));
-    nvim.nvim_set_scroll_region.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_set_scroll_region));
-    nvim.nvim_scroll.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_scroll));
-    nvim.nvim_redraw_end.connect
-            (sigc::mem_fun (this, &Buffer::on_nvim_redraw_end));
+    nvim.redraw_update_bg.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_update_bg));
+    nvim.redraw_update_fg.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_update_fg));
+    nvim.redraw_update_sp.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_update_sp));
+    nvim.redraw_cursor_goto.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_cursor_goto));
+    nvim.redraw_put.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_put));
+    nvim.redraw_clear.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_clear));
+    nvim.redraw_eol_clear.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_eol_clear));
+    nvim.redraw_highlight_set.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_highlight_set));
+    nvim.redraw_set_scroll_region.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_set_scroll_region));
+    nvim.redraw_scroll.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_scroll));
+    nvim.redraw_end.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_end));
 }
 
 bool Buffer::resize (int columns, int rows)
@@ -127,7 +127,7 @@ static void set_colour_prop (Glib::PropertyProxy<Gdk::RGBA> prop, int colour)
     }
 }
 
-void Buffer::on_nvim_clear ()
+void Buffer::on_redraw_clear ()
 {
     for (int y = 0; y < rows_; ++y)
     {
@@ -141,7 +141,7 @@ void Buffer::on_nvim_clear ()
     }
 }
 
-void Buffer::on_nvim_eol_clear ()
+void Buffer::on_redraw_eol_clear ()
 {
     auto cursor = get_cursor_iter ();
     auto range_end = cursor;
@@ -154,32 +154,32 @@ void Buffer::on_nvim_eol_clear ()
     this->insert_with_tag (get_cursor_iter (), s, current_attr_tag_);
 }
 
-void Buffer::on_nvim_update_fg (int colour)
+void Buffer::on_redraw_update_fg (int colour)
 {
     set_colour_prop (default_attr_tag_->property_foreground_rgba (),
                 fg_colour_ = colour);
 }
 
-void Buffer::on_nvim_update_bg (int colour)
+void Buffer::on_redraw_update_bg (int colour)
 {
     set_colour_prop (default_attr_tag_->property_background_rgba (),
                 bg_colour_ = colour);
 }
 
-void Buffer::on_nvim_update_sp (int colour)
+void Buffer::on_redraw_update_sp (int colour)
 {
     set_colour_prop (default_attr_tag_->property_underline_rgba (),
                 sp_colour_ = colour);
 }
 
-void Buffer::on_nvim_cursor_goto (int row, int col)
+void Buffer::on_redraw_cursor_goto (int row, int col)
 {
     cursor_col_ = col;
     cursor_row_ = row;
 //  std::cout << "Moving cursor to row " << row << ", col " << col << std::endl;
 }
 
-void Buffer::on_nvim_put (const msgpack::object_array &text_ar)
+void Buffer::on_redraw_put (const msgpack::object_array &text_ar)
 {
     Glib::ustring s;
 
@@ -234,7 +234,7 @@ static int int_from_rgba_prop (const Glib::PropertyProxy<Gdk::RGBA> &prop)
 }
 */
 
-void Buffer::on_nvim_highlight_set (const msgpack::object &map_o)
+void Buffer::on_redraw_highlight_set (const msgpack::object &map_o)
 {
     // We could probably share tag tables between multiple windows, but
     // different vim instances may have different themes with different default
@@ -349,7 +349,7 @@ void Buffer::on_nvim_highlight_set (const msgpack::object &map_o)
     current_attr_tag_ = tag;
 }
 
-void Buffer::on_nvim_set_scroll_region (int top, int bot, int left, int right)
+void Buffer::on_redraw_set_scroll_region (int top, int bot, int left, int right)
 {
     scroll_region_.top = top;
     scroll_region_.bot = bot;
@@ -357,7 +357,7 @@ void Buffer::on_nvim_set_scroll_region (int top, int bot, int left, int right)
     scroll_region_.right = right;
 }
 
-void Buffer::on_nvim_scroll (int count)
+void Buffer::on_redraw_scroll (int count)
 {
     int start, end, step;
 
@@ -403,7 +403,7 @@ void Buffer::on_nvim_scroll (int count)
     }
 }
 
-void Buffer::on_nvim_redraw_end ()
+void Buffer::on_redraw_end ()
 {
     place_cursor (get_cursor_iter ());
 }

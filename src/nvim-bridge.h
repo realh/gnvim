@@ -47,34 +47,34 @@ public:
         return error_signal_;
     }
 
-    sigc::signal<void, int, int> nvim_resize;
-    sigc::signal<void> nvim_clear;
-    sigc::signal<void> nvim_eol_clear;
-    sigc::signal<void, int, int> nvim_cursor_goto;
-    sigc::signal<void, int> nvim_update_fg;
-    sigc::signal<void, int> nvim_update_bg;
-    sigc::signal<void, int> nvim_update_sp;
-    sigc::signal<void, const msgpack::object &> nvim_highlight_set;
+    sigc::signal<void, int, int> redraw_resize;
+    sigc::signal<void> redraw_clear;
+    sigc::signal<void> redraw_eol_clear;
+    sigc::signal<void, int, int> redraw_cursor_goto;
+    sigc::signal<void, int> redraw_update_fg;
+    sigc::signal<void, int> redraw_update_bg;
+    sigc::signal<void, int> redraw_update_sp;
+    sigc::signal<void, const msgpack::object &> redraw_highlight_set;
     // Note that first member of array is method name
-    sigc::signal<void, const msgpack::object_array &> nvim_put;
-    sigc::signal<void, int, int, int, int> nvim_set_scroll_region;
-    sigc::signal<void, int> nvim_scroll;
-    sigc::signal<void, const std::string &> nvim_set_title;
-    sigc::signal<void, const std::string &> nvim_set_icon;
-    sigc::signal<void> nvim_mouse_on;
-    sigc::signal<void> nvim_mouse_off;
-    sigc::signal<void> nvim_busy_on;
-    sigc::signal<void> nvim_busy_off;
-    sigc::signal<void> nvim_suspend;
-    sigc::signal<void> nvim_bell;
-    sigc::signal<void> nvim_visual_bell;
-    sigc::signal<void> nvim_update_menu;
-    sigc::signal<void, const std::string &> nvim_mode_change;
+    sigc::signal<void, const msgpack::object_array &> redraw_put;
+    sigc::signal<void, int, int, int, int> redraw_set_scroll_region;
+    sigc::signal<void, int> redraw_scroll;
+    sigc::signal<void, const std::string &> redraw_set_title;
+    sigc::signal<void, const std::string &> redraw_set_icon;
+    sigc::signal<void> redraw_mouse_on;
+    sigc::signal<void> redraw_mouse_off;
+    sigc::signal<void> redraw_busy_on;
+    sigc::signal<void> redraw_busy_off;
+    sigc::signal<void> redraw_suspend;
+    sigc::signal<void> redraw_bell;
+    sigc::signal<void> redraw_visual_bell;
+    sigc::signal<void> redraw_update_menu;
+    sigc::signal<void, const std::string &> redraw_mode_change;
     sigc::signal<void, const msgpack::object &, int, int, int>
-            nvim_popupmenu_show;
-    sigc::signal<void, int> nvim_popupmenu_select;
-    sigc::signal<void> nvim_popupmenu_hide;
-    sigc::signal<void> nvim_redraw_end;
+            redraw_popupmenu_show;
+    sigc::signal<void, int> redraw_popupmenu_select;
+    sigc::signal<void> redraw_popupmenu_hide;
+    sigc::signal<void> redraw_end;
 
 private:
     void map_adapters ();

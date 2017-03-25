@@ -44,17 +44,17 @@ public:
     // Returns false if the size hasn't changed
     bool resize (int columns, int rows);
 
-    void on_nvim_update_fg (int colour);
-    void on_nvim_update_bg (int colour);
-    void on_nvim_update_sp (int colour);
-    void on_nvim_cursor_goto (int row, int col);
-    void on_nvim_put (const msgpack::object_array &);
-    void on_nvim_clear ();
-    void on_nvim_eol_clear ();
-    void on_nvim_highlight_set (const msgpack::object &map_o);
-    void on_nvim_set_scroll_region (int top, int bot, int left, int right);
-    void on_nvim_scroll (int count);
-    void on_nvim_redraw_end ();
+    void on_redraw_update_fg (int colour);
+    void on_redraw_update_bg (int colour);
+    void on_redraw_update_sp (int colour);
+    void on_redraw_cursor_goto (int row, int col);
+    void on_redraw_put (const msgpack::object_array &);
+    void on_redraw_clear ();
+    void on_redraw_eol_clear ();
+    void on_redraw_highlight_set (const msgpack::object &map_o);
+    void on_redraw_set_scroll_region (int top, int bot, int left, int right);
+    void on_redraw_scroll (int count);
+    void on_redraw_end ();
 
 protected:
     Buffer (NvimBridge &nvim, int columns, int rows);

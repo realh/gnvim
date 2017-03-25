@@ -61,56 +61,56 @@ NvimBridge::~NvimBridge ()
 void NvimBridge::map_adapters ()
 {
     redraw_adapters_.emplace ("resize",
-        new MsgpackAdapter<int, int> (nvim_resize));
+        new MsgpackAdapter<int, int> (redraw_resize));
     redraw_adapters_.emplace ("clear",
-        new MsgpackAdapter<void> (nvim_clear));
+        new MsgpackAdapter<void> (redraw_clear));
     redraw_adapters_.emplace ("eol_clear",
-        new MsgpackAdapter<void> (nvim_eol_clear));
+        new MsgpackAdapter<void> (redraw_eol_clear));
     redraw_adapters_.emplace ("cursor_goto",
-        new MsgpackAdapter<int, int> (nvim_cursor_goto));
+        new MsgpackAdapter<int, int> (redraw_cursor_goto));
     redraw_adapters_.emplace ("update_fg",
-        new MsgpackAdapter<int> (nvim_update_fg));
+        new MsgpackAdapter<int> (redraw_update_fg));
     redraw_adapters_.emplace ("update_bg",
-        new MsgpackAdapter<int> (nvim_update_bg));
+        new MsgpackAdapter<int> (redraw_update_bg));
     redraw_adapters_.emplace ("update_sp",
-        new MsgpackAdapter<int> (nvim_update_sp));
+        new MsgpackAdapter<int> (redraw_update_sp));
     redraw_adapters_.emplace ("highlight_set",
-        new MsgpackAdapter<const msgpack::object &> (nvim_highlight_set));
+        new MsgpackAdapter<const msgpack::object &> (redraw_highlight_set));
     redraw_adapters_.emplace ("put",
-        new MsgpackAdapter<const msgpack::object_array &> (nvim_put));
+        new MsgpackAdapter<const msgpack::object_array &> (redraw_put));
     redraw_adapters_.emplace ("set_scroll_region",
-        new MsgpackAdapter<int, int, int, int> (nvim_set_scroll_region));
+        new MsgpackAdapter<int, int, int, int> (redraw_set_scroll_region));
     redraw_adapters_.emplace ("scroll",
-        new MsgpackAdapter<int> (nvim_scroll));
+        new MsgpackAdapter<int> (redraw_scroll));
     redraw_adapters_.emplace ("set_title",
-        new MsgpackAdapter<const std::string &> (nvim_set_title));
+        new MsgpackAdapter<const std::string &> (redraw_set_title));
     redraw_adapters_.emplace ("set_icon",
-        new MsgpackAdapter<const std::string &> (nvim_set_icon));
+        new MsgpackAdapter<const std::string &> (redraw_set_icon));
     redraw_adapters_.emplace ("mouse_on",
-        new MsgpackAdapter<void> (nvim_mouse_on));
+        new MsgpackAdapter<void> (redraw_mouse_on));
     redraw_adapters_.emplace ("mouse_off",
-        new MsgpackAdapter<void> (nvim_mouse_off));
+        new MsgpackAdapter<void> (redraw_mouse_off));
     redraw_adapters_.emplace ("busy_on",
-        new MsgpackAdapter<void> (nvim_busy_on));
+        new MsgpackAdapter<void> (redraw_busy_on));
     redraw_adapters_.emplace ("busy_off",
-        new MsgpackAdapter<void> (nvim_busy_off));
+        new MsgpackAdapter<void> (redraw_busy_off));
     redraw_adapters_.emplace ("suspend",
-        new MsgpackAdapter<void> (nvim_suspend));
+        new MsgpackAdapter<void> (redraw_suspend));
     redraw_adapters_.emplace ("bell",
-        new MsgpackAdapter<void> (nvim_bell));
+        new MsgpackAdapter<void> (redraw_bell));
     redraw_adapters_.emplace ("visual_bell",
-        new MsgpackAdapter<void> (nvim_visual_bell));
+        new MsgpackAdapter<void> (redraw_visual_bell));
     redraw_adapters_.emplace ("update_menu",
-        new MsgpackAdapter<void> (nvim_update_menu));
+        new MsgpackAdapter<void> (redraw_update_menu));
     redraw_adapters_.emplace ("mode_change",
-        new MsgpackAdapter<const std::string &> (nvim_mode_change));
+        new MsgpackAdapter<const std::string &> (redraw_mode_change));
     redraw_adapters_.emplace ("popupmenu_show",
         new MsgpackAdapter<const msgpack::object &, int, int, int>
-        (nvim_popupmenu_show));
+        (redraw_popupmenu_show));
     redraw_adapters_.emplace ("popupmenu_select",
-        new MsgpackAdapter<int> (nvim_popupmenu_select));
+        new MsgpackAdapter<int> (redraw_popupmenu_select));
     redraw_adapters_.emplace ("popupmenu_hide",
-        new MsgpackAdapter<void> (nvim_popupmenu_hide));
+        new MsgpackAdapter<void> (redraw_popupmenu_hide));
 }
 
 void NvimBridge::start_gui (int width, int height)
@@ -186,7 +186,7 @@ void NvimBridge::on_notify (std::string method,
                         method_name.c_str());
             }
         }
-        nvim_redraw_end.emit ();
+        redraw_end.emit ();
     }
     else
     {
