@@ -60,6 +60,8 @@ public:
     }
 protected:
     virtual void on_size_allocate (Gtk::Allocation &) override;
+
+    virtual bool on_key_press_event (GdkEventKey *) override;
 private:
     void calculate_metrics ();
 

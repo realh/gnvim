@@ -37,6 +37,11 @@ View::View (Buffer *buffer)
 
 }
 
+bool View::on_key_press_event (GdkEventKey *event)
+{
+    return true;
+}
+
 void View::on_size_allocate (Gtk::Allocation &allocation)
 {
     Gtk::TextView::on_size_allocate (allocation);
