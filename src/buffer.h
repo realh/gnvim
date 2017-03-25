@@ -41,6 +41,11 @@ public:
         rows = rows_;
     }
 
+    NvimBridge &get_nvim_bridge ()
+    {
+        return nvim_;
+    }
+
     // Returns false if the size hasn't changed
     bool resize (int columns, int rows);
 

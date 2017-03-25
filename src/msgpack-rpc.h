@@ -81,7 +81,6 @@ public:
         aa.pack (packer);
         response_promises_[msgid] = promise;
         send (s.str());
-        std::cout << "Sent request" << std::endl;
     }
 
     template<class T> void response (guint32 msgid, const T &result)
@@ -143,12 +142,12 @@ protected:
 private:
     template<class S> class PackableBase {
     public:
-        void msgpack_pack(msgpack::packer<S> &packer) const
+        void msgpack_pack (msgpack::packer<S> &packer) const
         {
             pack (packer);
         }
 
-        virtual void pack(msgpack::packer<S> &) const = 0;
+        virtual void pack (msgpack::packer<S> &) const = 0;
 
         virtual ~PackableBase ()
         {}
@@ -174,10 +173,8 @@ private:
 
     template<class S> class ArgArray {
     public:
-        template<class... T> ArgArray (T... args)
-        {
-            add_args (args...);
-        }
+        ArgArray ()
+        {}
 
         void pack(msgpack::packer<S> &packer) const
         {
@@ -192,6 +189,7 @@ private:
 
         template<class T> void add_args (T arg)
         {
+            std::cout << "Packing arg " << arg << std::endl;
             args_.push_back (ptr_t (new Packable<S, T> (arg)));
         }
 

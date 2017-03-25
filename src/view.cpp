@@ -39,6 +39,77 @@ View::View (Buffer *buffer)
 
 bool View::on_key_press_event (GdkEventKey *event)
 {
+    if (event->is_modifier)
+    {
+        return true;
+    }
+
+    bool special = false;
+    gunichar uk = gdk_keyval_to_unicode (event->keyval);
+    Glib::ustring s = gdk_keyval_name (event->keyval);
+
+    bool kp = s.find ("KP_") == 0;
+    if (kp)
+    {
+        special = true;
+        s = s.substr (3);
+        if (s == "Add")
+            s = "Plus";
+        else if (s == "Subtract")
+            s = "Minus";
+        else if (s == "Decimal")
+            s = "Point";
+        s = Glib::ustring (1, 'k') + s;
+    }
+
+    if (g_unichar_isprint (uk))
+    {
+        s = Glib::ustring (1, uk);
+        if (s == "<")
+        {
+            special = true;
+            s = "lt";
+        }
+        else if (s == "\\")
+        {
+            special = true;
+            s = "Bslash";
+        }
+    }
+    else
+    {
+        special = true;
+        if (s == "BackSpace")
+            s = "BS";
+        else if (s == "Return" || s == "Enter")
+            s = "CR";
+        else if (s == "Escape")
+            s = "Esc";
+        else if (s == "Delete")
+            s = "Del";
+        else if (s == "Page_Up")
+            s = "PageUp";
+        else if (s == "Page_Down")
+            s = "PageDown";
+        else if (s == "ISO_Left_Tab")
+            s = "Tab";
+    }
+
+    if (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK))
+        special = true;
+    if (event->state & GDK_SHIFT_MASK)
+        s = Glib::ustring ("S-") + s;
+    if (event->state & GDK_CONTROL_MASK)
+        s = Glib::ustring ("C-") + s;
+    if (event->state & GDK_MOD1_MASK)
+        s = Glib::ustring ("A-") + s;
+
+    if (special)
+        s = Glib::ustring (1, '<') + s + '>';
+
+    g_debug("Keypress %s", s.c_str ());
+
+    buffer_->get_nvim_bridge ().nvim_feedkeys (s);
     return true;
 }
 

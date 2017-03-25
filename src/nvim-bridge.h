@@ -25,6 +25,7 @@
 
 #include <map>
 #include <memory>
+#include <string>
 
 #include "msgpack-adapter.h"
 #include "msgpack-rpc.h"
@@ -41,6 +42,8 @@ public:
     void start_gui (int width, int height);
 
     void stop ();
+
+    void nvim_feedkeys (const std::string &keys);
 
     sigc::signal<void, Glib::ustring> &error_signal ()
     {
