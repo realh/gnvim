@@ -45,17 +45,6 @@ void MsgpackRpc::start (int pipe_to_nvim, int pipe_from_nvim)
     start_async_read ();
 }
 
-void MsgpackRpc::request (const char *method,
-            std::shared_ptr<MsgpackPromise> promise)
-{
-    std::ostringstream s;
-    packer_t packer (s);
-    auto msgid = create_request (packer, method);
-    packer.pack_array (0);
-    response_promises_[msgid] = promise;
-    send (s.str());
-}
-
 void MsgpackRpc::stop ()
 {
     stop_ = true;
@@ -64,27 +53,41 @@ void MsgpackRpc::stop ()
     strm_to_nvim_->close ();
 }
 
-guint32 MsgpackRpc::create_request (packer_t &packer, const char *method)
+void MsgpackRpc::do_request (const char *method, packer_fn arg_packer,
+        std::shared_ptr<MsgpackPromise> promise)
 {
+    std::ostringstream s;
+    packer_t packer (s);
     packer.pack_array (4);
     packer.pack_int (REQUEST);
     packer.pack_uint32 (++msgid_);
     packer.pack (method);
-    return msgid_;
+    arg_packer (packer);
+    response_promises_[msgid_] = promise;
+    send (s.str());
 }
 
-void MsgpackRpc::create_response (packer_t &packer, guint32 msgid)
+void MsgpackRpc::do_notify (const char *method, packer_fn arg_packer)
 {
-    packer.pack_array (4);
-    packer.pack_int (RESPONSE);
-    packer.pack_uint32 (msgid);
-}
-
-void MsgpackRpc::create_notify (packer_t &packer, const char *method)
-{
+    std::ostringstream s;
+    packer_t packer (s);
     packer.pack_array (3);
     packer.pack_int (NOTIFY);
     packer.pack (method);
+    arg_packer (packer);
+    send (s.str());
+}
+
+void MsgpackRpc::do_response (guint32 msgid,
+        packer_fn val_packer, packer_fn err_packer)
+{
+    std::ostringstream s;
+    packer_t packer (s);
+    packer.pack_array (4);
+    packer.pack_int (RESPONSE);
+    packer.pack_uint32 (msgid);
+    val_packer (packer);
+    err_packer (packer);
 }
 
 void MsgpackRpc::send (std::string &&s)

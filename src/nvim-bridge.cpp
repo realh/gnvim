@@ -130,7 +130,7 @@ void NvimBridge::nvim_feedkeys (const std::string &keys)
 {
     // "t" = feed as if typed by user
     if (rpc_)
-        rpc_->notify ("feedkeys", keys, std::string (1, 't'));
+        rpc_->notify ("feedkeys", keys, std::string (1, 't'), false);
 }
 
 void NvimBridge::on_request (guint32 msgid, std::string method,

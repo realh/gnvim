@@ -25,6 +25,7 @@
 
 #include <cstdint>
 #include <deque>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -47,6 +48,10 @@ namespace Gnvim
 // to emit signals. Sending to nvim is all done on main thread, callbacks and
 // responses have their own thread
 class MsgpackRpc: public Glib::Object {
+private:
+    using packer_t = msgpack::packer<std::ostringstream>;
+
+    using packer_fn = std::function<void (packer_t &)>;
 public:
     constexpr static int REQUEST = 0;
     constexpr static int RESPONSE = 1;
@@ -68,58 +73,46 @@ public:
     void stop ();
 
     void request (const char *method,
-            std::shared_ptr<MsgpackPromise> promise);
+            std::shared_ptr<MsgpackPromise> promise)
+    {
+        do_request (method,
+                [](packer_t &packer) { packer.pack_array (0); },
+                promise);
+    }
 
     template<class... T> void request (const char *method,
             std::shared_ptr<MsgpackPromise> promise,
-            T... args)
+            const T &...args)
     {
-        std::ostringstream s;
-        packer_t packer (s);
-        auto msgid = create_request (packer, method);
-        ArgArray<std::ostringstream> aa (args...);
-        aa.pack (packer);
-        response_promises_[msgid] = promise;
-        send (s.str());
-    }
-
-    template<class T> void response (guint32 msgid, const T &result)
-    {
-        std::ostringstream s;
-        packer_t packer (s);
-        create_response (packer, msgid);
-        packer.pack_nil ();
-        packer.pack (result);
-        send (s.str());
-    }
-
-    template<class T> void response_error (guint32 msgid, const T &result)
-    {
-        std::ostringstream s;
-        packer_t packer (s);
-        create_response (packer, msgid);
-        packer.pack (result);
-        packer.pack_nil ();
-        send (s.str());
+        do_request (method,
+                [args...](packer_t &packer) { pack_args (packer, args...); },
+                promise);
     }
 
     void notify (const char *method)
     {
-        std::ostringstream s;
-        packer_t packer (s);
-        create_notify (packer, method);
-        packer.pack_array (0);
-        send (s.str());
+        do_notify (method,
+                [](packer_t &packer) { packer.pack_array (0); });
     }
 
     template<class... T> void notify (const char *method, T... args)
     {
-        std::ostringstream s;
-        packer_t packer (s);
-        create_notify (packer, method);
-        ArgArray<std::ostringstream> aa (args...);
-        aa.pack (packer);
-        send (s.str());
+        do_notify (method,
+                [args...](packer_t &packer) { pack_args (packer, args...); });
+    }
+
+    template<class T> void response (guint32 msgid, const T &result)
+    {
+        do_response (msgid,
+                [] (packer_t &packer) { packer.pack_nil (); },
+                [result] (packer_t &packer) { packer.pack (result); });
+    }
+
+    template<class T> void response_error (guint32 msgid, const T &err)
+    {
+        do_response (msgid,
+                [err] (packer_t &packer) { packer.pack (err); },
+                [] (packer_t &packer) { packer.pack_nil (); });
     }
 
     sigc::signal<void, guint32, std::string, const msgpack::object &>
@@ -140,77 +133,54 @@ public:
 protected:
     MsgpackRpc ();
 private:
-    template<class S> class PackableBase {
-    public:
-        void msgpack_pack (msgpack::packer<S> &packer) const
-        {
-            pack (packer);
-        }
+    void do_request (const char *method, packer_fn arg_packer,
+            std::shared_ptr<MsgpackPromise> promise);
 
-        virtual void pack (msgpack::packer<S> &) const = 0;
+    void do_notify (const char *method, packer_fn arg_packer);
 
-        virtual ~PackableBase ()
-        {}
-    };
+    void do_response (guint32 msgid,
+            packer_fn val_packer, packer_fn err_packer);
 
-    template<class S, class T> class Packable: public PackableBase<S> {
-    public:
-        Packable (const T &value) : value_ (value)
-        {}
+    template<class T1> static void
+    pack_args (packer_t &packer, const T1 &a1)
+    {
+        packer.pack_array (1);
+        packer.pack (a1);
+    }
 
-        Packable (T &&value) : value_ (value)
-        {}
+    template<class T1, class T2> static void
+    pack_args (packer_t &packer, const T1 &a1, const T2 &a2)
+    {
+        packer.pack_array (2);
+        packer.pack (a1);
+        packer.pack (a2);
+    }
 
-        virtual void pack(msgpack::packer<S> &packer) const override
-        {
-            packer.pack (value_);
-        }
+    template<class T1, class T2, class T3> static void
+    pack_args (packer_t &packer, const T1 &a1, const T2 &a2,
+            const T3 &a3)
+    {
+        packer.pack_array (3);
+        packer.pack (a1);
+        packer.pack (a2);
+        packer.pack (a3);
+    }
 
-        MSGPACK_DEFINE (value_);
-    private:
-        T value_;
-    };
+    template<class T1, class T2, class T3, class T4> static void
+    pack_args (packer_t &packer, const T1 &a1, const T2 &a2,
+            const T3 &a3, const T4 &a4)
+    {
+        packer.pack_array (4);
+        packer.pack (a1);
+        packer.pack (a2);
+        packer.pack (a3);
+        packer.pack (a4);
+    }
 
-    template<class S> class ArgArray {
-    public:
-        ArgArray ()
-        {}
-
-        void pack(msgpack::packer<S> &packer) const
-        {
-            packer.pack_array (args_.size ());
-            for (const auto &i: args_)
-            {
-                packer.pack (*i);
-            }
-        }
-    private:
-        using ptr_t = std::unique_ptr<PackableBase<S>>;
-
-        template<class T> void add_args (T arg)
-        {
-            std::cout << "Packing arg " << arg << std::endl;
-            args_.push_back (ptr_t (new Packable<S, T> (arg)));
-        }
-
-        template<class T, class... V> void add_args (T arg, V... args)
-        {
-            add_args (arg);
-            add_args (args...);
-        }
-
-        std::vector<ptr_t> args_;
-    };
-
-    using packer_t = msgpack::packer<std::ostringstream>;
-
-    guint32 create_request (packer_t &packer, const char *method);
-
-    void create_response (packer_t &packer, guint32 msgid);
-
-    void create_notify (packer_t &packer, const char *method);
-
-    void create_message (packer_t &packer, int type);
+    template<class T> static void pack_response (packer_t &packer, const T &a)
+    {
+        packer.pack (a);
+    }
 
     void send (std::string &&s);
 
