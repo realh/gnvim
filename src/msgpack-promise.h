@@ -25,6 +25,8 @@
 
 #include "defns.h"
 
+#include <memory>
+
 #include <msgpack.hpp>
 
 namespace Gnvim
@@ -32,8 +34,10 @@ namespace Gnvim
 
 class MsgpackPromise {
 public:
-    MsgpackPromise ()
-    {}
+    static std::shared_ptr<MsgpackPromise> create ()
+    {
+        return std::shared_ptr<MsgpackPromise> (new MsgpackPromise);
+    }
 
     MsgpackPromise (const MsgpackPromise &) = delete;
     MsgpackPromise (MsgpackPromise &&) = delete;
@@ -59,7 +63,11 @@ public:
     {
         error_sig_.emit (error);
     }
+protected:
+    MsgpackPromise ()
+    {}
 private:
+
     sigc::signal<void, const msgpack::object &> value_sig_;
     sigc::signal<void, const msgpack::object &> error_sig_;
 };

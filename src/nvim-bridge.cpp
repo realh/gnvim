@@ -126,11 +126,26 @@ void NvimBridge::stop ()
         rpc_->stop ();
 }
 
+static void on_feedkeys_response (const msgpack::object &response)
+{
+    std::cout << "Response from feedkeys " << response << std::endl;
+}
+
+static void on_feedkeys_error (const msgpack::object &response)
+{
+    std::cout << "Error from feedkeys " << response << std::endl;
+}
+
 void NvimBridge::nvim_feedkeys (const std::string &keys)
 {
     // "t" = feed as if typed by user
     if (rpc_)
-        rpc_->notify ("feedkeys", keys, std::string (1, 't'), false);
+    {
+        auto promise = MsgpackPromise::create ();;
+        promise->value_signal ().connect (sigc::ptr_fun (on_feedkeys_response));
+        promise->error_signal ().connect (sigc::ptr_fun (on_feedkeys_error));
+        rpc_->request ("feedkeys", promise, keys, std::string (1, 't'), false);
+    }
 }
 
 void NvimBridge::on_request (guint32 msgid, std::string method,
