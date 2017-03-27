@@ -352,44 +352,52 @@ void Buffer::on_redraw_highlight_set (const msgpack::object &map_o)
 
 void Buffer::on_redraw_set_scroll_region (int top, int bot, int left, int right)
 {
+    // nvim's scroll region bounds are inclusive, we want end and right to be
+    // exclusive. So always add one to right, but end is either top or bottom
+    // depending on direction
     scroll_region_.top = top;
     scroll_region_.bot = bot;
     scroll_region_.left = left;
-    scroll_region_.right = right;
+    scroll_region_.right = right + 1;
 }
 
 void Buffer::on_redraw_scroll (int count)
 {
     int start, end, step;
 
+    /*
+    g_debug ("Scroll left %d right %d top %d bottom %d count %d",
+            scroll_region_.left, scroll_region_.right,
+            scroll_region_.top, scroll_region_.bot,
+            count);
+    */
+
     if (count > 0)
     {
         start = scroll_region_.top;
-        end = scroll_region_.bot - count;
+        end = scroll_region_.bot + 1 - count;
         step = 1;
     }
     else
     {
         start = scroll_region_.bot;
-        end = scroll_region_.top + count;
+        end = scroll_region_.top - 1 + count;
         step = -1;
     }
 
     for (int y = start; y != end; y += step)
     {
         // Remove old text from dst row
+        //g_debug ("Clearing dst line %d", y);
         auto it1 = get_iter_at_line_offset (y, scroll_region_.left);
         auto it2 = get_iter_at_line_offset (y, scroll_region_.right);
         erase (it1, it2);
         // Copy from src to dst row
+        //g_debug ("Copying from line %d to %d", y + count, y);
         it1 = get_iter_at_line_offset (y, scroll_region_.left);
         it2 = get_iter_at_line_offset (y + count, scroll_region_.left);
         auto it3 = get_iter_at_line_offset (y + count, scroll_region_.right);
         insert (it1, it2, it3);
-        // Remove from src row
-        it2 = get_iter_at_line_offset (y + count, scroll_region_.left);
-        it3 = get_iter_at_line_offset (y + count, scroll_region_.right);
-        erase (it2, it3);
     }
     // Now count rows should have their scroll region cleared
     auto blank = Glib::ustring (scroll_region_.right - scroll_region_.left,
