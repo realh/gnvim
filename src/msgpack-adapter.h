@@ -19,9 +19,9 @@
 #ifndef GNVIM_MSGPACK_ADAPTER_H
 #define GNVIM_MSGPACK_ADAPTER_H
 
-// Adapts msg-pack rpc calls into signals with arguments. Return types
-// aren't supported, it's more straightforward for response handlers
-// to send a response directly due to multiple types and error support.
+// Adapts msg-pack rpc calls into signals with demarshalled arguments. Return
+// types aren't supported, it's more straightforward for response handlers to
+// send a response directly due to multiple types and error support.
 
 #include "defns.h"
 

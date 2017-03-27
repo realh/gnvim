@@ -312,22 +312,23 @@ void Buffer::on_redraw_highlight_set (const msgpack::object &map_o)
                 // There's no future-proof way to read a widget's colours, and
                 // if we try to read a tag's colour that hasn't been set
                 // explicitly it crashes, so just assume black on white
-                g_debug ("reverse, fg = bg = assumed white");
+
+                //g_debug ("reverse, fg = bg = assumed white");
                 tag->property_foreground ().set_value("#ffffff");
             }
             else
             {
-                g_debug ("reverse, bg = %06x", background);
+                //g_debug ("reverse, bg = %06x", background);
                 set_colour_prop (tag->property_foreground_rgba (), background);
             }
             if (foreground == -1)
             {
-                g_debug ("reverse, bg = fg = assumed black");
+                //g_debug ("reverse, bg = fg = assumed black");
                 tag->property_background ().set_value("#000000");
             }
             else
             {
-                g_debug ("reverse, fg = %06x", background);
+                //g_debug ("reverse, fg = %06x", background);
                 set_colour_prop (tag->property_background_rgba (), foreground);
             }
         }

@@ -107,7 +107,7 @@ bool View::on_key_press_event (GdkEventKey *event)
     if (special)
         s = Glib::ustring (1, '<') + s + '>';
 
-    g_debug("Keypress %s", s.c_str ());
+    //g_debug("Keypress %s", s.c_str ());
 
     buffer_->get_nvim_bridge ().nvim_feedkeys (s);
     return true;
