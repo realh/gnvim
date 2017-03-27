@@ -118,7 +118,7 @@ bool View::on_key_press_event (GdkEventKey *event)
 
     //g_debug("Keypress %s", s.c_str ());
 
-    buffer_->get_nvim_bridge ().nvim_feedkeys (s);
+    buffer_->get_nvim_bridge ().nvim_input (s);
     return true;
 }
 
@@ -172,7 +172,7 @@ bool View::on_mouse_event (GdkEventType etype, int button,
             modifier_string (modifiers).c_str (),
             but_str.c_str(), etype_str.c_str (),
             x, y);
-    buffer_->get_nvim_bridge ().nvim_feedkeys (inp);
+    buffer_->get_nvim_bridge ().nvim_input (inp);
     g_free (inp);
 
     return true;

@@ -126,7 +126,7 @@ void NvimBridge::stop ()
         rpc_->stop ();
 }
 
-void NvimBridge::nvim_feedkeys (const std::string &keys)
+void NvimBridge::nvim_input (const std::string &keys)
 {
     if (rpc_)
     {

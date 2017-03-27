@@ -43,7 +43,7 @@ public:
 
     void stop ();
 
-    void nvim_feedkeys (const std::string &keys);
+    void nvim_input (const std::string &keys);
 
     sigc::signal<void, Glib::ustring> &error_signal ()
     {
