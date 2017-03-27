@@ -63,13 +63,25 @@ protected:
 
     virtual bool on_key_press_event (GdkEventKey *) override;
 
-    /*
     virtual bool on_button_press_event (GdkEventButton *) override;
 
+    virtual bool on_button_release_event (GdkEventButton *) override;
+
     virtual bool on_motion_notify_event (GdkEventMotion *) override;
-    */
+
+    virtual bool on_scroll_event (GdkEventScroll *) override;
 private:
+    bool on_mouse_event (GdkEventType, int button,
+            guint modifiers, int x, int y);
+
     void calculate_metrics ();
+
+    // in = window coords eg from mose event, out = vim text coords
+    void convert_coords_to_cells (int &x, int &y)
+    {
+        x /= cell_width_px_;
+        y /= cell_height_px_;
+    }
 
     Buffer *buffer_;
 

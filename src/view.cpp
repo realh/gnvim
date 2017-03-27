@@ -37,6 +37,18 @@ View::View (Buffer *buffer)
 
 }
 
+Glib::ustring modifier_string (guint state)
+{
+    std::string s;
+    if (state & GDK_MOD1_MASK)
+        s = "A-";
+    if (state & GDK_CONTROL_MASK)
+        s += "C-";
+    if (state & GDK_SHIFT_MASK)
+        s += "S-";
+    return s;
+}
+
 bool View::on_key_press_event (GdkEventKey *event)
 {
     if (event->is_modifier)
@@ -96,13 +108,10 @@ bool View::on_key_press_event (GdkEventKey *event)
     }
 
     if (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK))
+    {
         special = true;
-    if (event->state & GDK_SHIFT_MASK)
-        s = Glib::ustring ("S-") + s;
-    if (event->state & GDK_CONTROL_MASK)
-        s = Glib::ustring ("C-") + s;
-    if (event->state & GDK_MOD1_MASK)
-        s = Glib::ustring ("A-") + s;
+        s = modifier_string (event->state) + s;
+    }
 
     if (special)
         s = Glib::ustring (1, '<') + s + '>';
@@ -110,6 +119,93 @@ bool View::on_key_press_event (GdkEventKey *event)
     //g_debug("Keypress %s", s.c_str ());
 
     buffer_->get_nvim_bridge ().nvim_feedkeys (s);
+    return true;
+}
+
+static const char *mouse_button_name (guint button)
+{
+    switch (button)
+    {
+        case 1:
+            return "Left";
+        case 2:
+            return "Middle";
+        case 3:
+            return "Right";
+    }
+    return nullptr;
+}
+
+bool View::on_mouse_event (GdkEventType etype, int button,
+        guint modifiers, int x, int y)
+{
+    if (!button || button >= 4)
+        return true;
+
+    Glib::ustring etype_str;
+    switch (etype)
+    {
+        case GDK_BUTTON_PRESS:
+        case GDK_2BUTTON_PRESS:
+        case GDK_3BUTTON_PRESS:
+            etype_str = "Mouse";
+            break;
+        case GDK_BUTTON_RELEASE:
+            etype_str = "Release";
+            break;
+        case GDK_MOTION_NOTIFY:
+            etype_str = "Drag";
+            break;
+        default:
+            return true;
+    }
+
+    Glib::ustring but_str;
+    if (button == 1 && etype == GDK_2BUTTON_PRESS)
+        but_str = "2-Left";
+    else if (button == 1 && etype == GDK_3BUTTON_PRESS)
+        but_str = "3-Left";
+    else
+        but_str = mouse_button_name (button);
+
+    char *inp = g_strdup_printf ("<%s%s%s><%d,%d>",
+            modifier_string (modifiers).c_str (),
+            but_str.c_str(), etype_str.c_str (),
+            x, y);
+    buffer_->get_nvim_bridge ().nvim_feedkeys (inp);
+    g_free (inp);
+
+    return true;
+}
+
+bool View::on_button_press_event (GdkEventButton *event)
+{
+    return on_mouse_event (event->type, event->button,
+            event->state, event->x, event->y);
+}
+
+bool View::on_button_release_event (GdkEventButton *event)
+{
+    return on_mouse_event (event->type, event->button,
+            event->state, event->x, event->y);
+}
+
+bool View::on_motion_notify_event (GdkEventMotion *event)
+{
+    auto b = event->state;
+    if (b & GDK_BUTTON1_MASK)
+        b = 1;
+    else if (b & GDK_BUTTON2_MASK)
+        b = 2;
+    else if (b & GDK_BUTTON3_MASK)
+        b = 3;
+    else
+        return true;
+    return on_mouse_event (event->type, b, event->state, event->x, event->y);
+}
+
+bool View::on_scroll_event (GdkEventScroll * /*event*/)
+{
     return true;
 }
 
