@@ -45,9 +45,9 @@ public:
 
     void nvim_input (const std::string &keys);
 
-    sigc::signal<void, Glib::ustring> &error_signal ()
+    sigc::signal<void, Glib::ustring> &io_error_signal ()
     {
-        return error_signal_;
+        return rpc_->io_error_signal ();
     }
 
     sigc::signal<void, int, int> redraw_resize;
@@ -87,15 +87,11 @@ private:
 
     void on_notify (std::string method, const msgpack::object &args);
 
-    void on_error (Glib::ustring);
-
     using adapter_ptr_t = std::unique_ptr<MsgpackAdapterBase>;
     using map_t = std::map<std::string, adapter_ptr_t>;
     map_t request_adapters_;
     map_t notify_adapters_;
     map_t redraw_adapters_;
-
-    sigc::signal<void, Glib::ustring> error_signal_;
 
     RefPtr<MsgpackRpc> rpc_;
     Glib::Pid nvim_pid_;

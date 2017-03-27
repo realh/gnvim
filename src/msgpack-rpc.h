@@ -38,7 +38,6 @@
 
 #include <msgpack.hpp>
 
-#include "msgpack-error.h"
 #include "msgpack-promise.h"
 
 namespace Gnvim
@@ -56,10 +55,6 @@ public:
     constexpr static int REQUEST = 0;
     constexpr static int RESPONSE = 1;
     constexpr static int NOTIFY = 2;
-
-    using Error = MsgpackError;
-    using SendError = MsgpackSendError;
-    using ResponseError = MsgpackResponseError;
 
     static RefPtr<MsgpackRpc> create ()
     {
@@ -115,20 +110,21 @@ public:
                 [] (packer_t &packer) { packer.pack_nil (); });
     }
 
-    sigc::signal<void, guint32, std::string, const msgpack::object &>
+    sigc::signal<void, guint32, std::string, const msgpack::object &> &
     request_signal ()
     {
         return request_signal_;
     }
 
-    sigc::signal<void, std::string, const msgpack::object &> notify_signal ()
+    sigc::signal<void, std::string, const msgpack::object &> &notify_signal ()
     {
         return notify_signal_;
     }
 
-    sigc::signal<void, Glib::ustring> rcv_error_signal ()
+    // This signal is generally caused by the nvim instance quitting
+    sigc::signal<void, Glib::ustring> &io_error_signal ()
     {
-        return rcv_error_signal_;
+        return io_error_signal_;
     }
 protected:
     MsgpackRpc ();
@@ -210,7 +206,7 @@ private:
     sigc::signal<void, guint32, std::string, const msgpack::object &>
             request_signal_;
     sigc::signal<void, std::string, const msgpack::object &> notify_signal_;
-    sigc::signal<void, Glib::ustring> rcv_error_signal_;
+    sigc::signal<void, Glib::ustring> io_error_signal_;
     msgpack::object *response_ {nullptr};
     msgpack::object *response_error_ {nullptr};
     RefPtr<Gio::Cancellable> rcv_cancellable_ { Gio::Cancellable::create () };

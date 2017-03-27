@@ -19,7 +19,6 @@
 #include "defns.h"
 
 #include "msgpack-adapter.h"
-#include "msgpack-error.h"
 
 namespace Gnvim
 {
@@ -33,11 +32,9 @@ void MsgpackAdapterBase::emit (const msgpack::object_array &mp_args)
     // member, so its size should be 1 or 2
     if (nmpa != na && (na > 0 || (na == 0 && nmpa > 2)))
     {
-        char *s = g_strdup_printf ("Wrong number of args in msgpack callback; "
+        g_critical ("Wrong number of args in msgpack callback; "
                 "expected %d, got %d", num_args (), mp_args.size);
-        Glib::ustring us (s);
-        g_free (s);
-        throw MsgpackArgsError (us);
+        return;
     }
     do_emit (mp_args);
 }

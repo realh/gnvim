@@ -44,8 +44,6 @@ NvimBridge::NvimBridge ()
             sigc::mem_fun (*this, &NvimBridge::on_notify));
     rpc_->request_signal ().connect (
             sigc::mem_fun (*this, &NvimBridge::on_request));
-    rpc_->rcv_error_signal ().connect (
-            sigc::mem_fun (*this, &NvimBridge::on_error));
     rpc_->start (to_nvim_stdin, from_nvim_stdout);
 }
 
@@ -201,12 +199,6 @@ void NvimBridge::on_notify (std::string method,
         std::cout << "nvim sent notification '" << method << "' ("
                 << args << ")" << std::endl;
     }
-}
-
-void NvimBridge::on_error (Glib::ustring desc)
-{
-    std::cerr << "Error communicating with nvim: " << desc << std::endl;
-    error_signal_.emit (desc);
 }
 
 }

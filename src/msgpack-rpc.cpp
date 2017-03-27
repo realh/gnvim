@@ -23,11 +23,6 @@
 namespace Gnvim
 {
 
-Glib::ustring MsgpackRpc::Error::what () const
-{
-    return desc_;
-}
-
 MsgpackRpc::MsgpackRpc ()
         : async_read_slot_ (sigc::mem_fun (this, &MsgpackRpc::async_read))
 {
@@ -92,18 +87,34 @@ void MsgpackRpc::do_response (guint32 msgid,
 
 void MsgpackRpc::send (std::string &&s)
 {
-    gsize nwritten;
-    if (strm_to_nvim_->write_all (s, nwritten))
+    gsize nwritten = 0;
+    try
     {
-        strm_to_nvim_->flush ();
+        if (strm_to_nvim_->write_all (s, nwritten))
+        {
+            strm_to_nvim_->flush ();
+        }
+        else
+        {
+            nwritten = 0;
+            io_error_signal_.emit ("Write to msgpack stream failed");
+        }
     }
-    else
+    catch (Glib::Exception &e)
     {
+        io_error_signal_.emit (Glib::ustring
+                ("msgpack stream write Glib::exception: ") + e.what ());
+        nwritten = 0;
+    }
+    catch (std::exception &e)
+    {
+        io_error_signal_.emit (Glib::ustring
+                ("msgpack stream write std::exception: ") + e.what ());
         nwritten = 0;
     }
     if (!nwritten)
     {
-        throw SendError ("No bytes written to nvim");
+        stop ();
     }
 }
 
@@ -121,12 +132,28 @@ void MsgpackRpc::async_read (RefPtr<Gio::AsyncResult> &result)
 {
     if (!stop_)
     {
-        auto nread = strm_from_nvim_->read_finish (result);
+        gssize nread = 0;
+        try
+        {
+            nread = strm_from_nvim_->read_finish (result);
+            if (nread <= 0)
+                io_error_signal_.emit (_("No bytes read from nvim"));
+        }
+        catch (Glib::Exception &e)
+        {
+            io_error_signal_.emit (Glib::ustring
+                    ("msgpack stream read Glib::exception: ") + e.what ());
+            nread = 0;
+        }
+        catch (std::exception &e)
+        {
+            io_error_signal_.emit (Glib::ustring
+                    ("msgpack stream read std::exception: ") + e.what ());
+            nread = 0;
+        }
         if (nread < 0)
         {
             stop ();
-            rcv_error_signal_.emit (_("I/O error reading from nvim"));
-            return;
         }
         else
         {
@@ -147,7 +174,7 @@ bool MsgpackRpc::object_error (char *raw_msg)
     stop_ = true;
     auto msg = Glib::ustring (raw_msg);
     g_free (raw_msg);
-    rcv_error_signal ().emit (msg);
+    io_error_signal ().emit (msg);
     return false;
 }
 

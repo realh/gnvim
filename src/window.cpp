@@ -32,7 +32,7 @@ Window::Window (std::vector<const char *>)
     view_->get_preferred_size (width, height);
     set_default_size (width, height);
 
-    nvim_.error_signal ().connect (
+    nvim_.io_error_signal ().connect (
             sigc::mem_fun (*this, &Window::on_nvim_error));
 
     view_->show_all ();
@@ -59,7 +59,7 @@ void Window::force_close ()
 
 void Window::on_nvim_error (Glib::ustring desc)
 {
-    g_critical ("Closing window due to nvim communication error: %s",
+    g_debug ("Closing window due to nvim communication error: %s",
             desc.c_str ());
     force_close ();
 }
