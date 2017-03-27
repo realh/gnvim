@@ -30,12 +30,19 @@ namespace Gnvim
 NvimBridge::NvimBridge ()
 {
     static std::vector<std::string> argv {"nvim", "--embed"};
-    static std::vector<std::string> envp;
     int to_nvim_stdin, from_nvim_stdout;
+
+    if (!envp_.size ())
+    {
+        envp_.push_back (Glib::ustring ("XDG_CONFIG_HOME=")
+                + Glib::get_user_config_dir ());
+        envp_.push_back (Glib::ustring ("XDG_DATA_HOME=")
+                + Glib::get_user_data_dir ());
+    }
 
     map_adapters ();
 
-    Glib::spawn_async_with_pipes ("", argv, envp, Glib::SPAWN_SEARCH_PATH,
+    Glib::spawn_async_with_pipes ("", argv, envp_, Glib::SPAWN_SEARCH_PATH,
             Glib::SlotSpawnChildSetup (), &nvim_pid_,
             &to_nvim_stdin, &from_nvim_stdout);
 
@@ -200,5 +207,7 @@ void NvimBridge::on_notify (std::string method,
                 << args << ")" << std::endl;
     }
 }
+
+std::vector<Glib::ustring> NvimBridge::envp_;
 
 }

@@ -26,6 +26,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "msgpack-adapter.h"
 #include "msgpack-rpc.h"
@@ -95,6 +96,8 @@ private:
 
     RefPtr<MsgpackRpc> rpc_;
     Glib::Pid nvim_pid_;
+
+    static std::vector<Glib::ustring> envp_;
 };
 
 }
