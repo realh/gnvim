@@ -168,10 +168,13 @@ bool View::on_mouse_event (GdkEventType etype, int button,
     else
         but_str = mouse_button_name (button);
 
+    convert_coords_to_cells (x, y);
+
     char *inp = g_strdup_printf ("<%s%s%s><%d,%d>",
             modifier_string (modifiers).c_str (),
             but_str.c_str(), etype_str.c_str (),
             x, y);
+    //g_debug ("Mouse event %s", inp);
     buffer_->get_nvim_bridge ().nvim_input (inp);
     g_free (inp);
 
