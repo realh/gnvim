@@ -37,11 +37,7 @@ void Application::on_activate ()
 
 int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
-    int argc;
-    char **argv = cl->get_arguments (argc);
-    std::vector<const char *> args_vec (argv, argv + argc);
-    g_strfreev(argv);
-    if (!open_window (args_vec))
+    if (!open_window (cl))
     {
         g_warning ("Failed to open window, exiting this instance");
         return 1;
@@ -49,21 +45,14 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
     return 0;
 }
 
-bool Application::open_window (const std::vector<const char *> &args)
+bool Application::open_window (const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
     try {
-        auto win = new Window (args);
-        if (win->is_visible ())
-        {
-            g_debug ("Adding window");
-            add_window (*win);
-            g_debug ("Window added, now have %ld", get_windows ().size ());
-            return true;
-        }
-        else
-        {
-            g_debug ("Window was never opened");
-        }
+        auto win = new Window (cl);
+        g_debug ("Adding window");
+        add_window (*win);
+        g_debug ("Window added, now have %ld", get_windows ().size ());
+        return true;
     }
     catch (Glib::Exception &e)
     {
@@ -90,5 +79,7 @@ void Application::on_window_removed (Gtk::Window *)
         g_debug ("Window removed, but %ld left", get_windows ().size ());
     }
 }
+
+RefPtr<Gio::ApplicationCommandLine> Application::null_cl;
 
 }

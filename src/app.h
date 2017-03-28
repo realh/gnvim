@@ -21,8 +21,6 @@
 
 #include "defns.h"
 
-#include <vector>
-
 namespace Gnvim
 {
 
@@ -40,17 +38,13 @@ public:
     virtual int on_command_line (const RefPtr<Gio::ApplicationCommandLine> &)
             override;
 
-    bool open_window ()
-    {
-        std::vector<const char *> no_args;
-        return open_window (no_args);
-    }
-
-    bool open_window (const std::vector<const char *> &args);
+    bool open_window (const RefPtr<Gio::ApplicationCommandLine> & = null_cl);
 
     //virtual void remove_window 
 protected:
     virtual void on_window_removed (Gtk::Window *) override;
+private:
+    static RefPtr<Gio::ApplicationCommandLine> null_cl;
 };
 
 }

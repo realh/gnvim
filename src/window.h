@@ -31,10 +31,12 @@ namespace Gnvim
 
 class Window : public Gtk::ApplicationWindow {
 public:
-    Window (std::vector<const char *> args);
+    Window (const RefPtr<Gio::ApplicationCommandLine> & = null_cl);
 
     void force_close ();
 private:
+    void on_nvim_ready ();
+
     void on_nvim_error (Glib::ustring desc);
 
     void on_nvim_resize (int columns, int rows);
@@ -51,6 +53,8 @@ private:
     View *view_;
 
     Buffer *buffer_;
+
+    static RefPtr<Gio::ApplicationCommandLine> null_cl;
 };
 
 }

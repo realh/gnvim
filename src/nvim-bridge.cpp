@@ -18,7 +18,9 @@
 
 #include "defns.h"
 
+#include <cstring>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -29,8 +31,44 @@ namespace Gnvim
 
 NvimBridge::NvimBridge ()
 {
-    static std::vector<std::string> argv {"nvim", "--embed"};
-    int to_nvim_stdin, from_nvim_stdout;
+    map_adapters ();
+}
+
+void NvimBridge::start (const RefPtr<Gio::ApplicationCommandLine> cl)
+{
+    static std::vector<std::string> args {"nvim"};
+    int argc;
+    bool u = false, embed = false;
+    char **argv = cl->get_arguments (argc);
+    //
+    // Check whether -u or --embed are already present
+    for (int n = 1; n < argc; ++n)
+    {
+        if (!strcmp (argv[n], "-u"))
+            u = true;
+        else if (!strcmp (argv[n], "--embed"))
+            embed = true;
+    }
+
+    if (!embed)
+        args.push_back ("--embed");
+
+    // Load gnvim.vim config if present and -u wasn't overridden
+    if (!u)
+    {
+        auto gnvimrc = Glib::build_filename (Glib::get_user_config_dir (),
+                "nvim", "gnvim.vim");
+        if (Glib::file_test (gnvimrc, Glib::FILE_TEST_IS_REGULAR))
+        {
+            args.push_back ("-u");
+            args.push_back (gnvimrc);
+        }
+    }
+
+    for (int n = 1; n < argc; ++n)
+    {
+        args.push_back (argv[n]);
+    }
 
     if (!envp_.size ())
     {
@@ -40,9 +78,9 @@ NvimBridge::NvimBridge ()
                 + Glib::get_user_data_dir ());
     }
 
-    map_adapters ();
-
-    Glib::spawn_async_with_pipes ("", argv, envp_, Glib::SPAWN_SEARCH_PATH,
+    int to_nvim_stdin, from_nvim_stdout;
+    Glib::spawn_async_with_pipes (cl->get_cwd (),
+            args, envp_, Glib::SPAWN_SEARCH_PATH,
             Glib::SlotSpawnChildSetup (), &nvim_pid_,
             &to_nvim_stdin, &from_nvim_stdout);
 
@@ -51,11 +89,26 @@ NvimBridge::NvimBridge ()
             sigc::mem_fun (*this, &NvimBridge::on_notify));
     rpc_->request_signal ().connect (
             sigc::mem_fun (*this, &NvimBridge::on_request));
+
     rpc_->start (to_nvim_stdin, from_nvim_stdout);
+
+    cols_promise_ = MsgpackPromise::create ();
+    lines_promise_ = MsgpackPromise::create ();
+    cols_promise_->value_signal ().connect (
+            sigc::mem_fun (this, &NvimBridge::on_cols_promise_value));
+    cols_promise_->error_signal ().connect (
+            sigc::mem_fun (this, &NvimBridge::on_cols_promise_error));
+    lines_promise_->value_signal ().connect (
+            sigc::mem_fun (this, &NvimBridge::on_lines_promise_value));
+    lines_promise_->error_signal ().connect (
+            sigc::mem_fun (this, &NvimBridge::on_lines_promise_error));
+    nvim_get_option ("columns", cols_promise_);
+    nvim_get_option ("lines", lines_promise_);
 }
 
 NvimBridge::~NvimBridge ()
 {
+    stop ();
     if (nvim_pid_)
     {
         Glib::spawn_close_pid (nvim_pid_);
@@ -118,7 +171,7 @@ void NvimBridge::map_adapters ()
         new MsgpackAdapter<void> (redraw_popupmenu_hide));
 }
 
-void NvimBridge::start_gui (int width, int height)
+void NvimBridge::start_ui (int width, int height)
 {
     std::map<std::string, bool> options;
     // Don't actually need to set any options
@@ -133,10 +186,13 @@ void NvimBridge::stop ()
 
 void NvimBridge::nvim_input (const std::string &keys)
 {
-    if (rpc_)
-    {
-        rpc_->notify ("nvim_input", keys);
-    }
+    rpc_->notify ("nvim_input", keys);
+}
+
+void NvimBridge::nvim_get_option (const std::string &name,
+        std::shared_ptr<MsgpackPromise> promise)
+{
+    rpc_->request ("nvim_get_option", promise, name);
 }
 
 void NvimBridge::on_request (guint32 msgid, std::string method,
@@ -206,6 +262,44 @@ void NvimBridge::on_notify (std::string method,
         std::cout << "nvim sent notification '" << method << "' ("
                 << args << ")" << std::endl;
     }
+}
+
+void NvimBridge::on_cols_promise_value (const msgpack::object &o)
+{
+    o.convert (default_cols_);
+    g_debug ("Read nvim 'columns' setting: %d", default_cols_);
+    cols_promise_.reset ();
+    if (!lines_promise_)
+        ready_signal_.emit ();
+}
+
+void NvimBridge::on_cols_promise_error (const msgpack::object &o)
+{
+    std::ostringstream s;
+    s << o;
+    g_debug ("Error reading nvim 'columns' setting: %s", s.str ().c_str ());
+    cols_promise_.reset ();
+    if (!lines_promise_)
+        ready_signal_.emit ();
+}
+
+void NvimBridge::on_lines_promise_value (const msgpack::object &o)
+{
+    o.convert (default_lines_);
+    g_debug ("Read nvim 'columns' setting: %d", default_lines_);
+    lines_promise_.reset ();
+    if (!cols_promise_)
+        ready_signal_.emit ();
+}
+
+void NvimBridge::on_lines_promise_error (const msgpack::object &o)
+{
+    std::ostringstream s;
+    s << o;
+    g_debug ("Error reading nvim 'lines' setting: %s", s.str ().c_str ());
+    lines_promise_.reset ();
+    if (!cols_promise_)
+        ready_signal_.emit ();
 }
 
 std::vector<Glib::ustring> NvimBridge::envp_;

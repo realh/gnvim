@@ -24,9 +24,18 @@
 namespace Gnvim
 {
 
-Window::Window (std::vector<const char *>)
+Window::Window (const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
-    buffer_ = Buffer::create (nvim_, 80, 36);
+    nvim_.ready_signal ().connect (
+            sigc::mem_fun (this, &Window::on_nvim_ready));
+    nvim_.start (cl);
+}
+
+void Window::on_nvim_ready ()
+{
+    int cols = nvim_.get_default_width ();
+    int rows = nvim_.get_default_height ();
+    buffer_ = Buffer::create (nvim_, cols, rows);
     view_ = new View (buffer_);
     int width, height;
     view_->get_preferred_size (width, height);
@@ -41,14 +50,15 @@ Window::Window (std::vector<const char *>)
     if (!force_close_)
     {
         present ();
-        nvim_.start_gui (80, 36);
+        nvim_.start_ui (cols, rows);
+        nvim_.redraw_resize.connect (
+                sigc::mem_fun (this, &Window::on_nvim_resize));
     }
     else
     {
-        g_warning ("Window closed before it opened");
+        g_critical ("Window closed before it opened");
+        unreference ();
     }
-
-    nvim_.redraw_resize.connect (sigc::mem_fun (this, &Window::on_nvim_resize));
 }
 
 void Window::force_close ()
@@ -72,8 +82,10 @@ void Window::on_nvim_resize (int columns, int rows)
     int pad_x = get_allocated_width () - view_->get_allocated_width ();
     int pad_y = get_allocated_height () - view_->get_allocated_height ();
     /*
-    g_debug ("Window size %dx%d", get_allocated_width (), get_allocated_height ());
-    g_debug ("View size %dx%d", view_->get_allocated_width (), view_->get_allocated_height ());
+    g_debug ("Window size %dx%d",
+            get_allocated_width (), get_allocated_height ());
+    g_debug ("View size %dx%d",
+            view_->get_allocated_width (), view_->get_allocated_height ());
     g_debug ("padding %d, %d", pad_x, pad_y);
     */
     view_->set_grid_size (columns, rows);
@@ -108,5 +120,7 @@ void Window::set_geometry_hints ()
             Gdk::HINT_MIN_SIZE | Gdk::HINT_RESIZE_INC | Gdk::HINT_BASE_SIZE);
 }
 #endif
+
+RefPtr<Gio::ApplicationCommandLine> Window::null_cl;
 
 }
