@@ -34,7 +34,7 @@ Application::Application ()
 {
     options_.set_summary (_("Run neovim with a GUI"));
     options_.set_description (
-            _("Other options are passed on to the embedded nvim instance; "
+            _("Other options are passed on to the embedded nvim instance;\n"
                 "--embed is added automatically"));
     options_.set_help_enabled (true);
     options_.set_ignore_unknown_options (true);
@@ -43,8 +43,8 @@ Application::Application ()
     entry.set_long_name ("geometry");
     entry.set_short_name ('g');
     entry.set_flags (Glib::OptionEntry::FLAG_IN_MAIN);
-    entry.set_description (_("Set editor size in characters WIDTHxHEIGHT "
-                "or maximised"));
+    entry.set_description (_("Set editor size in chars WIDTHxHEIGHT\n"
+                "                                        or maximised"));
     entry.set_arg_description (_("WIDTHxHEIGHT | max"));
     main_opt_group_.add_entry (entry,
             sigc::mem_fun (this, &Application::on_opt_geometry));
