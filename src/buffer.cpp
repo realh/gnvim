@@ -176,7 +176,6 @@ void Buffer::on_redraw_cursor_goto (int row, int col)
 {
     cursor_col_ = col;
     cursor_row_ = row;
-//  std::cout << "Moving cursor to row " << row << ", col " << col << std::endl;
 }
 
 void Buffer::on_redraw_put (const msgpack::object_array &text_ar)

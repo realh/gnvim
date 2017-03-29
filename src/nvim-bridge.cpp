@@ -200,8 +200,10 @@ void NvimBridge::nvim_get_option (const std::string &name,
 void NvimBridge::on_request (guint32 msgid, std::string method,
         const msgpack::object &args)
 {
-    std::cout << "nvim sent request " << msgid
-            << " '" << method << "' (" << args << ")" << std::endl;
+    std::ostringstream s;
+    s << "nvim sent request " << msgid
+            << " '" << method << "' (" << args << ")";
+    g_debug ("%s", s.str ().c_str ());
 }
 
 void NvimBridge::on_notify (std::string method,
@@ -209,8 +211,9 @@ void NvimBridge::on_notify (std::string method,
 {
     if (method != "redraw")
     {
-        std::cout << "nvim sent notification '" << method << "' ("
-                << args << ")" << std::endl;
+        std::ostringstream s;
+        s << "nvim sent notification '" << method << "' (" << args << ")";
+        g_debug ("%s", s.str ().c_str ());
     }
     redraw_start.emit ();
     const msgpack::object_array &ar = args.via.array;
@@ -246,13 +249,13 @@ void NvimBridge::on_notify (std::string method,
             }
             catch (std::exception &e)
             {
-                std::cerr << "std::exception emitting redraw method '"
-                    << method_name << "' : " << e.what() << std::endl;
+                g_critical ("std::exception emitting redraw method '%s': %s",
+                    method_name.c_str (), e.what());
             }
             catch (Glib::Exception &e)
             {
-                std::cerr << "Glib::Exception emitting redraw method '"
-                    << method_name << "' : " << e.what() << std::endl;
+                g_critical ("Glib::Exception emitting redraw method '%s': %s",
+                    method_name.c_str (), e.what().c_str ());
             }
         }
     }
