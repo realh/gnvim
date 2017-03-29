@@ -35,6 +35,9 @@ View::View (Buffer *buffer)
     set_monospace ();
     calculate_metrics ();
 
+    auto &nvim = buffer->get_nvim_bridge ();
+    nvim.redraw_mode_change.connect (
+            sigc::mem_fun (this, &View::on_redraw_mode_change));
 }
 
 Glib::ustring modifier_string (guint state)
@@ -263,6 +266,12 @@ void View::get_preferred_size_for (int &width, int &height)
     height = cell_height_px_ * height
             + get_margin_top () + get_margin_bottom ();
     // g_debug ("Preferred size %dx%d", width, height);
+}
+
+void View::on_redraw_mode_change (const std::string &mode)
+{
+    // Kludge to set cursor shape
+    set_overwrite (mode == "normal");
 }
 
 }

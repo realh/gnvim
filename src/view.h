@@ -74,6 +74,8 @@ private:
     bool on_mouse_event (GdkEventType, int button,
             guint modifiers, int x, int y);
 
+    void on_redraw_mode_change (const std::string &mode);
+
     void calculate_metrics ();
 
     // in = window coords eg from mose event, out = vim text coords
