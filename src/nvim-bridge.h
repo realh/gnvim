@@ -71,6 +71,7 @@ public:
         return default_lines_;
     }
 
+    sigc::signal<void> redraw_start;
     sigc::signal<void, int, int> redraw_resize;
     sigc::signal<void> redraw_clear;
     sigc::signal<void> redraw_eol_clear;
@@ -85,20 +86,23 @@ public:
     sigc::signal<void, int> redraw_scroll;
     sigc::signal<void, const std::string &> redraw_set_title;
     sigc::signal<void, const std::string &> redraw_set_icon;
+    sigc::signal<void> redraw_bell;
+    sigc::signal<void> redraw_visual_bell;
+    sigc::signal<void, const std::string &> redraw_mode_change;
+    sigc::signal<void> redraw_end;
+    // The following are ignored, some may be implemented in future
+    /*
     sigc::signal<void> redraw_mouse_on;
     sigc::signal<void> redraw_mouse_off;
     sigc::signal<void> redraw_busy_on;
     sigc::signal<void> redraw_busy_off;
     sigc::signal<void> redraw_suspend;
-    sigc::signal<void> redraw_bell;
-    sigc::signal<void> redraw_visual_bell;
     sigc::signal<void> redraw_update_menu;
-    sigc::signal<void, const std::string &> redraw_mode_change;
     sigc::signal<void, const msgpack::object &, int, int, int>
             redraw_popupmenu_show;
     sigc::signal<void, int> redraw_popupmenu_select;
     sigc::signal<void> redraw_popupmenu_hide;
-    sigc::signal<void> redraw_end;
+    */
 
 private:
     void map_adapters ();

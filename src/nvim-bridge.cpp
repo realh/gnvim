@@ -144,6 +144,13 @@ void NvimBridge::map_adapters ()
         new MsgpackAdapter<const std::string &> (redraw_set_title));
     redraw_adapters_.emplace ("set_icon",
         new MsgpackAdapter<const std::string &> (redraw_set_icon));
+    redraw_adapters_.emplace ("bell",
+        new MsgpackAdapter<void> (redraw_bell));
+    redraw_adapters_.emplace ("visual_bell",
+        new MsgpackAdapter<void> (redraw_visual_bell));
+    redraw_adapters_.emplace ("mode_change",
+        new MsgpackAdapter<const std::string &> (redraw_mode_change));
+    /*
     redraw_adapters_.emplace ("mouse_on",
         new MsgpackAdapter<void> (redraw_mouse_on));
     redraw_adapters_.emplace ("mouse_off",
@@ -154,14 +161,8 @@ void NvimBridge::map_adapters ()
         new MsgpackAdapter<void> (redraw_busy_off));
     redraw_adapters_.emplace ("suspend",
         new MsgpackAdapter<void> (redraw_suspend));
-    redraw_adapters_.emplace ("bell",
-        new MsgpackAdapter<void> (redraw_bell));
-    redraw_adapters_.emplace ("visual_bell",
-        new MsgpackAdapter<void> (redraw_visual_bell));
     redraw_adapters_.emplace ("update_menu",
         new MsgpackAdapter<void> (redraw_update_menu));
-    redraw_adapters_.emplace ("mode_change",
-        new MsgpackAdapter<const std::string &> (redraw_mode_change));
     redraw_adapters_.emplace ("popupmenu_show",
         new MsgpackAdapter<const msgpack::object &, int, int, int>
         (redraw_popupmenu_show));
@@ -169,6 +170,7 @@ void NvimBridge::map_adapters ()
         new MsgpackAdapter<int> (redraw_popupmenu_select));
     redraw_adapters_.emplace ("popupmenu_hide",
         new MsgpackAdapter<void> (redraw_popupmenu_hide));
+    */
 }
 
 void NvimBridge::start_ui (int width, int height)
@@ -205,63 +207,61 @@ void NvimBridge::on_request (guint32 msgid, std::string method,
 void NvimBridge::on_notify (std::string method,
         const msgpack::object &args)
 {
-    if (method == "redraw")
-    {
-        const msgpack::object_array &ar = args.via.array;
-        for (guint32 i = 0; i < ar.size; ++i)
-        {
-            const auto &method_ar = ar.ptr[i].via.array;
-            std::string method_name;
-            method_ar.ptr[0].convert (method_name);
-            const auto &it = redraw_adapters_.find (method_name);
-            if (it != redraw_adapters_.end ())
-            {
-                const auto &emitter = it->second;
-                try {
-                    // put is weird, encoded as ["put", [char], [char], ...]
-                    // (where each char is encoded as a utf-8 str)
-                    // instead of ["put", [str]].
-                    if (emitter->num_args () == 0 || method_name == "put")
-                    {
-                        emitter->emit (method_ar);
-                    }
-                    // highlight_set is also weird, may be sent as
-                    // ["highlight_set", [{}], [{useful}]] in addition to
-                    // expected ["highlight_set", [{useful}]]
-                    else if (method_name == "highlight_set"
-                            && method_ar.size > 2)
-                    {
-                        emitter->emit (method_ar.ptr[2].via.array);
-                    }
-                    else
-                    {
-                        emitter->emit (method_ar.ptr[1].via.array);
-                    }
-                }
-                catch (std::exception &e)
-                {
-                    std::cerr << "std::exception emitting redraw method '"
-                        << method_name << "' : " << e.what() << std::endl;
-                }
-                catch (Glib::Exception &e)
-                {
-                    std::cerr << "Glib::Exception emitting redraw method '"
-                        << method_name << "' : " << e.what() << std::endl;
-                }
-            }
-            else
-            {
-                g_warning ("No adapater for redraw method '%s'",
-                        method_name.c_str());
-            }
-        }
-        redraw_end.emit ();
-    }
-    else
+    if (method != "redraw")
     {
         std::cout << "nvim sent notification '" << method << "' ("
                 << args << ")" << std::endl;
     }
+    redraw_start.emit ();
+    const msgpack::object_array &ar = args.via.array;
+    for (guint32 i = 0; i < ar.size; ++i)
+    {
+        const auto &method_ar = ar.ptr[i].via.array;
+        std::string method_name;
+        method_ar.ptr[0].convert (method_name);
+        const auto &it = redraw_adapters_.find (method_name);
+        if (it != redraw_adapters_.end ())
+        {
+            const auto &emitter = it->second;
+            try {
+                // put is weird, encoded as ["put", [char], [char], ...]
+                // (where each char is encoded as a utf-8 str)
+                // instead of ["put", [str]].
+                if (emitter->num_args () == 0 || method_name == "put")
+                {
+                    emitter->emit (method_ar);
+                }
+                // highlight_set is also weird, may be sent as
+                // ["highlight_set", [{}], [{useful}]] in addition to
+                // expected ["highlight_set", [{useful}]]
+                else if (method_name == "highlight_set"
+                        && method_ar.size > 2)
+                {
+                    emitter->emit (method_ar.ptr[2].via.array);
+                }
+                else
+                {
+                    emitter->emit (method_ar.ptr[1].via.array);
+                }
+            }
+            catch (std::exception &e)
+            {
+                std::cerr << "std::exception emitting redraw method '"
+                    << method_name << "' : " << e.what() << std::endl;
+            }
+            catch (Glib::Exception &e)
+            {
+                std::cerr << "Glib::Exception emitting redraw method '"
+                    << method_name << "' : " << e.what() << std::endl;
+            }
+        }
+        else
+        {
+            g_warning ("No adapater for redraw method '%s'",
+                    method_name.c_str());
+        }
+    }
+    redraw_end.emit ();
 }
 
 void NvimBridge::on_cols_promise_value (const msgpack::object &o)
