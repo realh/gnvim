@@ -56,7 +56,7 @@ Application::Application ()
     main_opt_group_.add_entry (entry, opt_help_nvim_);
 
     options_.set_main_group (main_opt_group_);
-    //g_option_context_add_group (options_.gobj (), gtk_get_option_group (0));
+    g_option_context_add_group (options_.gobj (), gtk_get_option_group (0));
 }
 
 void Application::on_activate ()
