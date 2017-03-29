@@ -39,7 +39,9 @@ private:
 
     void on_nvim_error (Glib::ustring desc);
 
-    void on_nvim_resize (int columns, int rows);
+    void on_redraw_resize (int columns, int rows);
+
+    void on_redraw_set_title (const std::string &);
 
     // Geometry hints have a history of breakage and serve almost no useful
     // purpose in current desktops

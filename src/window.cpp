@@ -51,8 +51,10 @@ void Window::on_nvim_ready ()
     {
         present ();
         nvim_.start_ui (cols, rows);
-        nvim_.redraw_resize.connect (
-                sigc::mem_fun (this, &Window::on_nvim_resize));
+        nvim_.redraw_resize.connect
+            (sigc::mem_fun (this, &Window::on_redraw_resize));
+        nvim_.redraw_set_title.connect
+            (sigc::mem_fun (this, &Window::on_redraw_set_title));
     }
     else
     {
@@ -74,7 +76,7 @@ void Window::on_nvim_error (Glib::ustring desc)
     force_close ();
 }
 
-void Window::on_nvim_resize (int columns, int rows)
+void Window::on_redraw_resize (int columns, int rows)
 {
     g_debug ("nvim requested resize to %dx%d", columns, rows);
     if (!buffer_->resize (columns, rows))
@@ -96,6 +98,12 @@ void Window::on_nvim_resize (int columns, int rows)
     g_debug ("Resizing to %dx%d", vw + pad_x, vh + pad_y);
     */
     resize (vw + pad_x, vh + pad_y);
+}
+
+void Window::on_redraw_set_title (const std::string &title)
+{
+    g_debug ("Set window title %s", title.c_str ());
+    set_title (title);
 }
 
 #if 0
