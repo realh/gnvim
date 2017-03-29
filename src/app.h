@@ -44,6 +44,13 @@ public:
 protected:
     virtual void on_window_removed (Gtk::Window *) override;
 private:
+    Glib::OptionContext options_;
+    Glib::OptionGroup main_opt_group_;
+    bool opt_max_;
+    int opt_width_, opt_height_;
+    bool opt_help_nvim_;
+    bool on_opt_geometry (const Glib::ustring &, const Glib::ustring &, bool);
+
     static RefPtr<Gio::ApplicationCommandLine> null_cl;
 };
 

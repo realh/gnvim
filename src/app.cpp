@@ -18,6 +18,8 @@
 
 #include "defns.h"
 
+#include <cstdio>
+
 #include "app.h"
 #include "window.h"
 
@@ -26,8 +28,35 @@ namespace Gnvim
 
 Application::Application ()
         : Gtk::Application ("uk.co.realh.gnvim",
-            Gio::APPLICATION_HANDLES_COMMAND_LINE)
+            Gio::APPLICATION_HANDLES_COMMAND_LINE),
+        options_("NVIM_ARGUMENTS"),
+        main_opt_group_ ("gnvim", _("gnvim options"))
 {
+    options_.set_summary (_("Run neovim with a GUI"));
+    options_.set_description (
+            _("Other options are passed on to the embedded nvim instance; "
+                "--embed is added automatically"));
+    options_.set_help_enabled (true);
+    options_.set_ignore_unknown_options (true);
+
+    Glib::OptionEntry entry;
+    entry.set_long_name ("geometry");
+    entry.set_short_name ('g');
+    entry.set_flags (Glib::OptionEntry::FLAG_IN_MAIN);
+    entry.set_description (_("Set editor size in characters WIDTHxHEIGHT "
+                "or maximised"));
+    entry.set_arg_description (_("WIDTHxHEIGHT | max"));
+    main_opt_group_.add_entry (entry,
+            sigc::mem_fun (this, &Application::on_opt_geometry));
+
+    entry = Glib::OptionEntry ();
+    entry.set_long_name ("help-nvim");
+    entry.set_flags (Glib::OptionEntry::FLAG_IN_MAIN);
+    entry.set_description (_("Show options handled by embedded nvim"));
+    main_opt_group_.add_entry (entry, opt_help_nvim_);
+
+    options_.set_main_group (main_opt_group_);
+    //g_option_context_add_group (options_.gobj (), gtk_get_option_group (0));
 }
 
 void Application::on_activate ()
@@ -37,6 +66,19 @@ void Application::on_activate ()
 
 int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
+    int argc;
+    char **argv = cl->get_arguments (argc);
+    opt_max_ = false;
+    opt_width_ = 80;
+    opt_height_ = 32;
+    opt_help_nvim_ = false;
+    if (!options_.parse (argc, argv))
+        return 1;
+    if (opt_help_nvim_)
+    {
+        Glib::spawn_command_line_sync ("nvim --help");
+        return 0;
+    }
     if (!open_window (cl))
     {
         g_warning ("Failed to open window, exiting this instance");
@@ -78,6 +120,36 @@ void Application::on_window_removed (Gtk::Window *)
     {
         g_debug ("Window removed, but %ld left", get_windows ().size ());
     }
+}
+
+bool Application::on_opt_geometry (const Glib::ustring &,
+        const Glib::ustring &geom, bool has_value)
+{
+    if (!has_value)
+    {
+        g_critical ("--geometry needs an argument");
+        return false;
+    }
+
+    if (geom.find ("max") == 0)
+    {
+        opt_max_ = true;
+        return true;
+    }
+    else
+    {
+        int w = 0, h = 0;
+        if (sscanf (geom.c_str (), "%dx%d", &w, &h) != 2
+                || w <= 0 || h <= 0)
+        {
+            g_critical ("--geometry argument must be WxH or 'max'");
+            return false;
+        }
+        opt_width_ = w;
+        opt_height_ = h;
+    }
+
+    return true;
 }
 
 RefPtr<Gio::ApplicationCommandLine> Application::null_cl;
