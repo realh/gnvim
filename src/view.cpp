@@ -38,6 +38,7 @@ View::View (Buffer *buffer)
     auto &nvim = buffer->get_nvim_bridge ();
     nvim.redraw_mode_change.connect (
             sigc::mem_fun (this, &View::on_redraw_mode_change));
+    on_redraw_mode_change ("normal");
 }
 
 Glib::ustring modifier_string (guint state)
