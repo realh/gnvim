@@ -261,6 +261,10 @@ void NvimBridge::on_notify (std::string method,
                     method_name.c_str (), e.what().c_str ());
             }
         }
+        else
+        {
+            g_debug ("Unknown redraw method %s", method_name.c_str ());
+        }
     }
     redraw_end.emit ();
 }
