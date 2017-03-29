@@ -255,11 +255,6 @@ void NvimBridge::on_notify (std::string method,
                     << method_name << "' : " << e.what() << std::endl;
             }
         }
-        else
-        {
-            g_warning ("No adapater for redraw method '%s'",
-                    method_name.c_str());
-        }
     }
     redraw_end.emit ();
 }
