@@ -183,7 +183,10 @@ void NvimBridge::start_ui (int width, int height)
 void NvimBridge::stop ()
 {
     if (rpc_)
+    {
+        rpc_->notify ("nvim_ui_detach");
         rpc_->stop ();
+    }
 }
 
 void NvimBridge::nvim_input (const std::string &keys)

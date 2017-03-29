@@ -87,6 +87,8 @@ void MsgpackRpc::do_response (guint32 msgid,
 
 void MsgpackRpc::send (std::string &&s)
 {
+    if (stop_)
+        return;
     gsize nwritten = 0;
     try
     {
