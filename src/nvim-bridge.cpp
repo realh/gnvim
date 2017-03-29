@@ -34,12 +34,10 @@ NvimBridge::NvimBridge ()
     map_adapters ();
 }
 
-void NvimBridge::start (const RefPtr<Gio::ApplicationCommandLine> cl)
+void NvimBridge::start (const std::string &cwd, int argc, char **argv)
 {
     static std::vector<std::string> args {"nvim"};
-    int argc;
     bool u = false, embed = false;
-    char **argv = cl->get_arguments (argc);
     //
     // Check whether -u or --embed are already present
     for (int n = 1; n < argc; ++n)
@@ -79,7 +77,7 @@ void NvimBridge::start (const RefPtr<Gio::ApplicationCommandLine> cl)
     }
 
     int to_nvim_stdin, from_nvim_stdout;
-    Glib::spawn_async_with_pipes (cl->get_cwd (),
+    Glib::spawn_async_with_pipes (cwd,
             args, envp_, Glib::SPAWN_SEARCH_PATH,
             Glib::SlotSpawnChildSetup (), &nvim_pid_,
             &to_nvim_stdin, &from_nvim_stdout);
@@ -91,19 +89,6 @@ void NvimBridge::start (const RefPtr<Gio::ApplicationCommandLine> cl)
             sigc::mem_fun (*this, &NvimBridge::on_request));
 
     rpc_->start (to_nvim_stdin, from_nvim_stdout);
-
-    cols_promise_ = MsgpackPromise::create ();
-    lines_promise_ = MsgpackPromise::create ();
-    cols_promise_->value_signal ().connect (
-            sigc::mem_fun (this, &NvimBridge::on_cols_promise_value));
-    cols_promise_->error_signal ().connect (
-            sigc::mem_fun (this, &NvimBridge::on_cols_promise_error));
-    lines_promise_->value_signal ().connect (
-            sigc::mem_fun (this, &NvimBridge::on_lines_promise_value));
-    lines_promise_->error_signal ().connect (
-            sigc::mem_fun (this, &NvimBridge::on_lines_promise_error));
-    nvim_get_option ("columns", cols_promise_);
-    nvim_get_option ("lines", lines_promise_);
 }
 
 NvimBridge::~NvimBridge ()
@@ -267,44 +252,6 @@ void NvimBridge::on_notify (std::string method,
         }
     }
     redraw_end.emit ();
-}
-
-void NvimBridge::on_cols_promise_value (const msgpack::object &o)
-{
-    o.convert (default_cols_);
-    g_debug ("Read nvim 'columns' setting: %d", default_cols_);
-    cols_promise_.reset ();
-    if (!lines_promise_)
-        ready_signal_.emit ();
-}
-
-void NvimBridge::on_cols_promise_error (const msgpack::object &o)
-{
-    std::ostringstream s;
-    s << o;
-    g_debug ("Error reading nvim 'columns' setting: %s", s.str ().c_str ());
-    cols_promise_.reset ();
-    if (!lines_promise_)
-        ready_signal_.emit ();
-}
-
-void NvimBridge::on_lines_promise_value (const msgpack::object &o)
-{
-    o.convert (default_lines_);
-    g_debug ("Read nvim 'columns' setting: %d", default_lines_);
-    lines_promise_.reset ();
-    if (!cols_promise_)
-        ready_signal_.emit ();
-}
-
-void NvimBridge::on_lines_promise_error (const msgpack::object &o)
-{
-    std::ostringstream s;
-    s << o;
-    g_debug ("Error reading nvim 'lines' setting: %s", s.str ().c_str ());
-    lines_promise_.reset ();
-    if (!cols_promise_)
-        ready_signal_.emit ();
 }
 
 std::vector<Glib::ustring> NvimBridge::envp_;

@@ -61,7 +61,7 @@ Application::Application ()
 
 void Application::on_activate ()
 {
-    open_window ();
+    open_window (Glib::get_current_dir (), 0, nullptr);
 }
 
 int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
@@ -79,7 +79,7 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
         Glib::spawn_command_line_sync ("nvim --help");
         return 0;
     }
-    if (!open_window (cl))
+    if (!open_window (cl->get_cwd (), argc, argv))
     {
         g_warning ("Failed to open window, exiting this instance");
         return 1;
@@ -87,10 +87,11 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
     return 0;
 }
 
-bool Application::open_window (const RefPtr<Gio::ApplicationCommandLine> &cl)
+bool Application::open_window (const std::string &cwd, int argc, char **argv)
 {
     try {
-        auto win = new Window (cl);
+        auto win = new Window (opt_max_, opt_width_, opt_height_,
+                cwd, argc, argv);
         g_debug ("Adding window");
         add_window (*win);
         g_debug ("Window added, now have %ld", get_windows ().size ());
@@ -151,7 +152,5 @@ bool Application::on_opt_geometry (const Glib::ustring &,
 
     return true;
 }
-
-RefPtr<Gio::ApplicationCommandLine> Application::null_cl;
 
 }

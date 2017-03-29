@@ -28,9 +28,13 @@ namespace Gnvim
 
 class View : public Gtk::TextView {
 public:
+    View ();
+
     // Want to be passed an unref'd pointer because super takes a ref, but
     // it's a ref to Gtk::TextBuffer
     View (Buffer *buffer);
+
+    void set_buffer (Buffer *buffer);
 
     // Height includes spacing
     void get_cell_size_in_pixels (int &width, int &height) const

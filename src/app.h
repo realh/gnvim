@@ -38,7 +38,7 @@ public:
     virtual int on_command_line (const RefPtr<Gio::ApplicationCommandLine> &)
             override;
 
-    bool open_window (const RefPtr<Gio::ApplicationCommandLine> & = null_cl);
+    bool open_window (const std::string &cwd, int argc, char **argv);
 
     //virtual void remove_window 
 protected:
@@ -50,8 +50,6 @@ private:
     int opt_width_, opt_height_;
     bool opt_help_nvim_;
     bool on_opt_geometry (const Glib::ustring &, const Glib::ustring &, bool);
-
-    static RefPtr<Gio::ApplicationCommandLine> null_cl;
 };
 
 }

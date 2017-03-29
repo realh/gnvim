@@ -24,22 +24,37 @@
 namespace Gnvim
 {
 
-View::View (Buffer *buffer)
-        : Gtk::TextView (RefPtr<Gtk::TextBuffer> (buffer)),
-        buffer_ (buffer)
+View::View () : buffer_ (nullptr)
 {
     // Disabling wrapping should minimise nasty things happening during
     // asynchronous size changes
     set_wrap_mode (Gtk::WRAP_NONE);
-    buffer->get_size (columns_, rows_);
     set_monospace ();
     calculate_metrics ();
 
+    on_redraw_mode_change ("normal");
+
+}
+
+View::View (Buffer *buffer) : View ()
+{
+    set_buffer (buffer);
+}
+
+void View::set_buffer (Buffer *buffer)
+{
+    if (buffer_)
+    {
+        auto &nvim = buffer_->get_nvim_bridge ();
+        nvim.redraw_mode_change.clear ();
+        nvim.redraw_bell.clear ();
+        nvim.redraw_visual_bell.clear ();
+    }
+    buffer_ = buffer;
+    Gtk::TextView::set_buffer (RefPtr<Gtk::TextBuffer> (buffer));
     auto &nvim = buffer->get_nvim_bridge ();
     nvim.redraw_mode_change.connect (
             sigc::mem_fun (this, &View::on_redraw_mode_change));
-    on_redraw_mode_change ("normal");
-
     nvim.redraw_bell.connect (sigc::mem_fun (this, &View::on_redraw_bell));
     nvim.redraw_visual_bell.connect
             (sigc::mem_fun (this, &View::on_redraw_bell));
@@ -231,11 +246,9 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
     columns_ = (allocation.get_width () - borders_width) / cell_width_px_;
     rows_ = (allocation.get_height () - borders_height) / cell_height_px_;
 
-    /*
     g_debug ("allocation %dx%d, grid size %dx%d",
             allocation.get_width (), allocation.get_height (),
             columns_, rows_);
-    */
 
     // Does nothing if size hasn't changed
     buffer_->resize (columns_, rows_);
@@ -254,7 +267,7 @@ void View::calculate_metrics ()
             + get_pixels_above_lines () + get_pixels_below_lines ())
             / PANGO_SCALE;
 
-    // g_debug ("Cell size %dx%d", cell_width_px_, cell_height_px_);
+    g_debug ("Cell size %dx%d", cell_width_px_, cell_height_px_);
 }
 
 void View::get_preferred_size (int &width, int &height)

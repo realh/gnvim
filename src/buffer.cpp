@@ -62,7 +62,12 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
 bool Buffer::resize (int columns, int rows)
 {
     if (columns == columns_ && rows == rows_)
+    {
+        g_debug ("No change to buffer size");
         return false;
+    }
+    g_debug ("Changing buffer size from %dx%d to %dx%d", columns_, rows_,
+            columns, rows);
     if (rows_ > rows)
     {
         // Delete superfluous lines

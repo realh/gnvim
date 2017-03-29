@@ -40,7 +40,7 @@ public:
 
     ~NvimBridge ();
 
-    void start (const RefPtr<Gio::ApplicationCommandLine> cl);
+    void start (const std::string &cwd, int argc, char **argv);
 
     void start_ui (int width, int height);
 
@@ -54,21 +54,6 @@ public:
     sigc::signal<void, Glib::ustring> &io_error_signal ()
     {
         return rpc_->io_error_signal ();
-    }
-
-    sigc::signal<void> &ready_signal ()
-    {
-        return ready_signal_;
-    }
-
-    int get_default_width ()
-    {
-        return default_cols_;
-    }
-
-    int get_default_height ()
-    {
-        return default_lines_;
     }
 
     sigc::signal<void> redraw_start;
@@ -120,15 +105,6 @@ private:
 
     RefPtr<MsgpackRpc> rpc_;
     Glib::Pid nvim_pid_;
-
-    sigc::signal<void> ready_signal_;
-    int default_cols_ = 80;
-    int default_lines_ = 36;
-    std::shared_ptr<MsgpackPromise> cols_promise_, lines_promise_;
-    void on_cols_promise_value (const msgpack::object &);
-    void on_cols_promise_error (const msgpack::object &);
-    void on_lines_promise_value (const msgpack::object &);
-    void on_lines_promise_error (const msgpack::object &);
 
     static std::vector<Glib::ustring> envp_;
 };

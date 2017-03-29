@@ -24,43 +24,46 @@
 namespace Gnvim
 {
 
-Window::Window (const RefPtr<Gio::ApplicationCommandLine> &cl)
+Window::Window (bool maximise, int width, int height,
+            const std::string &cwd, int argc, char **argv)
 {
-    nvim_.ready_signal ().connect (
-            sigc::mem_fun (this, &Window::on_nvim_ready));
-    nvim_.start (cl);
-}
-
-void Window::on_nvim_ready ()
-{
-    int cols = nvim_.get_default_width ();
-    int rows = nvim_.get_default_height ();
-    buffer_ = Buffer::create (nvim_, cols, rows);
-    view_ = new View (buffer_);
-    int width, height;
-    view_->get_preferred_size (width, height);
-    set_default_size (width, height);
+    g_debug ("Trying to start max %d, size %dx%d", maximise, width, height);
+    nvim_.start (cwd, argc, argv);
+    if (maximise)
+    {
+        view_ = new View ();
+        add (*view_);
+        maximize ();
+        view_->show_all ();
+        view_->get_allocation_in_cells (width, height);
+        g_debug ("Allocation in cells %dx%d", width, height);
+        buffer_ = Buffer::create (nvim_, width, height);
+        view_->set_buffer (buffer_);
+    }
+    else
+    {
+        buffer_ = Buffer::create (nvim_, width, height);
+        view_ = new View (buffer_);
+        add (*view_);
+        int vw, vh;
+        view_->get_preferred_size (vw, vh);
+        g_debug ("View's preferred size %dx%d", vw, vh);
+        set_default_size (vw, vh);
+        view_->show_all ();
+    }
 
     nvim_.io_error_signal ().connect (
             sigc::mem_fun (*this, &Window::on_nvim_error));
 
-    view_->show_all ();
-    add (*view_);
     set_geometry_hints ();
-    if (!force_close_)
-    {
-        present ();
-        nvim_.start_ui (cols, rows);
-        nvim_.redraw_resize.connect
-            (sigc::mem_fun (this, &Window::on_redraw_resize));
-        nvim_.redraw_set_title.connect
-            (sigc::mem_fun (this, &Window::on_redraw_set_title));
-    }
-    else
-    {
-        g_critical ("Window closed before it opened");
-        unreference ();
-    }
+
+    present ();
+    g_debug ("Attaching to nvim %dx%d", width, height);
+    nvim_.start_ui (width, height);
+    nvim_.redraw_resize.connect
+        (sigc::mem_fun (this, &Window::on_redraw_resize));
+    nvim_.redraw_set_title.connect
+        (sigc::mem_fun (this, &Window::on_redraw_set_title));
 }
 
 void Window::force_close ()
