@@ -76,6 +76,8 @@ private:
 
     void on_redraw_mode_change (const std::string &mode);
 
+    void on_redraw_bell ();
+
     void calculate_metrics ();
 
     // in = window coords eg from mose event, out = vim text coords

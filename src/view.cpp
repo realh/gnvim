@@ -39,6 +39,10 @@ View::View (Buffer *buffer)
     nvim.redraw_mode_change.connect (
             sigc::mem_fun (this, &View::on_redraw_mode_change));
     on_redraw_mode_change ("normal");
+
+    nvim.redraw_bell.connect (sigc::mem_fun (this, &View::on_redraw_bell));
+    nvim.redraw_visual_bell.connect
+            (sigc::mem_fun (this, &View::on_redraw_bell));
 }
 
 Glib::ustring modifier_string (guint state)
@@ -273,6 +277,11 @@ void View::on_redraw_mode_change (const std::string &mode)
 {
     // Kludge to set cursor shape
     set_overwrite (mode == "normal");
+}
+
+void View::on_redraw_bell ()
+{
+    get_window (Gtk::TEXT_WINDOW_TEXT)->beep ();
 }
 
 }
