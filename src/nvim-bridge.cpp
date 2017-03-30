@@ -185,6 +185,12 @@ void NvimBridge::nvim_get_option (const std::string &name,
     rpc_->request ("nvim_get_option", promise, name);
 }
 
+void NvimBridge::nvim_ui_try_resize (int width, int height)
+{
+    rpc_->notify ("nvim_ui_try_resize", width, height);
+}
+
+
 void NvimBridge::on_request (guint32 msgid, std::string method,
         const msgpack::object &args)
 {
@@ -203,6 +209,7 @@ void NvimBridge::on_notify (std::string method,
         s << "nvim sent notification '" << method << "' (" << args << ")";
         g_debug ("%s", s.str ().c_str ());
     }
+    g_debug ("Starting redraw");
     redraw_start.emit ();
     const msgpack::object_array &ar = args.via.array;
     for (guint32 i = 0; i < ar.size; ++i)

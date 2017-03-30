@@ -27,30 +27,16 @@ namespace Gnvim
 Window::Window (bool maximise, int width, int height,
             const std::string &cwd, int argc, char **argv)
 {
+    if (maximise)
+        maximize ();
     g_debug ("Trying to start max %d, size %dx%d", maximise, width, height);
     nvim_.start (cwd, argc, argv);
-    if (maximise)
-    {
-        view_ = new View ();
-        add (*view_);
-        maximize ();
-        view_->show_all ();
-        view_->get_allocation_in_cells (width, height);
-        g_debug ("Allocation in cells %dx%d", width, height);
-        buffer_ = Buffer::create (nvim_, width, height);
-        view_->set_buffer (buffer_);
-    }
-    else
-    {
-        buffer_ = Buffer::create (nvim_, width, height);
-        view_ = new View (buffer_);
-        add (*view_);
-        int vw, vh;
-        view_->get_preferred_size (vw, vh);
-        g_debug ("View's preferred size %dx%d", vw, vh);
-        set_default_size (vw, vh);
-        view_->show_all ();
-    }
+    buffer_ = Buffer::create (nvim_, width, height);
+    view_ = new View (buffer_);
+    nvim_.start_ui (width, height);
+    g_debug ("Started ui");
+    add (*view_);
+    view_->show_all ();
 
     nvim_.io_error_signal ().connect (
             sigc::mem_fun (*this, &Window::on_nvim_error));
@@ -58,10 +44,6 @@ Window::Window (bool maximise, int width, int height,
     set_geometry_hints ();
 
     present ();
-    g_debug ("Attaching to nvim %dx%d", width, height);
-    nvim_.start_ui (width, height);
-    nvim_.redraw_resize.connect
-        (sigc::mem_fun (this, &Window::on_redraw_resize));
     nvim_.redraw_set_title.connect
         (sigc::mem_fun (this, &Window::on_redraw_set_title));
 }
@@ -77,30 +59,6 @@ void Window::on_nvim_error (Glib::ustring desc)
     g_debug ("Closing window due to nvim communication error: %s",
             desc.c_str ());
     force_close ();
-}
-
-void Window::on_redraw_resize (int columns, int rows)
-{
-    g_debug ("nvim requested resize to %dx%d", columns, rows);
-    if (!buffer_->resize (columns, rows))
-        return;
-    int pad_x = get_allocated_width () - view_->get_allocated_width ();
-    int pad_y = get_allocated_height () - view_->get_allocated_height ();
-    /*
-    g_debug ("Window size %dx%d",
-            get_allocated_width (), get_allocated_height ());
-    g_debug ("View size %dx%d",
-            view_->get_allocated_width (), view_->get_allocated_height ());
-    g_debug ("padding %d, %d", pad_x, pad_y);
-    */
-    view_->set_grid_size (columns, rows);
-    int vw, vh;
-    view_->get_preferred_size (vw, vh);
-    /*
-    g_debug ("View wants size %dx%d", vw, vh);
-    g_debug ("Resizing to %dx%d", vw + pad_x, vh + pad_y);
-    */
-    resize (vw + pad_x, vh + pad_y);
 }
 
 void Window::on_redraw_set_title (const std::string &title)

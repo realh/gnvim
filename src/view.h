@@ -36,31 +36,19 @@ public:
 
     void set_buffer (Buffer *buffer);
 
-    // Height includes spacing
-    void get_cell_size_in_pixels (int &width, int &height) const
+    bool has_buffer () const
     {
-        width = cell_width_px_;
-        height = cell_height_px_;
+        return buffer_ != nullptr;
     }
 
-    void get_allocation_in_cells (int &columns, int &rows) const
+    int get_allocated_columns () const
     {
-        columns = columns_;
-        rows = rows_;
+        return columns_;
     }
 
-    // width and height are out parameters
-    void get_preferred_size (int &width, int &height);
-
-    // width and height are columns and rows in, pixels out
-    void get_preferred_size_for (int &width, int &height);
-
-    // Sets (supposed) size passively. Actual widget resizing should be done
-    // separately eg by resizing parent window
-    void set_grid_size (int columns, int rows)
+    int get_allocated_rows () const
     {
-        columns_ = columns;
-        rows_ = rows;
+        return rows_;
     }
 protected:
     virtual void on_size_allocate (Gtk::Allocation &) override;
@@ -74,17 +62,35 @@ protected:
     virtual bool on_motion_notify_event (GdkEventMotion *) override;
 
     virtual bool on_scroll_event (GdkEventScroll *) override;
+
+    virtual void get_preferred_width_vfunc (int &minimum, int &natural)
+            const override;
+
+    virtual void get_preferred_height_vfunc (int &minimum, int &natural)
+            const override;
 private:
     bool on_mouse_event (GdkEventType, int button,
             guint modifiers, int x, int y);
 
     void on_redraw_mode_change (const std::string &mode);
 
+    void on_redraw_resize (int columns, int rows);
+
     void on_redraw_bell ();
 
     void calculate_metrics ();
 
-    // in = window coords eg from mose event, out = vim text coords
+    int get_borders_width () const;
+
+    int get_borders_height () const;
+
+    void get_borders_size (int &width, int &height) const
+    {
+        width = get_borders_width ();
+        height = get_borders_height ();
+    }
+
+    // in = window coords eg from mouse event, out = vim text coords
     void convert_coords_to_cells (int &x, int &y)
     {
         x /= cell_width_px_;
@@ -94,7 +100,7 @@ private:
     Buffer *buffer_;
 
     int cell_width_px_, cell_height_px_;
-    int columns_, rows_;
+    int columns_ {-1}, rows_ {-1};
 };
 
 }

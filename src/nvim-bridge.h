@@ -51,6 +51,8 @@ public:
     void nvim_get_option (const std::string &name,
             std::shared_ptr<MsgpackPromise> promise);
 
+    void nvim_ui_try_resize (int width, int height);
+
     sigc::signal<void, Glib::ustring> &io_error_signal ()
     {
         return rpc_->io_error_signal ();

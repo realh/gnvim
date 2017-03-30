@@ -35,7 +35,17 @@ public:
         return new Buffer (nvim, columns, rows);
     }
 
-    void get_size (int &columns, int &rows)
+    int get_columns () const
+    {
+        return columns_;
+    }
+
+    int get_rows () const
+    {
+        return rows_;
+    }
+
+    void get_size (int &columns, int &rows) const
     {
         columns = columns_;
         rows = rows_;

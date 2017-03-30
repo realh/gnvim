@@ -70,7 +70,7 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
     char **argv = cl->get_arguments (argc);
     opt_max_ = false;
     opt_width_ = 80;
-    opt_height_ = 32;
+    opt_height_ = 30;
     opt_help_nvim_ = false;
     if (!options_.parse (argc, argv))
         return 1;
