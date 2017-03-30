@@ -209,7 +209,6 @@ void NvimBridge::on_notify (std::string method,
         s << "nvim sent notification '" << method << "' (" << args << ")";
         g_debug ("%s", s.str ().c_str ());
     }
-    g_debug ("Starting redraw");
     redraw_start.emit ();
     const msgpack::object_array &ar = args.via.array;
     for (guint32 i = 0; i < ar.size; ++i)
@@ -253,10 +252,10 @@ void NvimBridge::on_notify (std::string method,
                     method_name.c_str (), e.what().c_str ());
             }
         }
-        else
-        {
-            g_debug ("Unknown redraw method %s", method_name.c_str ());
-        }
+        //else
+        //{
+        //    g_debug ("Unknown redraw method %s", method_name.c_str ());
+        //}
     }
     redraw_end.emit ();
 }

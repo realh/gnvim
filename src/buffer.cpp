@@ -35,7 +35,6 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
     get_tag_table ()->add (default_attr_tag_);
     on_redraw_clear ();
 
-    g_debug ("Attaching redraw handlers");
     nvim.redraw_update_bg.connect
             (sigc::mem_fun (this, &Buffer::on_redraw_update_bg));
     nvim.redraw_update_fg.connect
@@ -64,11 +63,8 @@ bool Buffer::resize (int columns, int rows)
 {
     if (columns == columns_ && rows == rows_)
     {
-        g_debug ("No change to buffer size");
         return false;
     }
-    g_debug ("Changing buffer size from %dx%d to %dx%d", columns_, rows_,
-            columns, rows);
     if (rows_ > rows)
     {
         // Delete superfluous lines
@@ -420,7 +416,6 @@ void Buffer::on_redraw_scroll (int count)
 void Buffer::on_redraw_end ()
 {
     place_cursor (get_cursor_iter ());
-    g_debug ("Redraw sequence ended");
 }
 
 }

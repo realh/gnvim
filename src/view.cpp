@@ -255,14 +255,8 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
     // Size requests and allocations appear not to include margins
     int borders_width, borders_height;
     get_borders_size (borders_width, borders_height);
-    g_debug ("view size allocate: borders size %dx%d",
-            borders_width, borders_height);
     columns_ = (allocation.get_width () - borders_width) / cell_width_px_;
     rows_ = (allocation.get_height () - borders_height) / cell_height_px_;
-
-    g_debug ("view allocation %dx%d, grid size %dx%d, buf %d",
-            allocation.get_width (), allocation.get_height (),
-            columns_, rows_, buffer_ != nullptr);
 
     // Does nothing if size hasn't changed
     if (buffer_ && buffer_->resize (columns_, rows_))
@@ -283,28 +277,20 @@ void View::calculate_metrics ()
     cell_height_px_ = (metrics.get_ascent () + metrics.get_descent ()
             + get_pixels_above_lines () + get_pixels_below_lines ())
             / PANGO_SCALE;
-
-    g_debug ("Cell size %dx%d", cell_width_px_, cell_height_px_);
 }
 
 void View::get_preferred_width_vfunc (int &minimum, int &natural) const
 {
     auto bw = get_borders_width ();
-    g_debug ("bw %d", bw);
     minimum = 5 * cell_width_px_ + bw;
     natural = (buffer_ ? buffer_->get_columns () : 80) * cell_width_px_ + bw;
-    g_debug ("View preferred width (buf %d) %d, %d", buffer_ != nullptr,
-            minimum, natural);
 }
 
 void View::get_preferred_height_vfunc (int &minimum, int &natural) const
 {
     auto bh = get_borders_height ();
-    g_debug ("bh %d", bh);
     minimum = 5 * cell_height_px_ + bh;
     natural = (buffer_ ? buffer_->get_rows () : 30) * cell_height_px_ + bh;
-    g_debug ("View preferred height (buf %d) %d, %d", buffer_ != nullptr,
-            minimum, natural);
 }
 
 void View::on_redraw_mode_change (const std::string &mode)

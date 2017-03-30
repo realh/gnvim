@@ -317,12 +317,7 @@ bool MsgpackRpc::dispatch_notify (const msgpack::object &msg)
     {
         std::string method;
         ar.ptr[1].convert (method);
-        g_debug ("Dispathing notify %s", method.c_str ());
         notify_signal_.emit (method, ar.ptr[2]);
-    }
-    else
-    {
-        g_debug ("Not dispatching notify because stopped");
     }
 
     return true;
