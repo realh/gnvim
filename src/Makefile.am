@@ -12,4 +12,5 @@ gnvim_SOURCES = \
 	view.cpp		view.h			\
 	window.cpp		window.h
 
+gnvim_CXXFLAGS = $(gnvim_CFLAGS)
 gnvim_LDFLAGS = $(gnvim_LIBS)
