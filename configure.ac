@@ -6,7 +6,9 @@ AC_INIT([gnvim], [0.0.1], [h@realh.co.uk])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/nvim-bridge.cpp])
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIRS([m4])
+#AC_CONFIG_MACRO_DIRS([m4])
+
+GLIB_GSETTINGS
 
 # Checks for programs.
 AC_PROG_CXX

@@ -1,0 +1,29 @@
+<schemalist>
+    <schema id="uk.co.realh.gnvim" path="/uk/co.realh/gnvim/"
+    gettext-domain="gnvim">
+        <key name="columns" type="u">
+            <default>80</default>
+            <range min="5" max="1000"/>
+            <summary>Number of columns</summary>
+            <description>Number of text columns for new windows</description>
+        </key>
+        <key name="rows" type="u">
+            <default>30</default>
+            <range min="5" max="1000"/>
+            <summary>Number of rows</summary>
+            <description>Number of text rows for new windows</description>
+        </key>
+        <key name="maximise" type="b">
+            <default>false</default>
+            <summary>Maximise new windows</summary>
+            <description>Whether to open new windows maximised
+                (overrides columns and rows)</description>
+        </key>
+        <key name="init-file" type="s">
+            <summary>Neovim init file</summary>
+            <default l10n="messages">""</default>
+            <description>Pathname of an alternative init.vim file
+            (blank for default)</description>
+        </key>
+    </schema>
+</schemalist>

@@ -2,11 +2,15 @@ aclocal.m4
 autom4te.cache
 build
 compile
-config.h.in
+config.*
 configure
 depcomp
 install-sh
+Makefile
 Makefile.in
 missing
+*.o
+*.schema.valid
+stamp*
 .*.swp
 .ycm_extra_conf.py
