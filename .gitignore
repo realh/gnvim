@@ -1,3 +1,12 @@
+aclocal.m4
+autom4te.cache
 build
+compile
+config.h.in
+configure
+depcomp
+install-sh
+Makefile.in
+missing
 .*.swp
 .ycm_extra_conf.py

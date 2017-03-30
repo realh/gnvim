@@ -21,6 +21,10 @@
 
 // Build options etc may go here, so include this before anything else
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <gtkmm.h>
 
 #define _(s) (s)
