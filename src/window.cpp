@@ -27,8 +27,6 @@ namespace Gnvim
 Window::Window (bool maximise, int width, int height,
             const std::string &cwd, int argc, char **argv)
 {
-    if (maximise)
-        maximize ();
     g_debug ("Trying to start max %d, size %dx%d", maximise, width, height);
     nvim_.start (cwd, argc, argv);
     buffer_ = Buffer::create (nvim_, width, height);
@@ -37,6 +35,17 @@ Window::Window (bool maximise, int width, int height,
     g_debug ("Started ui");
     add (*view_);
     view_->show_all ();
+    if (maximise)
+    {
+        maximize ();
+    }
+    else
+    {
+        Gtk::Requisition minimum, natural;
+        view_->get_preferred_size (minimum, natural);
+        g_debug ("View wants size %dx%d", natural.width, natural.height);
+        set_default_size (natural.width, natural.height);
+    }
 
     nvim_.io_error_signal ().connect (
             sigc::mem_fun (*this, &Window::on_nvim_error));
