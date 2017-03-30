@@ -40,7 +40,8 @@ public:
 
     ~NvimBridge ();
 
-    void start (const std::string &cwd, int argc, char **argv);
+    void start (const std::string &init_file, const std::string &cwd,
+            int argc, char **argv);
 
     void start_ui (int width, int height);
 

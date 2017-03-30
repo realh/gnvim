@@ -7,11 +7,11 @@
             <summary>Number of columns</summary>
             <description>Number of text columns for new windows</description>
         </key>
-        <key name="rows" type="u">
+        <key name="lines" type="u">
             <default>30</default>
             <range min="5" max="1000"/>
-            <summary>Number of rows</summary>
-            <description>Number of text rows for new windows</description>
+            <summary>Number of lines</summary>
+            <description>Number of text lines for new windows</description>
         </key>
         <key name="maximise" type="b">
             <default>false</default>

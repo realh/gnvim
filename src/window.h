@@ -31,7 +31,7 @@ namespace Gnvim
 
 class Window : public Gtk::ApplicationWindow {
 public:
-    Window (bool maximise, int width, int height,
+    Window (bool maximise, int width, int height, const std::string &init_file,
             const std::string &cwd, int argc, char **argv);
 
     void force_close ();

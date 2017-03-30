@@ -25,9 +25,10 @@ namespace Gnvim
 {
 
 Window::Window (bool maximise, int width, int height,
-            const std::string &cwd, int argc, char **argv)
+        const std::string &init_file, const std::string &cwd,
+        int argc, char **argv)
 {
-    nvim_.start (cwd, argc, argv);
+    nvim_.start (cwd, init_file, argc, argv);
     buffer_ = Buffer::create (nvim_, width, height);
     view_ = new View (buffer_);
     nvim_.start_ui (width, height);

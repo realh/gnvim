@@ -34,7 +34,8 @@ NvimBridge::NvimBridge ()
     map_adapters ();
 }
 
-void NvimBridge::start (const std::string &cwd, int argc, char **argv)
+void NvimBridge::start (const std::string &cwd, const std::string &init_file,
+        int argc, char **argv)
 {
     static std::vector<std::string> args {"nvim"};
     bool u = false, embed = false;
@@ -52,15 +53,10 @@ void NvimBridge::start (const std::string &cwd, int argc, char **argv)
         args.push_back ("--embed");
 
     // Load gnvim.vim config if present and -u wasn't overridden
-    if (!u)
+    if (!u && init_file.size ())
     {
-        auto gnvimrc = Glib::build_filename (Glib::get_user_config_dir (),
-                "nvim", "gnvim.vim");
-        if (Glib::file_test (gnvimrc, Glib::FILE_TEST_IS_REGULAR))
-        {
-            args.push_back ("-u");
-            args.push_back (gnvimrc);
-        }
+        args.push_back ("-u");
+        args.push_back (init_file);
     }
 
     for (int n = 1; n < argc; ++n)
