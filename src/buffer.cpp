@@ -57,6 +57,11 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
             (sigc::mem_fun (this, &Buffer::on_redraw_scroll));
     nvim.redraw_end.connect
             (sigc::mem_fun (this, &Buffer::on_redraw_end));
+
+    scroll_region_.left = 0;
+    scroll_region_.right = columns - 1;
+    scroll_region_.top = 0;
+    scroll_region_.bot = rows - 1;
 }
 
 bool Buffer::resize (int columns, int rows)
@@ -109,6 +114,12 @@ bool Buffer::resize (int columns, int rows)
 
     columns_ = columns;
     rows_ = rows;
+
+    scroll_region_.left = 0;
+    scroll_region_.right = columns - 1;
+    scroll_region_.top = 0;
+    scroll_region_.bot = rows - 1;
+
     return true;
 }
 
@@ -360,18 +371,19 @@ void Buffer::on_redraw_set_scroll_region (int top, int bot, int left, int right)
     scroll_region_.bot = bot;
     scroll_region_.left = left;
     scroll_region_.right = right + 1;
+    g_debug ("Set scroll region left %d right %d top %d bottom %d",
+            scroll_region_.left, scroll_region_.right,
+            scroll_region_.top, scroll_region_.bot);
 }
 
 void Buffer::on_redraw_scroll (int count)
 {
     int start, end, step;
 
-    /*
-    g_debug ("Scroll left %d right %d top %d bottom %d count %d",
+    g_debug ("Scroll with region left %d right %d top %d bottom %d count %d",
             scroll_region_.left, scroll_region_.right,
             scroll_region_.top, scroll_region_.bot,
             count);
-    */
 
     if (count > 0)
     {
