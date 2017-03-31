@@ -1,6 +1,31 @@
 <schemalist>
+    <enum id="uk.co.realh.gnvim.fontsrc">
+        <value nick="gtk" value="0"/>
+        <value nick="sys" value="1"/>
+        <value nick="prefs" value="2"/>
+    </enum>
     <schema id="uk.co.realh.gnvim" path="/uk/co.realh/gnvim/"
     gettext-domain="gnvim">
+        <key name="dark" type="b">
+            <default>false</default>
+            <summary>Use dark theme</summary>
+            <description>Whether to use the dark version of the UI
+            theme</description>
+        </key>
+        <key name="font-source" enum="uk.co.realh.gnvim.fontsrc">
+            <default>"gtk"</default>
+            <summary>How to choose the main font</summary>
+            <description>gtk=Default for GtkTextView;
+            sys=System's monospace font;
+            prefs=gnvim's 'font' setting
+            </description>
+        </key>
+        <key name="font" type="s">
+            <summary>Font description</summary>
+            <default l10n="messages">"Monospace 11"</default>
+            <description>Description of font to use in editor
+            windows</description>
+        </key>
         <key name="columns" type="u">
             <default>80</default>
             <range min="5" max="1000"/>
@@ -17,7 +42,7 @@
             <default>false</default>
             <summary>Maximise new windows</summary>
             <description>Whether to open new windows maximised
-                (overrides columns and rows)</description>
+            (overrides columns and rows)</description>
         </key>
         <key name="init-file" type="s">
             <summary>Neovim init file</summary>
