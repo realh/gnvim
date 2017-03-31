@@ -24,14 +24,10 @@
 #include "defns.h"
 
 #include <cstdint>
-#include <deque>
 #include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
-#include <sstream>
-#include <thread>
-#include <utility>
 #include <vector>
 
 #include <giomm.h>
