@@ -153,7 +153,7 @@ void MsgpackRpc::async_read (RefPtr<Gio::AsyncResult> &result)
                     ("msgpack stream read std::exception: ") + e.what ());
             nread = 0;
         }
-        if (nread < 0)
+        if (nread <= 0)
         {
             stop ();
         }

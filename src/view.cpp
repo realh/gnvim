@@ -49,6 +49,10 @@ View::View () : buffer_ (nullptr)
     sys_settings->signal_changed ("monospace-font-name").connect
             (sigc::mem_fun (this, &View::on_font_name_changed));
 
+    auto sc = get_style_context ();
+    if (!sc->has_class ("gnvim"))
+        sc->add_class ("gnvim");
+
     update_font ();
     on_redraw_mode_change ("normal");
 }
@@ -81,11 +85,49 @@ void View::set_buffer (Buffer *buffer)
 
 void View::set_font (const Glib::ustring &desc, bool q_resize)
 {
-    get_pango_context ()->set_font_description (Pango::FontDescription
-            (desc.size () ? desc : default_font_));
-    calculate_metrics ();
-    if (q_resize)
-        queue_resize ();
+    if (!font_style_provider_)
+    {
+        font_style_provider_ = Gtk::CssProvider::create ();
+        get_style_context ()->add_provider
+            (font_style_provider_, GTK_STYLE_PROVIDER_PRIORITY_USER);
+    }
+    auto sep = desc.find_last_of (' ');
+    if (sep == Glib::ustring::npos)
+    {
+        g_critical (_("Invalid font description '%s'"), desc.c_str ());
+        return;
+    }
+    try
+    {
+        Glib::ustring fsize (desc.substr (sep + 1));
+        if (g_unichar_isdigit (desc.at (desc.size () - 1)))
+        {
+            fsize += "pt";
+        }
+        Glib::ustring family = desc.substr (0, sep);
+        if (family.find_first_of (' ') != Glib::ustring::npos)
+        {
+            family = Glib::ustring (1, '"') + family + '"';
+        }
+        auto css = Glib::ustring ("* { font: ")
+            + fsize + " " + family + "; }";
+        font_style_provider_->load_from_data (css);
+        get_pango_context ()->set_font_description (Pango::FontDescription
+                (desc.size () ? desc : default_font_));
+        calculate_metrics ();
+        if (q_resize)
+            queue_resize ();
+    }
+    catch (const std::exception &e)
+    {
+        g_critical (_("std::exception setting font '%s': %s"),
+                    desc.c_str (), e.what ());
+    }
+    catch (const Glib::Exception &e)
+    {
+        g_critical (_("Glib::Exception setting font '%s': %s"),
+                    desc.c_str (), e.what ().c_str ());
+    }
 }
 
 Glib::ustring modifier_string (guint state)
@@ -295,6 +337,7 @@ void View::calculate_metrics ()
 {
     auto pc = get_pango_context ();
     auto desc = pc->get_font_description ();
+    g_debug ("Getting metrics from %s", desc.to_string ().c_str ());
     auto metrics = pc->get_metrics (desc);
     // digit_width and char_width should be the same for monospace, but
     // digit_width might be slightly more useful in case we accidentally use

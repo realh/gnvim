@@ -115,6 +115,7 @@ private:
     int columns_ {-1}, rows_ {-1};
 
     Glib::ustring default_font_;
+    RefPtr<Gtk::CssProvider> font_style_provider_;
 };
 
 }
