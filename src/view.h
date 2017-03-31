@@ -50,6 +50,9 @@ public:
     {
         return rows_;
     }
+
+    // desc is a pango font description string or "" for GTK default
+    void set_font (const Glib::ustring &desc = "", bool q_resize = true);
 protected:
     virtual void on_size_allocate (Gtk::Allocation &) override;
 
@@ -84,6 +87,15 @@ private:
 
     int get_borders_height () const;
 
+    // Used for both app and sys fonts, using key to work out which
+    void on_font_name_changed (const Glib::ustring &key);
+
+    void on_font_source_changed (const Glib::ustring &key);
+
+    // If init is true, this is being called at construction, in which case
+    // don't set font if "font-source" pref is "gtk", and don't queue resize
+    void update_font (bool init = false);
+
     void get_borders_size (int &width, int &height) const
     {
         width = get_borders_width ();
@@ -101,6 +113,8 @@ private:
 
     int cell_width_px_, cell_height_px_;
     int columns_ {-1}, rows_ {-1};
+
+    Glib::ustring default_font_;
 };
 
 }

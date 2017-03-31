@@ -18,11 +18,19 @@
 
 #include "defns.h"
 
+#include "app.h"
 #include "nvim-bridge.h"
 #include "view.h"
 
 namespace Gnvim
 {
+
+enum FontSource
+{
+    FONT_SOURCE_GTK = 0,
+    FONT_SOURCE_SYS,
+    FONT_SOURCE_PREFS,
+};
 
 View::View () : buffer_ (nullptr)
 {
@@ -30,10 +38,19 @@ View::View () : buffer_ (nullptr)
     // asynchronous size changes
     set_wrap_mode (Gtk::WRAP_NONE);
     set_monospace ();
-    calculate_metrics ();
+    default_font_ = get_pango_context ()->get_font_description ().to_string ();
 
+    auto app_settings = Application::app_gsettings ();
+    app_settings->signal_changed ("font").connect
+            (sigc::mem_fun (this, &View::on_font_name_changed));
+    app_settings->signal_changed ("font-source").connect
+            (sigc::mem_fun (this, &View::on_font_source_changed));
+    auto sys_settings = Application::sys_gsettings ();
+    sys_settings->signal_changed ("monospace-font-name").connect
+            (sigc::mem_fun (this, &View::on_font_name_changed));
+
+    update_font ();
     on_redraw_mode_change ("normal");
-
 }
 
 View::View (Buffer *buffer) : View ()
@@ -60,6 +77,15 @@ void View::set_buffer (Buffer *buffer)
             (sigc::mem_fun (this, &View::on_redraw_bell));
     nvim.redraw_resize.connect
         (sigc::mem_fun (this, &View::on_redraw_resize));
+}
+
+void View::set_font (const Glib::ustring &desc, bool q_resize)
+{
+    get_pango_context ()->set_font_description (Pango::FontDescription
+            (desc.size () ? desc : default_font_));
+    calculate_metrics ();
+    if (q_resize)
+        queue_resize ();
 }
 
 Glib::ustring modifier_string (guint state)
@@ -308,6 +334,42 @@ void View::on_redraw_resize (int columns, int rows)
 {
     if (buffer_->resize (columns, rows))
         queue_resize ();
+}
+
+void View::on_font_name_changed (const Glib::ustring &key)
+{
+    auto app_settings = Application::app_gsettings ();
+    if ((key == "font"
+            && app_settings->get_enum ("font-source") == FONT_SOURCE_PREFS)
+        || (key == "monospace-font-name"
+            && app_settings->get_enum ("font-source") == FONT_SOURCE_SYS))
+    {
+        update_font ();
+    }
+}
+
+void View::on_font_source_changed (const Glib::ustring &)
+{
+    update_font ();
+}
+
+void View::update_font (bool init)
+{
+    auto app_settings = Application::app_gsettings ();
+    switch (app_settings->get_enum ("font-source"))
+    {
+        case FONT_SOURCE_SYS:
+            set_font (Application::sys_gsettings ()->get_string
+                    ("monospace-font-name"), !init);
+            break;
+        case FONT_SOURCE_PREFS:
+            set_font (app_settings->get_string ("font"), !init);
+            break;
+        default:    // FONT_SOURCE_GTK
+            if (!init)
+                set_font (default_font_);
+            break;
+    }
 }
 
 }

@@ -15,7 +15,7 @@
         <key name="font-source" enum="uk.co.realh.gnvim.fontsrc">
             <default>"gtk"</default>
             <summary>How to choose the main font</summary>
-            <description>gtk=Default for GtkTextView;
+            <description>gtk=GtkTextView's default monospace font;
             sys=System's monospace font;
             prefs=gnvim's 'font' setting
             </description>

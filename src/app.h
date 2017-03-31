@@ -40,7 +40,16 @@ public:
 
     bool open_window (const std::string &cwd, int argc, char **argv);
 
-    //virtual void remove_window 
+    static RefPtr<Gio::Settings> app_gsettings ()
+    {
+        return app_gsettings_;
+    }
+
+    // "org.gnome.desktop.interface" for reading "monospace-font-name"
+    static RefPtr<Gio::Settings> sys_gsettings ()
+    {
+        return sys_gsettings_;
+    }
 protected:
     virtual void on_window_removed (Gtk::Window *) override;
 private:
@@ -48,10 +57,12 @@ private:
 
     Glib::OptionContext options_;
     Glib::OptionGroup main_opt_group_;
-    RefPtr<Gio::Settings> gsettings_;
     bool opt_max_;
     int opt_width_, opt_height_;
     bool opt_help_nvim_;
+
+    static RefPtr<Gio::Settings> app_gsettings_;
+    static RefPtr<Gio::Settings> sys_gsettings_;
 };
 
 }

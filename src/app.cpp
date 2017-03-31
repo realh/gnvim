@@ -30,8 +30,7 @@ Application::Application ()
         : Gtk::Application ("uk.co.realh.gnvim",
             Gio::APPLICATION_HANDLES_COMMAND_LINE),
         options_("NVIM_ARGUMENTS"),
-        main_opt_group_ ("gnvim", _("gnvim options")),
-        gsettings_ (Gio::Settings::create ("uk.co.realh.gnvim"))
+        main_opt_group_ ("gnvim", _("gnvim options"))
 {
     options_.set_summary (_("Run neovim with a GUI"));
     options_.set_description (
@@ -69,9 +68,9 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
     int argc;
     char **argv = cl->get_arguments (argc);
-    opt_max_ = gsettings_->get_boolean ("maximise");
-    opt_width_ = gsettings_->get_uint ("columns");
-    opt_height_ = gsettings_->get_uint ("lines");
+    opt_max_ = app_gsettings_->get_boolean ("maximise");
+    opt_width_ = app_gsettings_->get_uint ("columns");
+    opt_height_ = app_gsettings_->get_uint ("lines");
     opt_help_nvim_ = false;
     if (!options_.parse (argc, argv))
         return 1;
@@ -92,7 +91,7 @@ bool Application::open_window (const std::string &cwd, int argc, char **argv)
 {
     try
     {
-        Glib::ustring init_file = gsettings_->get_string ("init-file");
+        Glib::ustring init_file = app_gsettings_->get_string ("init-file");
         auto win = new Window (opt_max_, opt_width_, opt_height_, init_file,
                 cwd, argc, argv);
         g_debug ("Adding window");
@@ -155,5 +154,11 @@ bool Application::on_opt_geometry (const Glib::ustring &,
 
     return true;
 }
+
+RefPtr<Gio::Settings> Application::app_gsettings_
+        (Gio::Settings::create ("uk.co.realh.gnvim"));
+
+RefPtr<Gio::Settings> Application::sys_gsettings_
+        (Gio::Settings::create ("org.gnome.desktop.interface"));
 
 }
