@@ -110,20 +110,21 @@ bool Application::open_window (const std::string &cwd, int argc, char **argv)
     return false;
 }
 
-void Application::on_window_removed (Gtk::Window *)
+/*
+void Application::on_window_removed (Gtk::Window *win)
 {
-    // Apparently this is called before the window is actually removed, so
-    // size still includes the window being removed
-    if (get_windows ().size () <= 1)
+    Gtk::Application::on_window_removed (win);
+    if (get_windows ().size () < 1)
     {
         g_debug ("No open windows, quitting");
-        quit ();
+        //quit ();
     }
     else
     {
         g_debug ("Window removed, but %ld left", get_windows ().size ());
     }
 }
+*/
 
 bool Application::on_opt_geometry (const Glib::ustring &,
         const Glib::ustring &geom, bool has_value)

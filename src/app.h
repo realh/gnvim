@@ -50,8 +50,6 @@ public:
     {
         return sys_gsettings_;
     }
-protected:
-    virtual void on_window_removed (Gtk::Window *) override;
 private:
     bool on_opt_geometry (const Glib::ustring &, const Glib::ustring &, bool);
 
