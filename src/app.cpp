@@ -68,9 +68,10 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
     int argc;
     char **argv = cl->get_arguments (argc);
-    opt_max_ = app_gsettings_->get_boolean ("maximise");
-    opt_width_ = app_gsettings_->get_uint ("columns");
-    opt_height_ = app_gsettings_->get_uint ("lines");
+    auto settings = app_gsettings ();
+    opt_max_ = settings->get_boolean ("maximise");
+    opt_width_ = settings->get_uint ("columns");
+    opt_height_ = settings->get_uint ("lines");
     opt_help_nvim_ = false;
     if (!options_.parse (argc, argv))
         return 1;
@@ -156,10 +157,23 @@ bool Application::on_opt_geometry (const Glib::ustring &,
     return true;
 }
 
-RefPtr<Gio::Settings> Application::app_gsettings_
-        (Gio::Settings::create ("uk.co.realh.gnvim"));
+// Use lazy init for GSettings, apparently can't do C++ static init of GObjects
 
-RefPtr<Gio::Settings> Application::sys_gsettings_
-        (Gio::Settings::create ("org.gnome.desktop.interface"));
+RefPtr<Gio::Settings> Application::app_gsettings ()
+{
+    if (!app_gsettings_)
+        app_gsettings_ = Gio::Settings::create ("uk.co.realh.gnvim");
+    return app_gsettings_;
+}
+
+RefPtr<Gio::Settings> Application::sys_gsettings ()
+{
+    if (!sys_gsettings_)
+        sys_gsettings_ = Gio::Settings::create ("org.gnome.desktop.interface");
+    return sys_gsettings_;
+}
+
+RefPtr<Gio::Settings> Application::app_gsettings_;
+RefPtr<Gio::Settings> Application::sys_gsettings_;
 
 }

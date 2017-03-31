@@ -40,16 +40,10 @@ public:
 
     bool open_window (const std::string &cwd, int argc, char **argv);
 
-    static RefPtr<Gio::Settings> app_gsettings ()
-    {
-        return app_gsettings_;
-    }
+    static RefPtr<Gio::Settings> app_gsettings ();
 
     // "org.gnome.desktop.interface" for reading "monospace-font-name"
-    static RefPtr<Gio::Settings> sys_gsettings ()
-    {
-        return sys_gsettings_;
-    }
+    static RefPtr<Gio::Settings> sys_gsettings ();
 private:
     bool on_opt_geometry (const Glib::ustring &, const Glib::ustring &, bool);
 
