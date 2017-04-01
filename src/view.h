@@ -96,6 +96,10 @@ private:
     // don't set font if "font-source" pref is "gtk", and don't queue resize
     void update_font (bool init = false);
 
+    // Try to resize the parent window to fit the desired number of columns
+    // and lines
+    void resize_window ();
+
     void get_borders_size (int &width, int &height) const
     {
         width = get_borders_width ();

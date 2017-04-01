@@ -120,7 +120,7 @@ void View::set_font (const Glib::ustring &desc, bool q_resize)
                 (desc.size () ? desc : default_font_));
         calculate_metrics ();
         if (q_resize)
-            queue_resize ();
+            resize_window ();
     }
     catch (const std::exception &e)
     {
@@ -131,6 +131,33 @@ void View::set_font (const Glib::ustring &desc, bool q_resize)
     {
         g_critical (_("Glib::Exception setting font '%s': %s"),
                     desc.c_str (), e.what ().c_str ());
+    }
+}
+
+void View::resize_window ()
+{
+    auto view_alloc = get_allocation ();
+    int ignored, nat_width, nat_height;
+    get_preferred_width_vfunc (ignored, nat_width);
+    get_preferred_height_vfunc (ignored, nat_height);
+    bool changed = nat_width != view_alloc.get_width ()
+                || nat_height != view_alloc.get_height ();
+    auto win = static_cast<Gtk::Window *> (get_toplevel ());
+    if (changed)
+    {
+        if (win)
+        {
+            win->set_size_request (-1, -1);
+            auto win_alloc = win->get_allocation ();
+            win->resize (nat_width
+                    + win_alloc.get_width () - view_alloc.get_width (),
+                nat_height
+                    + win_alloc.get_height () - view_alloc.get_height ());
+        }
+        else
+        {
+            queue_resize ();
+        }
     }
 }
 
@@ -380,7 +407,7 @@ void View::on_redraw_bell ()
 void View::on_redraw_resize (int columns, int rows)
 {
     if (buffer_->resize (columns, rows))
-        queue_resize ();
+        resize_window ();
 }
 
 void View::on_font_name_changed (const Glib::ustring &key)
