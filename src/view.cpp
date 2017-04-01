@@ -136,7 +136,6 @@ void View::set_font (const Glib::ustring &desc, bool q_resize)
 
 void View::resize_window ()
 {
-    g_debug ("resize_window");
     auto view_alloc = get_allocation ();
     int ignored, nat_width, nat_height;
     get_preferred_width_vfunc (ignored, nat_width);
@@ -157,12 +156,6 @@ void View::resize_window ()
         {
             int w = nat_width + toplevel_width_ - view_alloc.get_width ();
             int h = nat_height + toplevel_height_ - view_alloc.get_height ();
-            g_debug ("Current allocation %dx%d in %dx%d: padding %dx%d",
-                    view_alloc.get_width (), view_alloc.get_height (),
-                    toplevel_width_, toplevel_height_,
-                    toplevel_width_ - view_alloc.get_width (),
-                    toplevel_height_ - view_alloc.get_height ());
-            g_debug ("Want %dx%d in %dx%d", nat_width, nat_height, w, h);
             //win->set_size_request (w, h);
             win->resize (w, h);
         }
@@ -364,9 +357,6 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
     get_borders_size (borders_width, borders_height);
     columns_ = (allocation.get_width () - borders_width) / cell_width_px_;
     rows_ = (allocation.get_height () - borders_height) / cell_height_px_;
-    g_debug ("View size allocate %dx%d => %dx%d",
-            allocation.get_width (), allocation.get_height (),
-            columns_, rows_);
 
     // Does nothing if size hasn't changed
     if (buffer_ && buffer_->resize (columns_, rows_))
@@ -387,9 +377,6 @@ void View::calculate_metrics ()
     cell_height_px_ = (metrics.get_ascent () + metrics.get_descent ()
             + get_pixels_above_lines () + get_pixels_below_lines ())
             / PANGO_SCALE;
-    g_debug ("Got cell size %dx%d from %s metrics",
-            cell_width_px_, cell_height_px_,
-            desc.to_string ().c_str ());
 }
 
 void View::get_preferred_width_vfunc (int &minimum, int &natural) const
@@ -397,8 +384,6 @@ void View::get_preferred_width_vfunc (int &minimum, int &natural) const
     auto bw = get_borders_width ();
     minimum = 5 * cell_width_px_ + bw;
     natural = (buffer_ ? buffer_->get_columns () : 80) * cell_width_px_ + bw;
-    g_debug ("Preferred width %dx%d+%d=%d",
-            buffer_->get_columns (), cell_width_px_, bw, natural);
 }
 
 void View::get_preferred_height_vfunc (int &minimum, int &natural) const
@@ -406,8 +391,6 @@ void View::get_preferred_height_vfunc (int &minimum, int &natural) const
     auto bh = get_borders_height ();
     minimum = 5 * cell_height_px_ + bh;
     natural = (buffer_ ? buffer_->get_rows () : 30) * cell_height_px_ + bh;
-    g_debug ("Preferred height %dx%d+%d=%d",
-            buffer_->get_rows (), cell_height_px_, bh, natural);
 }
 
 void View::on_redraw_mode_change (const std::string &mode)
