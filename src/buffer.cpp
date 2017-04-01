@@ -35,6 +35,8 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
     get_tag_table ()->add (default_attr_tag_);
     on_redraw_clear ();
 
+    nvim.redraw_start.connect
+            (sigc::mem_fun (this, &Buffer::on_redraw_start));
     nvim.redraw_update_bg.connect
             (sigc::mem_fun (this, &Buffer::on_redraw_update_bg));
     nvim.redraw_update_fg.connect
@@ -127,25 +129,17 @@ bool Buffer::resize (int columns, int rows)
     return true;
 }
 
-static void set_colour_prop (Glib::PropertyProxy<Gdk::RGBA> prop, int colour)
+void Buffer::on_redraw_start ()
 {
-    if (colour == -1)
-    {
-        prop.reset_value ();
-    }
-    else
-    {
-        static Gdk::RGBA rgba;
-
-        rgba.set_rgba_u ((colour & 0xff0000) >> 8,
-                colour & 0xff00,
-                (colour & 0xff) << 8);
-        prop.set_value (rgba);
-    }
+    // Neovim doesn't seem to do this before redrawing the whole screen
+    cursor_row_ = 0;
+    cursor_col_ = 0;
 }
 
 void Buffer::on_redraw_clear ()
 {
+    cursor_row_ = 0;
+    cursor_col_ = 0;
     for (int y = 0; y < rows_; ++y)
     {
         auto s = Glib::ustring (columns_, ' ');
@@ -169,6 +163,23 @@ void Buffer::on_redraw_eol_clear ()
     erase (cursor, range_end);
     auto s = Glib::ustring (len, ' ');
     this->insert_with_tag (get_cursor_iter (), s, current_attr_tag_);
+}
+
+static void set_colour_prop (Glib::PropertyProxy<Gdk::RGBA> prop, int colour)
+{
+    if (colour == -1)
+    {
+        prop.reset_value ();
+    }
+    else
+    {
+        static Gdk::RGBA rgba;
+
+        rgba.set_rgba_u ((colour & 0xff0000) >> 8,
+                colour & 0xff00,
+                (colour & 0xff) << 8);
+        prop.set_value (rgba);
+    }
 }
 
 void Buffer::on_redraw_update_fg (int colour)

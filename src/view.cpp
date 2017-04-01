@@ -112,6 +112,10 @@ void View::set_font (const Glib::ustring &desc, bool q_resize)
         auto css = Glib::ustring ("textview.gnvim { font: ")
             + fsize + " " + family + "; }";
         font_style_provider_->load_from_data (css);
+        // Changing the font in the widget's Pango context seems to have no
+        // effect, which is why we're using a style provider, but setting the
+        // Pango context too makes it easier for calculate_metrics () to get
+        // the description back.
         get_pango_context ()->set_font_description (Pango::FontDescription
                 (desc.size () ? desc : default_font_));
         calculate_metrics ();
