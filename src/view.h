@@ -54,6 +54,8 @@ public:
     // desc is a pango font description string or "" for GTK default
     void set_font (const Glib::ustring &desc = "", bool q_resize = true);
 protected:
+    virtual void on_parent_changed (Gtk::Widget *old_parent) override;
+
     virtual void on_size_allocate (Gtk::Allocation &) override;
 
     virtual bool on_key_press_event (GdkEventKey *) override;
@@ -72,6 +74,8 @@ protected:
     virtual void get_preferred_height_vfunc (int &minimum, int &natural)
             const override;
 private:
+    void on_toplevel_size_allocate (Gtk::Allocation &);
+
     bool on_mouse_event (GdkEventType, int button,
             guint modifiers, int x, int y);
 
@@ -117,6 +121,9 @@ private:
 
     int cell_width_px_, cell_height_px_;
     int columns_ {-1}, rows_ {-1};
+
+    sigc::connection toplevel_size_allocate_connection_;
+    int toplevel_width_ {0}, toplevel_height_ {0};
 
     Glib::ustring default_font_;
     RefPtr<Gtk::CssProvider> font_style_provider_;

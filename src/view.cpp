@@ -53,7 +53,7 @@ View::View () : buffer_ (nullptr)
     if (!sc->has_class ("gnvim"))
         sc->add_class ("gnvim");
 
-    update_font ();
+    update_font (true);
     on_redraw_mode_change ("normal");
 }
 
@@ -136,6 +136,7 @@ void View::set_font (const Glib::ustring &desc, bool q_resize)
 
 void View::resize_window ()
 {
+    g_debug ("resize_window");
     auto view_alloc = get_allocation ();
     int ignored, nat_width, nat_height;
     get_preferred_width_vfunc (ignored, nat_width);
@@ -145,18 +146,25 @@ void View::resize_window ()
     auto win = static_cast<Gtk::Window *> (get_toplevel ());
     if (changed)
     {
+        // I wasn't sure whether the queue_resize and set_size_request were
+        // necessary. Things seem to work correctly without them, whereas with
+        // them, the window initially resizes correctly, but in Wayland (and
+        // in X11 with CSD?) if the size change is a reduction in width it
+        // gains some of it back the next time the window is focused. Weird.
+
+        //queue_resize ();
         if (win)
         {
-            win->set_size_request (-1, -1);
-            auto win_alloc = win->get_allocation ();
-            win->resize (nat_width
-                    + win_alloc.get_width () - view_alloc.get_width (),
-                nat_height
-                    + win_alloc.get_height () - view_alloc.get_height ());
-        }
-        else
-        {
-            queue_resize ();
+            int w = nat_width + toplevel_width_ - view_alloc.get_width ();
+            int h = nat_height + toplevel_height_ - view_alloc.get_height ();
+            g_debug ("Current allocation %dx%d in %dx%d: padding %dx%d",
+                    view_alloc.get_width (), view_alloc.get_height (),
+                    toplevel_width_, toplevel_height_,
+                    toplevel_width_ - view_alloc.get_width (),
+                    toplevel_height_ - view_alloc.get_height ());
+            g_debug ("Want %dx%d in %dx%d", nat_width, nat_height, w, h);
+            //win->set_size_request (w, h);
+            win->resize (w, h);
         }
     }
 }
@@ -356,6 +364,9 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
     get_borders_size (borders_width, borders_height);
     columns_ = (allocation.get_width () - borders_width) / cell_width_px_;
     rows_ = (allocation.get_height () - borders_height) / cell_height_px_;
+    g_debug ("View size allocate %dx%d => %dx%d",
+            allocation.get_width (), allocation.get_height (),
+            columns_, rows_);
 
     // Does nothing if size hasn't changed
     if (buffer_ && buffer_->resize (columns_, rows_))
@@ -368,7 +379,6 @@ void View::calculate_metrics ()
 {
     auto pc = get_pango_context ();
     auto desc = pc->get_font_description ();
-    g_debug ("Getting metrics from %s", desc.to_string ().c_str ());
     auto metrics = pc->get_metrics (desc);
     // digit_width and char_width should be the same for monospace, but
     // digit_width might be slightly more useful in case we accidentally use
@@ -377,6 +387,9 @@ void View::calculate_metrics ()
     cell_height_px_ = (metrics.get_ascent () + metrics.get_descent ()
             + get_pixels_above_lines () + get_pixels_below_lines ())
             / PANGO_SCALE;
+    g_debug ("Got cell size %dx%d from %s metrics",
+            cell_width_px_, cell_height_px_,
+            desc.to_string ().c_str ());
 }
 
 void View::get_preferred_width_vfunc (int &minimum, int &natural) const
@@ -384,6 +397,8 @@ void View::get_preferred_width_vfunc (int &minimum, int &natural) const
     auto bw = get_borders_width ();
     minimum = 5 * cell_width_px_ + bw;
     natural = (buffer_ ? buffer_->get_columns () : 80) * cell_width_px_ + bw;
+    g_debug ("Preferred width %dx%d+%d=%d",
+            buffer_->get_columns (), cell_width_px_, bw, natural);
 }
 
 void View::get_preferred_height_vfunc (int &minimum, int &natural) const
@@ -391,6 +406,8 @@ void View::get_preferred_height_vfunc (int &minimum, int &natural) const
     auto bh = get_borders_height ();
     minimum = 5 * cell_height_px_ + bh;
     natural = (buffer_ ? buffer_->get_rows () : 30) * cell_height_px_ + bh;
+    g_debug ("Preferred height %dx%d+%d=%d",
+            buffer_->get_rows (), cell_height_px_, bh, natural);
 }
 
 void View::on_redraw_mode_change (const std::string &mode)
@@ -442,8 +459,30 @@ void View::update_font (bool init)
         default:    // FONT_SOURCE_GTK
             if (!init)
                 set_font (default_font_);
+            else
+                calculate_metrics ();
             break;
     }
+}
+
+void View::on_parent_changed (Gtk::Widget *old_parent)
+{
+    Gtk::TextView::on_parent_changed (old_parent);
+    // The width and height sent in Window::size-allocate signals are no use
+    // because of CSD and Wayland issues, so we're supposed to use
+    // gtk_window_get_size. But that should only be used during certain signal
+    // handlers, size-allocate being one of them.
+    if (old_parent && toplevel_size_allocate_connection_)
+        toplevel_size_allocate_connection_.disconnect ();
+    toplevel_size_allocate_connection_
+        = get_toplevel ()->signal_size_allocate ().connect
+            (sigc::mem_fun (this, &View::on_toplevel_size_allocate));
+}
+
+void View::on_toplevel_size_allocate (Gtk::Allocation &)
+{
+    static_cast<Gtk::Window *> (get_toplevel ())->get_size
+        (toplevel_width_, toplevel_height_);
 }
 
 }
