@@ -37,7 +37,7 @@ NvimBridge::NvimBridge ()
 void NvimBridge::start (const std::string &cwd, const std::string &init_file,
         int argc, char **argv)
 {
-    static std::vector<std::string> args {"nvim"};
+    std::vector<std::string> args {"nvim"};
     bool u = false, embed = false;
     //
     // Check whether -u or --embed are already present

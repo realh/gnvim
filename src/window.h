@@ -48,7 +48,7 @@ private:
 
     NvimBridge nvim_;
 
-    // These is just a convenience pointer, view is managed by GTK
+    // These are just convenience pointers, life cycle is managed by GTK
     View *view_;
     Buffer *buffer_;
 
