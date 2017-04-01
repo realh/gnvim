@@ -109,7 +109,7 @@ void View::set_font (const Glib::ustring &desc, bool q_resize)
         {
             family = Glib::ustring (1, '"') + family + '"';
         }
-        auto css = Glib::ustring ("* { font: ")
+        auto css = Glib::ustring ("textview.gnvim { font: ")
             + fsize + " " + family + "; }";
         font_style_provider_->load_from_data (css);
         get_pango_context ()->set_font_description (Pango::FontDescription
