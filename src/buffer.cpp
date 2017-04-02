@@ -321,7 +321,7 @@ void Buffer::on_redraw_highlight_set (const msgpack::object &map_o)
     if (special == -1)
         special = sp_colour_;
 
-    Glib::ustring tag_name;
+    Glib::ustring tag_name = "v";
     if (foreground != -1)
         tag_name += repr_colour ('f', foreground);
     if (background != -1)
