@@ -102,9 +102,7 @@ bool Application::open_window (const std::string &cwd, int argc, char **argv)
         Glib::ustring init_file = app_gsettings_->get_string ("init-file");
         auto win = new Window (opt_max_, opt_width_, opt_height_, init_file,
                 cwd, argc, argv);
-        g_debug ("Adding window");
         add_window (*win);
-        g_debug ("Window added, now have %ld", get_windows ().size ());
         return true;
     }
     catch (Glib::Exception &e)
