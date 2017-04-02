@@ -471,11 +471,7 @@ void Buffer::on_prop_dark_theme_changed ()
     // the state of the tags
     bool dark = prop_dark_theme_.get_value ();
     if (dark == dark_tags_)
-    {
-        g_debug ("Dark changed to %d, already matches tags", dark);
         return;
-    }
-    g_debug ("Dark changed to %d", dark);
     dark_tags_ = dark;
     get_tag_table ()->foreach ([] (const RefPtr<Gtk::TextTag> &tag_c)
     {
@@ -484,15 +480,10 @@ void Buffer::on_prop_dark_theme_changed ()
         // 'r' in tag name means it's for reverse video
         if (name.find ("r") != Glib::ustring::npos)
         {
-            g_debug ("Swapping colours of '%s'", name.c_str ());
             auto old_bg = tag->property_background_rgba ().get_value ();
             auto old_fg = tag->property_foreground_rgba ().get_value ();
             tag->property_background_rgba ().set_value (old_fg);
             tag->property_foreground_rgba ().set_value (old_bg);
-        }
-        else
-        {
-            g_debug ("Ignoring colours of '%s'", name.c_str ());
         }
     });
 }
