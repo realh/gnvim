@@ -79,6 +79,8 @@ private:
     bool on_mouse_event (GdkEventType, int button,
             guint modifiers, int x, int y);
 
+    void do_scroll (const std::string &direction, int state);
+
     void on_redraw_mode_change (const std::string &mode);
 
     void on_redraw_resize (int columns, int rows);

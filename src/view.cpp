@@ -332,9 +332,43 @@ bool View::on_motion_notify_event (GdkEventMotion *event)
     return on_mouse_event (event->type, b, event->state, event->x, event->y);
 }
 
-bool View::on_scroll_event (GdkEventScroll * /*event*/)
+bool View::on_scroll_event (GdkEventScroll *event)
 {
+    switch (event->direction)
+    {
+        case GDK_SCROLL_UP:
+            do_scroll ("Up", event->state);
+            break;
+        case GDK_SCROLL_DOWN:
+            do_scroll ("Down", event->state);
+            break;
+        case GDK_SCROLL_LEFT:
+            do_scroll ("Left", event->state);
+            break;
+        case GDK_SCROLL_RIGHT:
+            do_scroll ("Right", event->state);
+            break;
+        case GDK_SCROLL_SMOOTH:
+            // Bit of a kludge, vim doesn't currently have a good way to do
+            // smooth scrolling
+            if (event->delta_x < 0)
+                do_scroll ("Left", event->state);
+            else if (event->delta_x > 0)
+                do_scroll ("Right", event->state);
+            if (event->delta_y < 0)
+                do_scroll ("Up", event->state);
+            else if (event->delta_y > 0)
+                do_scroll ("Down", event->state);
+            break;
+    }
     return true;
+}
+
+void View::do_scroll (const std::string &direction, int state)
+{
+    auto s = std::string (1, '<') + modifier_string (state)
+        + "ScrollWheel" + direction + '>';
+    buffer_->get_nvim_bridge().nvim_input (s);
 }
 
 int View::get_borders_width () const
