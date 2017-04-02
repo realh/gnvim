@@ -44,8 +44,15 @@ public:
 
     // "org.gnome.desktop.interface" for reading "monospace-font-name"
     static RefPtr<Gio::Settings> sys_gsettings ();
+
+    Glib::PropertyProxy<bool> property_dark_theme ()
+    {
+        return prop_dark_theme_.get_proxy ();
+    }
 private:
     bool on_opt_geometry (const Glib::ustring &, const Glib::ustring &, bool);
+
+    void on_prop_dark_theme_changed ();
 
     Glib::OptionContext options_;
     Glib::OptionGroup main_opt_group_;
@@ -55,6 +62,7 @@ private:
 
     static RefPtr<Gio::Settings> app_gsettings_;
     static RefPtr<Gio::Settings> sys_gsettings_;
+    Glib::Property<bool> prop_dark_theme_;
 };
 
 }

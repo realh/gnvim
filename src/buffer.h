@@ -80,6 +80,8 @@ private:
         return get_iter_at_line_offset (cursor_row_, cursor_col_);
     }
 
+    void on_prop_dark_theme_changed ();
+
     NvimBridge &nvim_;
 
     int columns_, rows_;
@@ -91,6 +93,8 @@ private:
     struct {
         int top, bot, left, right;
     } scroll_region_;
+    Glib::Property<bool> prop_dark_theme_;
+    bool dark_tags_;
 };
 
 }

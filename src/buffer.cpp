@@ -20,6 +20,7 @@
 
 #include <utility>
 
+#include "app.h"
 #include "buffer.h"
 #include "nvim-bridge.h"
 
@@ -27,9 +28,13 @@ namespace Gnvim
 {
 
 Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
-        : nvim_ (nvim), columns_ (columns), rows_ (rows),
+        : Glib::ObjectBase (typeid (Buffer)),
+        nvim_ (nvim), columns_ (columns), rows_ (rows),
         fg_colour_ (-1), bg_colour_ (-1), sp_colour_ (-1),
-        cursor_row_ (0), cursor_col_ (0)
+        cursor_row_ (0), cursor_col_ (0),
+        prop_dark_theme_ (*this, "dark-theme", false, _("Use dark theme"),
+            _("Whether to use the dark theme"), Glib::PARAM_READWRITE),
+        dark_tags_ (false)
 {
     current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ("default");
     get_tag_table ()->add (default_attr_tag_);
@@ -59,6 +64,11 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
             (sigc::mem_fun (this, &Buffer::on_redraw_scroll));
     nvim.redraw_end.connect
             (sigc::mem_fun (this, &Buffer::on_redraw_end));
+
+    auto propp = prop_dark_theme_.get_proxy ();
+    propp.signal_changed ().connect
+        (sigc::mem_fun (this, &Buffer::on_prop_dark_theme_changed));
+    Application::app_gsettings ()->bind ("dark", propp);
 
     // Remember we store scroll region with exclusive right, but inclusive
     // top & bottom
@@ -279,6 +289,8 @@ void Buffer::on_redraw_highlight_set (const msgpack::object &map_o)
     bool bold = false;
     bool underline = false;
     bool undercurl = false;
+    dark_tags_ = Application::app_gsettings ()->get_boolean ("dark");
+
     for (guint n = 0; n < map_m.size; ++n)
     {
         const auto &kv = map_m.ptr[n];
@@ -315,7 +327,7 @@ void Buffer::on_redraw_highlight_set (const msgpack::object &map_o)
     if (background != -1)
         tag_name += repr_colour ('b', background);
     if (special != -1)
-        tag_name += repr_colour ('b', special);
+        tag_name += repr_colour ('s', special);
     if (reverse)
         tag_name += 'r';
     if (italic)
@@ -338,10 +350,12 @@ void Buffer::on_redraw_highlight_set (const msgpack::object &map_o)
             {
                 // There's no future-proof way to read a widget's colours, and
                 // if we try to read a tag's colour that hasn't been set
-                // explicitly it crashes, so just assume black on white
+                // explicitly it crashes, so just assume black on white, or
+                // white on black if the app's "dark" option is set
 
                 //g_debug ("reverse, fg = bg = assumed white");
-                tag->property_foreground ().set_value("#ffffff");
+                tag->property_foreground ().set_value
+                    (dark_tags_ ? "#000000" : "#ffffff");
             }
             else
             {
@@ -351,7 +365,8 @@ void Buffer::on_redraw_highlight_set (const msgpack::object &map_o)
             if (foreground == -1)
             {
                 //g_debug ("reverse, bg = fg = assumed black");
-                tag->property_background ().set_value("#000000");
+                tag->property_background ().set_value
+                        (dark_tags_ ? "#ffffff" : "#000000");
             }
             else
             {
@@ -447,6 +462,39 @@ void Buffer::on_redraw_scroll (int count)
 void Buffer::on_redraw_end ()
 {
     place_cursor (get_cursor_iter ());
+}
+
+void Buffer::on_prop_dark_theme_changed ()
+{
+    // There could be a race condition between the dark property changing
+    // and tags being created, so dark_tags_ serves as a separate flag for
+    // the state of the tags
+    bool dark = prop_dark_theme_.get_value ();
+    if (dark == dark_tags_)
+    {
+        g_debug ("Dark changed to %d, already matches tags", dark);
+        return;
+    }
+    g_debug ("Dark changed to %d", dark);
+    dark_tags_ = dark;
+    get_tag_table ()->foreach ([] (const RefPtr<Gtk::TextTag> &tag_c)
+    {
+        auto tag = const_cast<RefPtr<Gtk::TextTag> &> (tag_c);
+        const auto &name = tag->property_name ().get_value ();
+        // 'r' in tag name means it's for reverse video
+        if (name.find ("r") != Glib::ustring::npos)
+        {
+            g_debug ("Swapping colours of '%s'", name.c_str ());
+            auto old_bg = tag->property_background_rgba ().get_value ();
+            auto old_fg = tag->property_foreground_rgba ().get_value ();
+            tag->property_background_rgba ().set_value (old_fg);
+            tag->property_foreground_rgba ().set_value (old_bg);
+        }
+        else
+        {
+            g_debug ("Ignoring colours of '%s'", name.c_str ());
+        }
+    });
 }
 
 }

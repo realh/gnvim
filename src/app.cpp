@@ -27,10 +27,13 @@ namespace Gnvim
 {
 
 Application::Application ()
-        : Gtk::Application ("uk.co.realh.gnvim",
+        : Glib::ObjectBase (typeid (Application)),
+        Gtk::Application ("uk.co.realh.gnvim",
             Gio::APPLICATION_HANDLES_COMMAND_LINE),
         options_("NVIM_ARGUMENTS"),
-        main_opt_group_ ("gnvim", _("gnvim options"))
+        main_opt_group_ ("gnvim", _("gnvim options")),
+        prop_dark_theme_ (*this, "dark-theme", false, _("Use dark theme"),
+            _("Whether to use the dark theme"), Glib::PARAM_READWRITE)
 {
     options_.set_summary (_("Run neovim with a GUI"));
     options_.set_description (
@@ -57,6 +60,10 @@ Application::Application ()
 
     options_.set_main_group (main_opt_group_);
     g_option_context_add_group (options_.gobj (), gtk_get_option_group (0));
+
+    property_dark_theme ().signal_changed ().connect
+        (sigc::mem_fun (this, &Application::on_prop_dark_theme_changed));
+    app_gsettings ()->bind ("dark", property_dark_theme ());
 }
 
 void Application::on_activate ()
@@ -171,6 +178,13 @@ RefPtr<Gio::Settings> Application::sys_gsettings ()
     if (!sys_gsettings_)
         sys_gsettings_ = Gio::Settings::create ("org.gnome.desktop.interface");
     return sys_gsettings_;
+}
+
+void Application::on_prop_dark_theme_changed ()
+{
+    auto gsettings = Gtk::Settings::get_default ();
+    gsettings->property_gtk_application_prefer_dark_theme ().set_value
+            (prop_dark_theme_.get_value ());
 }
 
 RefPtr<Gio::Settings> Application::app_gsettings_;
