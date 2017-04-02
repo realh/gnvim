@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=gnvim
+Comment=Neovim GUI
+Exec=gnvim
+Icon=neovim.svg
+Type=Application
+StartupNotify=true
+Categories=GTK;Utility;TextEditor;Development

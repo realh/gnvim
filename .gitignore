@@ -1,4 +1,5 @@
 aclocal.m4
+autobuild
 autom4te.cache
 build
 compile

@@ -52,7 +52,7 @@ void NvimBridge::start (const std::string &cwd, const std::string &init_file,
     if (!embed)
         args.push_back ("--embed");
 
-    // Load gnvim.vim config if present and -u wasn't overridden
+    // Load custom init file if present and -u wasn't overridden
     if (!u && init_file.size ())
     {
         args.push_back ("-u");

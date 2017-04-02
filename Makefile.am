@@ -6,3 +6,9 @@ gsettings_SCHEMAS = uk.co.realh.gnvim.gschema.xml
 EXTRA_DIST = $(gsettings_SCHEMAS)
 
 @GSETTINGS_RULES@
+
+appicondir = $(datadir)/icons/hicolor/scalable/apps
+appicon_DATA = neovim.svg
+
+desktopdir = $(datadir)/applications
+desktop_DATA = gnvim.desktop
