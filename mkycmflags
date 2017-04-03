@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 
-clang_version = 3.9
+clang_version = 4.0
 
 clang_bin = "/usr/bin/clang-" + str(clang_version)
 
