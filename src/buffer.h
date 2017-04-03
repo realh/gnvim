@@ -59,7 +59,7 @@ public:
     // Returns false if the size hasn't changed
     bool resize (int columns, int rows);
 
-    void on_redraw_start ();
+    //void on_redraw_start ();
     void on_redraw_update_fg (int colour);
     void on_redraw_update_bg (int colour);
     void on_redraw_update_sp (int colour);
