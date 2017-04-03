@@ -18,6 +18,7 @@
 
 #include "defns.h"
 
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <sstream>
@@ -34,13 +35,34 @@ NvimBridge::NvimBridge ()
     map_adapters ();
 }
 
-void NvimBridge::start (const std::string &cwd, const std::string &init_file,
-        int argc, char **argv)
+static void modify_env (std::vector<std::string> &env,
+        const std::string &name, const std::string &value,
+        bool overwrite = true)
+{
+    auto l = name.size ();
+    auto it = std::find_if (env.begin (), env.end (),
+            [l, name] (const std::string &a)
+    {
+        return a.compare (0, l, name) == 0;
+    });
+    if (it == env.end ())
+    {
+        env.push_back (name + '=' + value);
+    }
+    else if (overwrite)
+    {
+        *it = name + '=' + value;
+    }
+}
+
+void NvimBridge::start (RefPtr<Gio::ApplicationCommandLine> cl,
+        const std::string &init_file)
 {
     std::vector<std::string> args {"nvim"};
-    bool u = false, embed = false;
-    //
+    int argc;
+    char **argv = cl->get_arguments (argc);
     // Check whether -u or --embed are already present
+    bool u = false, embed = false;
     for (int n = 1; n < argc; ++n)
     {
         if (!strcmp (argv[n], "-u"))
@@ -63,18 +85,22 @@ void NvimBridge::start (const std::string &cwd, const std::string &init_file,
     {
         args.push_back (argv[n]);
     }
+    std::ostringstream s;
+    for (const auto &a: args)
+        s << a << ' ';
+    g_debug ("%s", s.str ().c_str ());
 
-    if (!envp_.size ())
-    {
-        envp_.push_back (Glib::ustring ("XDG_CONFIG_HOME=")
-                + Glib::get_user_config_dir ());
-        envp_.push_back (Glib::ustring ("XDG_DATA_HOME=")
-                + Glib::get_user_data_dir ());
-    }
+    auto envp = cl->get_environ ();
+    modify_env (envp, "XDG_CONFIG_HOME", Glib::get_user_config_dir (), false);
+    modify_env (envp, "XDG_DATA_HOME", Glib::get_user_data_dir (), false);
+    s.str ("env:\n");
+    for (const auto &a: envp)
+        s << a << '\n';
+    g_debug ("%s", s.str ().c_str ());
 
     int to_nvim_stdin, from_nvim_stdout;
-    Glib::spawn_async_with_pipes (cwd,
-            args, envp_, Glib::SPAWN_SEARCH_PATH,
+    Glib::spawn_async_with_pipes (cl->get_cwd (),
+            args, envp, Glib::SPAWN_SEARCH_PATH,
             Glib::SlotSpawnChildSetup (), &nvim_pid_,
             &to_nvim_stdin, &from_nvim_stdout);
 
@@ -255,7 +281,5 @@ void NvimBridge::on_notify (std::string method,
     }
     redraw_end.emit ();
 }
-
-std::vector<Glib::ustring> NvimBridge::envp_;
 
 }

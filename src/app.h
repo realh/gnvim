@@ -33,12 +33,10 @@ public:
         return RefPtr<Application> (new Application ());
     }
 
-    virtual void on_activate () override;
-
     virtual int on_command_line (const RefPtr<Gio::ApplicationCommandLine> &)
             override;
 
-    bool open_window (const std::string &cwd, int argc, char **argv);
+    bool open_window (const RefPtr<Gio::ApplicationCommandLine> &);
 
     static RefPtr<Gio::Settings> app_gsettings ();
 

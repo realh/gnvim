@@ -40,8 +40,8 @@ public:
 
     ~NvimBridge ();
 
-    void start (const std::string &init_file, const std::string &cwd,
-            int argc, char **argv);
+    void start (RefPtr<Gio::ApplicationCommandLine> cl,
+            const std::string &init_file);
 
     void start_ui (int width, int height);
 
@@ -108,8 +108,6 @@ private:
 
     RefPtr<MsgpackRpc> rpc_;
     Glib::Pid nvim_pid_;
-
-    static std::vector<Glib::ustring> envp_;
 };
 
 }

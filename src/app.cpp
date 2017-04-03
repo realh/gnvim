@@ -66,11 +66,6 @@ Application::Application ()
     app_gsettings ()->bind ("dark", property_dark_theme ());
 }
 
-void Application::on_activate ()
-{
-    open_window (Glib::get_current_dir (), 0, nullptr);
-}
-
 int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
     int argc;
@@ -87,7 +82,7 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
         Glib::spawn_command_line_sync ("nvim --help");
         return 0;
     }
-    if (!open_window (cl->get_cwd (), argc, argv))
+    if (!open_window (cl))
     {
         g_warning ("Failed to open window, exiting this instance");
         return 1;
@@ -95,13 +90,13 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
     return 0;
 }
 
-bool Application::open_window (const std::string &cwd, int argc, char **argv)
+bool Application::open_window (const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
     try
     {
         Glib::ustring init_file = app_gsettings_->get_string ("init-file");
-        auto win = new Window (opt_max_, opt_width_, opt_height_, init_file,
-                cwd, argc, argv);
+        auto win = new Window (opt_max_, opt_width_, opt_height_,
+                init_file, cl);
         add_window (*win);
         return true;
     }
