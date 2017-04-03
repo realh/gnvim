@@ -85,18 +85,10 @@ void NvimBridge::start (RefPtr<Gio::ApplicationCommandLine> cl,
     {
         args.push_back (argv[n]);
     }
-    std::ostringstream s;
-    for (const auto &a: args)
-        s << a << ' ';
-    g_debug ("%s", s.str ().c_str ());
 
     auto envp = cl->get_environ ();
     modify_env (envp, "XDG_CONFIG_HOME", Glib::get_user_config_dir (), false);
     modify_env (envp, "XDG_DATA_HOME", Glib::get_user_data_dir (), false);
-    s.str ("env:\n");
-    for (const auto &a: envp)
-        s << a << '\n';
-    g_debug ("%s", s.str ().c_str ());
 
     int to_nvim_stdin, from_nvim_stdout;
     Glib::spawn_async_with_pipes (cl->get_cwd (),
