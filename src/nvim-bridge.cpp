@@ -35,6 +35,7 @@ NvimBridge::NvimBridge ()
     map_adapters ();
 }
 
+/*
 static void modify_env (std::vector<std::string> &env,
         const std::string &name, const std::string &value,
         bool overwrite = true)
@@ -54,6 +55,7 @@ static void modify_env (std::vector<std::string> &env,
         *it = name + '=' + value;
     }
 }
+*/
 
 void NvimBridge::start (RefPtr<Gio::ApplicationCommandLine> cl,
         const std::string &init_file)
@@ -87,8 +89,8 @@ void NvimBridge::start (RefPtr<Gio::ApplicationCommandLine> cl,
     }
 
     auto envp = cl->get_environ ();
-    modify_env (envp, "XDG_CONFIG_HOME", Glib::get_user_config_dir (), false);
-    modify_env (envp, "XDG_DATA_HOME", Glib::get_user_data_dir (), false);
+    //modify_env (envp, "XDG_CONFIG_HOME", Glib::get_user_config_dir (), false);
+    //modify_env (envp, "XDG_DATA_HOME", Glib::get_user_data_dir (), false);
 
     int to_nvim_stdin, from_nvim_stdout;
     Glib::spawn_async_with_pipes (cl->get_cwd (),
