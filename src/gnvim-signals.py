@@ -16,8 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This either declares the signals in NvimBridge's class definition, or stores
-# them in the maps in map_adapters().
+"""
+This script was written to generate boilerplate code for handling nvim redraw
+events, but it currently has no use. It's still here in case a modified version
+can be useful in the future.
+"""
 
 import sys
 
