@@ -91,10 +91,31 @@ void NvimBridge::start (RefPtr<Gio::ApplicationCommandLine> cl,
     auto envp = cl->get_environ ();
     //modify_env (envp, "XDG_CONFIG_HOME", Glib::get_user_config_dir (), false);
     //modify_env (envp, "XDG_DATA_HOME", Glib::get_user_data_dir (), false);
+    /*
+    std::ostringstream s;
+    for (const auto &a: envp)
+    {
+        s << a << std::endl;
+    }
+    g_debug ("%s", s.str ().c_str ());
+    */
+
+    // Only the first call to Application::on_command_line has an enviroment,
+    // on subsequent calls it's empty. glib(mm) bug?
+    if (envp.size() && !envp_.size())
+    {
+        //g_debug ("Replacing empty envp_ with %ld", envp.size ());
+        envp_ = envp;
+    }
+    else
+    {
+        //g_debug ("Passed envp %ld, using envp_ %ld",
+        //        envp.size (), envp_.size ());
+    }
 
     int to_nvim_stdin, from_nvim_stdout;
     Glib::spawn_async_with_pipes (cl->get_cwd (),
-            args, envp, Glib::SPAWN_SEARCH_PATH,
+            args, envp_, Glib::SPAWN_SEARCH_PATH,
             Glib::SlotSpawnChildSetup (), &nvim_pid_,
             &to_nvim_stdin, &from_nvim_stdout);
 
@@ -275,5 +296,7 @@ void NvimBridge::on_notify (std::string method,
     }
     redraw_end.emit ();
 }
+
+std::vector<std::string> NvimBridge::envp_;
 
 }
