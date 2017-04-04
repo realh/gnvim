@@ -34,7 +34,7 @@ A GTK3 GUI for neovim.
 
 * [gtkmm](http://www.gtkmm.org) version 3.22 or later
 
-* [msgpack C/C++ library](https://github.com/msgpack/msgpack-c) 
+* [msgpack C/C++ library](https://github.com/msgpack/msgpack-c) (version 1.x)
 
 * An up-to-date GNU Build System (autotools)
 
