@@ -440,7 +440,7 @@ void Buffer::on_redraw_scroll (int count)
     else
     {
         start = scroll_region_.bot;
-        end = scroll_region_.top - 1 + count;
+        end = scroll_region_.top - 1 - count;
         step = -1;
     }
 
