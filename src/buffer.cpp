@@ -36,7 +36,7 @@ Buffer::Buffer (NvimBridge &nvim, int columns, int rows)
             _("Whether to use the dark theme"), Glib::PARAM_READWRITE),
         dark_tags_ (false)
 {
-    current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ("default");
+    current_attr_tag_ = default_attr_tag_ = Gtk::TextTag::create ("v");
     get_tag_table ()->add (default_attr_tag_);
     on_redraw_clear ();
 
@@ -156,9 +156,14 @@ void Buffer::on_redraw_clear ()
         if (y < rows_ - 1)
             s += '\n';
         if (y == 0)
+        {
             set_text (s);
+            apply_tag (current_attr_tag_, begin (), end ());
+        }
         else
-            this->insert_with_tag (end (), s, current_attr_tag_);
+        {
+            insert_with_tag (end (), s, current_attr_tag_);
+        }
     }
 }
 
@@ -283,6 +288,13 @@ void Buffer::on_redraw_highlight_set (const msgpack::object &map_o)
         return;
     }
     const auto &map_m = map_o.via.map;
+
+    if (!map_m.size)
+    {
+        current_attr_tag_ = default_attr_tag_;
+        return;
+    }
+
     int foreground = -1, background = -1, special = -1;
     bool reverse = false;
     bool italic = false;
