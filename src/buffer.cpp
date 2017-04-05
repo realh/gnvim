@@ -91,7 +91,7 @@ bool Buffer::resize (int columns, int rows)
         Gtk::TextIter end_it = end ();
         // Including terminator of new last line
         start_it.backward_char ();
-        erase (start_it, end_it);
+        erase_with_tags (start_it, end_it);
         rows_ = rows;
     }
     else if (rows_ < rows)
@@ -101,7 +101,7 @@ bool Buffer::resize (int columns, int rows)
         for (int y = 0; y < rows - rows_; ++y)
         {
             Gtk::TextIter end_it = end ();
-            this->insert_with_tag (end_it, s, current_attr_tag_);
+            this->insert_with_tag (end_it, s, default_attr_tag_);
         }
     }
     // rows_ is now the number of rows that (may) need their length changed
@@ -112,7 +112,7 @@ bool Buffer::resize (int columns, int rows)
         {
             Gtk::TextIter it = get_iter_at_line_offset (y, columns_ - 1);
             it.forward_char ();
-            this->insert_with_tag (it, s, current_attr_tag_);
+            this->insert_with_tag (it, s, default_attr_tag_);
         }
     }
     else if (columns < columns_)
@@ -122,7 +122,7 @@ bool Buffer::resize (int columns, int rows)
             Gtk::TextIter start_it = get_iter_at_line_offset (y, columns);
             Gtk::TextIter end_it (start_it);
             end_it.forward_to_line_end ();
-            erase (start_it, end_it);
+            erase_with_tags (start_it, end_it);
         }
     }
 
@@ -150,6 +150,7 @@ void Buffer::on_redraw_clear ()
 {
     cursor_row_ = 0;
     cursor_col_ = 0;
+    remove_all_tags (begin (), end ());
     for (int y = 0; y < rows_; ++y)
     {
         auto s = Glib::ustring (columns_, ' ');
@@ -158,11 +159,11 @@ void Buffer::on_redraw_clear ()
         if (y == 0)
         {
             set_text (s);
-            apply_tag (current_attr_tag_, begin (), end ());
+            apply_tag (default_attr_tag_, begin (), end ());
         }
         else
         {
-            insert_with_tag (end (), s, current_attr_tag_);
+            insert_with_tag (end (), s, default_attr_tag_);
         }
     }
 }
@@ -175,9 +176,9 @@ void Buffer::on_redraw_eol_clear ()
         return;
     range_end.forward_to_line_end ();
     auto len = range_end.get_line_offset () - cursor.get_line_offset ();
-    erase (cursor, range_end);
+    erase_with_tags (cursor, range_end);
     auto s = Glib::ustring (len, ' ');
-    this->insert_with_tag (get_cursor_iter (), s, current_attr_tag_);
+    this->insert_with_tag (get_cursor_iter (), s, default_attr_tag_);
 }
 
 static void set_colour_prop (Glib::PropertyProxy<Gdk::RGBA> prop, int colour)
@@ -249,7 +250,7 @@ void Buffer::on_redraw_put (const msgpack::object_array &text_ar)
     auto cursor = get_cursor_iter ();
     auto range_end = cursor;
     range_end.forward_chars (len);
-    erase (cursor, range_end);
+    erase_with_tags (cursor, range_end);
     this->insert_with_tag (get_cursor_iter (), s, current_attr_tag_);
     cursor = get_cursor_iter ();
     cursor.forward_chars (len);
@@ -450,7 +451,7 @@ void Buffer::on_redraw_scroll (int count)
         //g_debug ("Clearing dst line %d", y);
         auto it1 = get_iter_at_line_offset (y, scroll_region_.left);
         auto it2 = get_iter_at_line_offset (y, scroll_region_.right);
-        erase (it1, it2);
+        erase_with_tags (it1, it2);
         // Copy from src to dst row
         //g_debug ("Copying from line %d to %d", y + count, y);
         it1 = get_iter_at_line_offset (y, scroll_region_.left);
@@ -465,7 +466,7 @@ void Buffer::on_redraw_scroll (int count)
     {
         auto it1 = get_iter_at_line_offset (y, scroll_region_.left);
         auto it2 = get_iter_at_line_offset (y, scroll_region_.right);
-        erase (it1, it2);
+        erase_with_tags (it1, it2);
         it1 = get_iter_at_line_offset (y, scroll_region_.left);
         insert_with_tag (it1, blank, default_attr_tag_);
     }

@@ -56,6 +56,13 @@ public:
         return nvim_;
     }
 
+    iterator erase_with_tags (const iterator &range_begin,
+            const iterator &range_end)
+    {
+        remove_all_tags (range_begin, range_end);
+        return erase (range_begin, range_end);
+    }
+
     // Returns false if the size hasn't changed
     bool resize (int columns, int rows);
 
