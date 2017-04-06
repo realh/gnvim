@@ -72,6 +72,7 @@ void Window::on_redraw_set_title (const std::string &title)
     set_title (title);
 }
 
+/*
 void Window::on_size_allocate (Gtk::Allocation &alloc)
 {
     g_debug (">> Window::size_allocate %dx%d",
@@ -80,6 +81,7 @@ void Window::on_size_allocate (Gtk::Allocation &alloc)
     g_debug ("<< Window::size_allocate %dx%d",
             alloc.get_width (), alloc.get_height ());
 }
+*/
 
 #if 0
 void Window::set_geometry_hints ()

@@ -385,11 +385,9 @@ int View::get_borders_height () const
 
 void View::on_size_allocate (Gtk::Allocation &allocation)
 {
-    g_debug (">> View::size_allocate %dx%d",
-            allocation.get_width (), allocation.get_height ());
+    //g_debug (">> View::size_allocate %dx%d",
+    //        allocation.get_width (), allocation.get_height ());
     Gtk::TextView::on_size_allocate (allocation);
-    g_debug ("Post TextView::size_allocate %dx%d",
-            allocation.get_width (), allocation.get_height ());
     // Size requests and allocations appear not to include margins
     int borders_width, borders_height;
     get_borders_size (borders_width, borders_height);
@@ -399,11 +397,12 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
     // Does nothing if size hasn't changed
     if (buffer_ && buffer_->resize (columns_, rows_))
     {
-        g_debug ("Borders %dx%d, grid size %dx%d, resizing nvim",
-                borders_width, borders_height, columns_, rows_);
+        //g_debug ("Borders %dx%d, grid size %dx%d, resizing nvim",
+        //        borders_width, borders_height, columns_, rows_);
         ++gui_resize_counter_;
         buffer_->get_nvim_bridge ().nvim_ui_try_resize (columns_, rows_);
     }
+    /*
     else
     {
         g_debug ("Borders %dx%d, grid size %dx%d, not resizing",
@@ -415,6 +414,7 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
             nat_s.width, nat_s.height);
     g_debug ("<< View::size_allocate %dx%d",
             allocation.get_width (), allocation.get_height ());
+    */
 }
 
 void View::calculate_metrics ()
@@ -437,8 +437,8 @@ void View::get_preferred_width_vfunc (int &minimum, int &natural) const
     auto cols = buffer_ ? buffer_->get_columns () : 80;
     minimum = 5 * cell_width_px_ + bw;
     natural = cols * cell_width_px_ + bw;
-    g_debug ("Preferred width bw %d + %d columns * %dpx = %d",
-            bw, cols, cell_width_px_, natural);
+    //g_debug ("Preferred width bw %d + %d columns * %dpx = %d",
+    //        bw, cols, cell_width_px_, natural);
 }
 
 void View::get_preferred_height_vfunc (int &minimum, int &natural) const
@@ -447,8 +447,8 @@ void View::get_preferred_height_vfunc (int &minimum, int &natural) const
     auto lines = buffer_ ? buffer_->get_rows () : 30;
     minimum = 5 * cell_height_px_ + bh;
     natural = lines * cell_height_px_ + bh;
-    g_debug ("Preferred height bh %d + %d lines * %dpx = %d",
-            bh, lines, cell_height_px_, natural);
+    //g_debug ("Preferred height bh %d + %d lines * %dpx = %d",
+    //        bh, lines, cell_height_px_, natural);
 }
 
 void View::on_redraw_mode_change (const std::string &mode)
@@ -464,19 +464,19 @@ void View::on_redraw_bell ()
 
 void View::on_redraw_resize (int columns, int rows)
 {
-    g_debug ("on_redraw_resize from %dx%d to %dx%d",
-            columns_, rows_, columns, rows);
+    //g_debug ("on_redraw_resize from %dx%d to %dx%d",
+    //        columns_, rows_, columns, rows);
     if (buffer_->resize (columns, rows))
     {
-        g_debug ("Buffer agreed to resize, _ now %dx%d", columns_, rows_);
+        //g_debug ("Buffer agreed to resize, _ now %dx%d", columns_, rows_);
         if (!gui_resize_counter_)
         {
             resize_window ();
-            g_debug ("Called resize_window (), _ now %dx%d", columns_, rows_);
+            //g_debug ("Called resize_window (), _ now %dx%d", columns_, rows_);
         }
         else
         {
-            g_debug ("GUI-driven resize (%d)", gui_resize_counter_);
+            //g_debug ("GUI-driven resize (%d)", gui_resize_counter_);
             --gui_resize_counter_;
         }
     }

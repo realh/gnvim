@@ -35,8 +35,10 @@ public:
             RefPtr<Gio::ApplicationCommandLine> cl);
 
     void force_close ();
+/*
 protected:
     virtual void on_size_allocate (Gtk::Allocation &alloc) override;
+*/
 private:
     void on_nvim_error (Glib::ustring desc);
 
