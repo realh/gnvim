@@ -124,6 +124,16 @@ private:
     int cell_width_px_, cell_height_px_;
     int columns_ {-1}, rows_ {-1};
 
+    /* If we've asked nvim to resize in response to size-allocate from GUI we
+     * shouldn't then try to resize the GUI in response to nvim's redraw_resize
+     * event. In particular, Wayland or CSD causes a spurious undersized
+     * size-allocate when unmaximising, before sending the correct allocation.
+     * If we call Window::resize in response to that, the window ends up at the
+     * wrong size. This counter keeps track of which resize events were
+     * GUI-driven.
+     */
+    int gui_resize_counter_ {0};
+
     sigc::connection toplevel_size_allocate_connection_;
     int toplevel_width_ {0}, toplevel_height_ {0};
 

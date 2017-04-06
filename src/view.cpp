@@ -401,6 +401,7 @@ void View::on_size_allocate (Gtk::Allocation &allocation)
     {
         g_debug ("Borders %dx%d, grid size %dx%d, resizing nvim",
                 borders_width, borders_height, columns_, rows_);
+        ++gui_resize_counter_;
         buffer_->get_nvim_bridge ().nvim_ui_try_resize (columns_, rows_);
     }
     else
@@ -468,8 +469,16 @@ void View::on_redraw_resize (int columns, int rows)
     if (buffer_->resize (columns, rows))
     {
         g_debug ("Buffer agreed to resize, _ now %dx%d", columns_, rows_);
-        resize_window ();
-        g_debug ("Called resize_window (), _ now %dx%d", columns_, rows_);
+        if (!gui_resize_counter_)
+        {
+            resize_window ();
+            g_debug ("Called resize_window (), _ now %dx%d", columns_, rows_);
+        }
+        else
+        {
+            g_debug ("GUI-driven resize (%d)", gui_resize_counter_);
+            --gui_resize_counter_;
+        }
     }
     columns_ = columns;
     rows_ = rows;
