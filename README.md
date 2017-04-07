@@ -96,4 +96,6 @@ textview.gnvim {
 
 gnvim uses GtkTextView to display the text, with a GtkTextBuffer that shadows
 the currently displayed vim text and highlights. It's a rather novel way of
-using GtkTextView, but it's easy and almost perfect for the job.
+using GtkTextView, but it's easy and at first it seemed ideal for the job. But
+in practice it works out to very inefficient, and fixing that would require
+nearly as much work as writing a specialised widget.
