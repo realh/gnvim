@@ -2,13 +2,21 @@
 
 A GTK3 GUI for neovim.
 
+## Status
+
+Unfortunately I've come to the conclusion that neovim's API architecture
+presents too many obstacles for writing a first-class GUI, in particular for
+scrolling. I don't think it could even quite match the GUI flavours of classic
+vim, let alone surpass it, so it's not really worth the effort, and development
+is probably going to stop here, I'm afraid.
+
 ## Features currently implemented
 
 * Configurable GUI
 
 * Multiple windows, one nvim instance per window
 
-## Coming soon
+## High priority future features
 
 * Preferences dialog
 
@@ -18,7 +26,9 @@ A GTK3 GUI for neovim.
 
 * Share state between nvim instances
 
-## Also planned (subject to feasibility)
+## Slightly lower priority future features
+
+Not all of these may be possible.
 
 * Windows binary
 
