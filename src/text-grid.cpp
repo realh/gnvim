@@ -25,8 +25,10 @@
 namespace Gnvim
 {
 
-TextGrid::TextGrid (int columns, int lines)
-    : columns_ (columns), lines_ (lines), grid_ (columns_ * lines_),
+TextGrid::TextGrid (int columns, int lines, int cell_width, int cell_height)
+    : columns_ (columns), lines_ (lines),
+    cell_width_ (cell_width), cell_height_ (cell_height),
+    grid_ (columns_ * lines_),
     default_attrs_ (* (attrs_.emplace ()).first)
 {
 }

@@ -101,7 +101,25 @@ private:
         const CellAttributes *attrs_;
     };
 public:
-    TextGrid (int columns, int lines);
+    /**
+     * @param columns       Number of columns.
+     * @param lines         Number of lines.
+     * @param cell_width    Width of each text cell in pixels.
+     * @param cell_height   Height of each text cell in pixels.
+     * */
+    TextGrid (int columns, int lines, int cell_width, int cell_height);
+
+    void resize (int columns, int lines)
+    {
+        columns_ = columns;
+        lines_ = lines;
+    }
+
+    void set_cell_size (int cell_width, int cell_height)
+    {
+        cell_width_ = cell_width;
+        cell_height_ = cell_height;
+    }
 
     /**
      * @param text Consisting of a single unichar which is copied.
@@ -140,6 +158,7 @@ public:
     void scroll (int left, int top, int right, int bottom, int count);
 private:
     int columns_, lines_;
+    int cell_width_, cell_height_;
     std::vector<TextCell> grid_;
     std::set<CellAttributes> attrs_;
     const CellAttributes &default_attrs_;
