@@ -116,9 +116,9 @@ public:
     }
 
     // Hashability for std::set etc
-    bool operator< (const CellAttributes &other);
+    bool operator< (const CellAttributes &other) const;
 
-    bool operator== (const CellAttributes &other);
+    bool operator== (const CellAttributes &other) const;
 
     Pango::AttrList &get_pango_attrs ();
 private:

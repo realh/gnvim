@@ -41,14 +41,14 @@ private:
         /**
          * @param attrs this does not take ownership of attrs
          */
-        TextCell (gunichar c = ' ', const CellAttributes *attrs = nullptr)
+        TextCell (gunichar c = ' ', CellAttributes *attrs = nullptr)
             : c_ (c), attrs_ (attrs)
         {}
 
         /**
          * @param attrs this does not take ownership of attrs
          */
-        TextCell (const Glib::ustring &c, const CellAttributes *attrs = nullptr)
+        TextCell (const Glib::ustring &c, CellAttributes *attrs = nullptr)
             : attrs_ (attrs)
         {
             set_text (c);
@@ -79,7 +79,7 @@ private:
             return c_;
         }
 
-        const CellAttributes *get_attrs () const
+        CellAttributes *get_attrs () const
         {
             return attrs_;
         }
@@ -87,7 +87,7 @@ private:
         /**
          * @param attrs this does not take ownership of attrs
          */
-        void set_attrs (const CellAttributes &attrs)
+        void set_attrs (CellAttributes &attrs)
         {
             attrs_ = &attrs;
         }
@@ -98,7 +98,7 @@ private:
         }
     private:
         gunichar c_;
-        const CellAttributes *attrs_;
+        CellAttributes *attrs_;
     };
 public:
     /**
@@ -108,6 +108,11 @@ public:
      * @param cell_height   Height of each text cell in pixels.
      * */
     TextGrid (int columns, int lines, int cell_width, int cell_height);
+
+    TextGrid (const TextGrid &) = delete;
+    TextGrid &operator=(const TextGrid &) = delete;
+    TextGrid (TextGrid &&) = delete;
+    TextGrid &operator=(TextGrid &&) = delete;
 
     void resize (int columns, int lines)
     {
@@ -147,7 +152,7 @@ public:
      * Draws (part of) the line of text in the given cairo context.
      * Columns are inclusive.
      */
-    void draw_line (Cairo::RefPtr<Cairo::Context> cairo,
+    void draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
             int line, int start_column, int end_column);
 
     /** Scroll a region of the grid. 

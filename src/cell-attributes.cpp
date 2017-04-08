@@ -126,7 +126,7 @@ void CellAttributes::set_undercurl (bool undercurl)
 }
 
 // Hashability for std::set etc
-bool CellAttributes::operator< (const CellAttributes &other)
+bool CellAttributes::operator< (const CellAttributes &other) const
 {
     if ((special_rgb_ & ~DIRTY_BIT) == (other.special_rgb_ & ~DIRTY_BIT))
     {
@@ -138,7 +138,7 @@ bool CellAttributes::operator< (const CellAttributes &other)
     return (special_rgb_ & ~DIRTY_BIT) < (other.special_rgb_ & ~DIRTY_BIT);
 }
 
-bool CellAttributes::operator== (const CellAttributes &other)
+bool CellAttributes::operator== (const CellAttributes &other) const
 {
     if (this == &other)
         return true;

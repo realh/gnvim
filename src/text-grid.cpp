@@ -29,7 +29,7 @@ TextGrid::TextGrid (int columns, int lines, int cell_width, int cell_height)
     : columns_ (columns), lines_ (lines),
     cell_width_ (cell_width), cell_height_ (cell_height),
     grid_ (columns_ * lines_),
-    default_attrs_ (* (attrs_.emplace ()).first)
+    default_attrs_ (* ((attrs_.emplace ()).first))
 {
 }
 
@@ -54,10 +54,13 @@ void TextGrid::apply_attrs (const CellAttributes &attrs,
 {
     auto start = start_line * columns_ + start_column;
     auto end = end_line * columns_ + end_column;
+    const auto &it = attrs_.find (attrs);
+    const auto &actual_attrs = (it == attrs_.end ())
+        ? *((attrs_.emplace (attrs)).first) : *it;
     for (int i = start; i <= end; ++i)
     {
         auto &cell = grid_ [i];
-        cell.set_attrs (attrs);
+        cell.set_attrs (actual_attrs);
     }
 }
 
@@ -100,6 +103,37 @@ void TextGrid::scroll (int left, int top, int right, int bottom, int count)
         {
             auto &cell = grid_ [y + x];
             cell.clear ();
+        }
+    }
+}
+
+void TextGrid::draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
+        int line, int start_column, int end_column)
+{
+    auto layout = Pango::Layout::create (cairo);
+    auto li = line * columns_;
+    Glib::ustring s;
+    auto last_attrs = grid_ [li + start_column].get_attrs ();
+    int last_x = start_column;
+    int y = line * cell_height_;
+    for (int x = start_column; x <= end_column + 1; ++x)
+    {
+        const auto cell = (x <= end_column) ? &grid_ [li + x] : nullptr;
+        if (x > end_column || cell->get_attrs() != last_attrs) 
+        {
+            layout->set_attributes (last_attrs->get_pango_attrs ());
+            layout->set_text (s);
+            cairo->move_to (last_x * cell_width_, y);
+            // update shouldn't be necessary, but python-gui does it
+            //layout->update_from_cairo_context (cairo);
+            layout->show_in_cairo_context (cairo);
+            s.clear ();
+            last_x = x;
+            last_attrs = cell->get_attrs ();
+        }
+        if (x <= end_column)
+        {
+            s += cell->get_char ();
         }
     }
 }
