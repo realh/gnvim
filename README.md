@@ -4,11 +4,12 @@ A GTK3 GUI for neovim.
 
 ## Status
 
-Unfortunately I've come to the conclusion that neovim's API architecture
-presents too many obstacles for writing a first-class GUI, in particular for
-scrolling. I don't think it could even quite match the GUI flavours of classic
-vim, let alone surpass it, so it's not really worth the effort, and development
-is probably going to stop here, I'm afraid.
+I'm not sure how far I can take this project, because neovim poses big
+difficulties when trying to implement the sort of GUI I want for an all-purpose
+text editor. But when thinking about how to solve the current problem (using
+GtkTextView like this is too inefficient for scrolling etc) I've realised it
+might even be possible to implement correctly-behaving scrollbars eventually,
+so I'm going to persist with development for now.
 
 ## Features currently implemented
 
@@ -37,6 +38,9 @@ Not all of these may be possible.
 * System clipboard integration with vim's + register (and Mac cmd key)
 
 * Better support for "smooth" touchpad scrolling
+
+* Scrollbars (one for each vim split window ie multiple per GU window) might
+  even be possible
 
 ## Building and installing
 
