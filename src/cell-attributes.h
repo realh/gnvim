@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GNVIM_TEXT_GRID_H
-#define GNVIM_TEXT_GRID_H
+#ifndef GNVIM_CELL_ATTRIBUTES_H
+#define GNVIM_CELL_ATTRIBUTES_H
 
 #include "defns.h"
 
@@ -38,6 +38,14 @@ public:
     CellAttributes () : foreground_rgb_ {0}, background_rgb_ {0xffffff},
                    special_rgb_ {0xff0000 | DIRTY_BIT}
     {}
+
+    CellAttributes (const CellAttributes &);
+
+    CellAttributes &operator=(const CellAttributes &);
+
+    CellAttributes (CellAttributes &&);
+
+    CellAttributes &operator=(CellAttributes &&);
 
     void set_foreground_rgb (guint32 rgb)
     {
@@ -138,4 +146,4 @@ private:
 
 }
 
-#endif // GNVIM_TEXT_GRID_H
+#endif // GNVIM_CELL_ATTRIBUTES_H

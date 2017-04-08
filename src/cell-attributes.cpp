@@ -18,10 +18,45 @@
 
 #include "defns.h"
 
+#include <utility>
+
 #include "cell-attributes.h"
 
 namespace Gnvim
 {
+
+CellAttributes::CellAttributes (const CellAttributes &other)
+    : foreground_rgb_ (other.foreground_rgb_),
+    background_rgb_ (other.background_rgb_),
+    special_rgb_ (other.special_rgb_ | DIRTY_BIT)
+{}
+
+CellAttributes &CellAttributes::operator= (const CellAttributes &other)
+{
+    foreground_rgb_ = other.foreground_rgb_;
+    background_rgb_  = other.background_rgb_;
+    special_rgb_  = other.special_rgb_ | DIRTY_BIT;
+    return *this;
+}
+
+CellAttributes::CellAttributes (CellAttributes &&other)
+    : foreground_rgb_ (other.foreground_rgb_),
+    background_rgb_ (other.background_rgb_),
+    special_rgb_ (other.special_rgb_),
+    pango_attrs_ (std::move(other.pango_attrs_))
+{
+    other.special_rgb_ |= DIRTY_BIT;
+}
+
+CellAttributes &CellAttributes::operator= (CellAttributes &&other)
+{
+    foreground_rgb_ = other.foreground_rgb_;
+    background_rgb_  = other.background_rgb_;
+    special_rgb_  = other.special_rgb_;
+    pango_attrs_ = std::move(other.pango_attrs_);
+    other.special_rgb_ |= DIRTY_BIT;
+    return *this;
+}
 
 void CellAttributes::set_bold (bool bold)
 {
