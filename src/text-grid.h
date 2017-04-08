@@ -41,14 +41,14 @@ private:
         /**
          * @param attrs this does not take ownership of attrs
          */
-        TextCell (gunichar c = ' ', CellAttributes *attrs = nullptr)
+        TextCell (gunichar c = ' ', const CellAttributes *attrs = nullptr)
             : c_ (c), attrs_ (attrs)
         {}
 
         /**
          * @param attrs this does not take ownership of attrs
          */
-        TextCell (const Glib::ustring &c, CellAttributes *attrs = nullptr)
+        TextCell (const Glib::ustring &c, const CellAttributes *attrs = nullptr)
             : attrs_ (attrs)
         {
             set_text (c);
@@ -57,6 +57,12 @@ private:
         void set_char (gunichar c)
         {
             c_ = c;
+        }
+
+        void clear ()
+        {
+            set_char (' ');
+            clear_attrs ();
         }
 
         /**
@@ -81,13 +87,18 @@ private:
         /**
          * @param attrs this does not take ownership of attrs
          */
-        void set_attrs (CellAttributes &attrs)
+        void set_attrs (const CellAttributes &attrs)
         {
             attrs_ = &attrs;
         }
+
+        void clear_attrs ()
+        {
+            attrs_ = nullptr;
+        }
     private:
         gunichar c_;
-        CellAttributes *attrs_;
+        const CellAttributes *attrs_;
     };
 public:
     TextGrid (int columns, int lines);
@@ -95,7 +106,10 @@ public:
     /**
      * @param text Consisting of a single unichar which is copied.
      */
-    void set_text_at (const Glib::ustring &text, int column, int line);
+    void set_text_at (const Glib::ustring &text, int column, int line)
+    {
+        grid_[line * columns_ + column].set_text (text);
+    }
 
     /// Clears the entire grid of text and styles.
     void clear ();
@@ -112,7 +126,7 @@ public:
             int start_column, int start_line, int end_column, int end_line);
 
     /**
-     * Draws (part of) the line in the given cairo context.
+     * Draws (part of) the line of text in the given cairo context.
      * Columns are inclusive.
      */
     void draw_line (Cairo::RefPtr<Cairo::Context> cairo,

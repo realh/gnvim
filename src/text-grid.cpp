@@ -18,6 +18,8 @@
 
 #include "defns.h"
 
+#include <cstring>
+
 #include "text-grid.h"
 
 namespace Gnvim
@@ -27,6 +29,77 @@ TextGrid::TextGrid (int columns, int lines)
     : columns_ (columns), lines_ (lines), grid_ (columns_ * lines_),
     default_attrs_ (* (attrs_.emplace ()).first)
 {
+}
+
+void TextGrid::clear ()
+{
+    for (auto &cell: grid_)
+        cell.clear ();
+}
+
+void TextGrid::clear_eol (int column, int line)
+{
+    line *= columns_;
+    while (column++ < columns_)
+    {
+        auto &cell = grid_ [line + column];
+        cell.clear ();
+    }
+}
+
+void TextGrid::apply_attrs (const CellAttributes &attrs,
+        int start_column, int start_line, int end_column, int end_line)
+{
+    auto start = start_line * columns_ + start_column;
+    auto end = end_line * columns_ + end_column;
+    for (int i = start; i <= end; ++i)
+    {
+        auto &cell = grid_ [i];
+        cell.set_attrs (attrs);
+    }
+}
+
+void TextGrid::scroll (int left, int top, int right, int bottom, int count)
+{
+    if (!count)
+        return;
+    int start, end, step;
+    auto dat = grid_.data ();
+    if (count > 0)  // up
+    {
+        start = top;
+        end = bottom + 1 - count;
+        step = 1;
+    }
+    else    // down
+    {
+        start = bottom;
+        end = top - 1 - count;
+        step = 1;
+    }
+    for (auto y = start; y != end; y += step)
+    {
+        std::memmove (dat + y * columns_, dat + (y + count) * columns_,
+                right - left + 1);
+    }
+    if (count > 0)  // up
+    {
+        start = (bottom - count) * columns_;
+        end = (bottom + 1) * columns_;
+    }
+    else    // down
+    {
+        start = top * columns_;
+        end = (top + count) * columns_;
+    }
+    for (auto y = start; y != end; y += columns_)
+    {
+        for (auto x = left; x <= right; ++x)
+        {
+            auto &cell = grid_ [y + x];
+            cell.clear ();
+        }
+    }
 }
 
 }
