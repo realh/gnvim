@@ -120,7 +120,7 @@ public:
 
     bool operator== (const CellAttributes &other) const;
 
-    Pango::AttrList &get_pango_attrs ();
+    const Pango::AttrList &get_pango_attrs () const;
 private:
     bool is_dirty () const
     {
@@ -141,7 +141,7 @@ private:
     guint32 foreground_rgb_;
     guint32 background_rgb_;
     guint32 special_rgb_;       // Other flags are stored in top 8 bits
-    Pango::AttrList pango_attrs_;
+    mutable Pango::AttrList pango_attrs_;
 };
 
 }

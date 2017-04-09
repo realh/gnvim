@@ -79,7 +79,7 @@ private:
             return c_;
         }
 
-        CellAttributes *get_attrs () const
+        const CellAttributes *get_attrs () const
         {
             return attrs_;
         }
@@ -87,7 +87,7 @@ private:
         /**
          * @param attrs this does not take ownership of attrs
          */
-        void set_attrs (CellAttributes &attrs)
+        void set_attrs (const CellAttributes &attrs)
         {
             attrs_ = &attrs;
         }
@@ -98,7 +98,7 @@ private:
         }
     private:
         gunichar c_;
-        CellAttributes *attrs_;
+        const CellAttributes *attrs_;
     };
 public:
     /**
@@ -116,11 +116,7 @@ public:
     TextGrid (TextGrid &&) = delete;
     TextGrid &operator=(TextGrid &&) = delete;
 
-    void resize (int columns, int lines)
-    {
-        columns_ = columns;
-        lines_ = lines;
-    }
+    void resize (int columns, int lines);
 
     int get_columns () const
     {

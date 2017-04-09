@@ -33,6 +33,13 @@ TextGrid::TextGrid (int columns, int lines, int cell_width, int cell_height)
 {
 }
 
+void TextGrid::resize (int columns, int lines)
+{
+    columns_ = columns;
+    lines_ = lines;
+    grid_.resize (columns * lines);
+}
+
 void TextGrid::clear ()
 {
     for (auto &cell: grid_)

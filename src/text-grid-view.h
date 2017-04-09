@@ -21,6 +21,9 @@
 
 #include "defns.h"
 
+#include <utility>
+#include <vector>
+
 #include "text-grid.h"
 
 namespace Gnvim
@@ -89,6 +92,10 @@ private:
 
     Pango::FontDescription font_;
     constexpr static const char DEFAULT_FONT[] = "Monospace 11";
+
+    // vector has an element per grid line, first = left, second = right
+    // (inclusive); -1 for no redraw queued
+    std::vector<std::pair<int, int>> changed_lines_;
 };
 
 }

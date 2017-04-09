@@ -105,6 +105,7 @@ void TextGridView::calculate_metrics ()
     cell_width_px_ = metrics.get_approximate_digit_width () / PANGO_SCALE;
     cell_height_px_ = (metrics.get_ascent () + metrics.get_descent ())
             / PANGO_SCALE;
+    grid_.set_cell_size (cell_width_px_, cell_height_px_);
 }
 
 void TextGridView::get_preferred_width_vfunc (int &minimum, int &natural) const
