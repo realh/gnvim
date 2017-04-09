@@ -106,8 +106,10 @@ public:
      * @param lines         Number of lines.
      * @param cell_width    Width of each text cell in pixels.
      * @param cell_height   Height of each text cell in pixels.
-     * */
-    TextGrid (int columns, int lines, int cell_width, int cell_height);
+     * Cell size need not be given at construction, but must be set before
+     * calling draw_line ().
+     */
+    TextGrid (int columns, int lines, int cell_width = 0, int cell_height = 0);
 
     TextGrid (const TextGrid &) = delete;
     TextGrid &operator=(const TextGrid &) = delete;
@@ -120,10 +122,42 @@ public:
         lines_ = lines;
     }
 
+    int get_columns () const
+    {
+        return columns_;
+    }
+
+    int get_lines () const
+    {
+        return lines_;
+    }
+
+    void get_size (int &columns, int &lines)
+    {
+        columns = columns_;
+        lines = lines_;
+    }
+
     void set_cell_size (int cell_width, int cell_height)
     {
         cell_width_ = cell_width;
         cell_height_ = cell_height;
+    }
+
+    int get_cell_width () const
+    {
+        return cell_width_;
+    }
+
+    int get_cell_height () const
+    {
+        return cell_height_;
+    }
+
+    void get_cell_size (int &width, int &height)
+    {
+        width = cell_width_;
+        height = cell_height_;
     }
 
     /**
