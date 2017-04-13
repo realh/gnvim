@@ -6,10 +6,16 @@ A GTK3 GUI for neovim.
 
 I'm not sure how far I can take this project, because neovim poses big
 difficulties when trying to implement the sort of GUI I want for an all-purpose
-text editor. But when thinking about how to solve the current problem (using
-GtkTextView like this is too inefficient for scrolling etc) I've realised it
-might even be possible to implement correctly-behaving scrollbars eventually,
-so I'm going to persist with development for now.
+text editor. The current implementation is too inefficient, causing lag when
+scrolling, so I think I have to abandon GtkTextView and use a custom
+implementation similar to
+[python-gui](https://github.com/neovim/python-gui/tree/master/neovim_gui)'s. 
+
+Ideally I would like to use GTK scrollbars, but neovim's architecture/API
+wasn't designed to support that and I'd be foreced to use some sort of kludge,
+if it's possibe at all. Overall there are too many problems and I think I'll
+have to look elsewhere for the ideal of a Swiss Army text editor that combines
+a rich set of vi(m) keystrokes and features with a first class GUI.
 
 ## Features currently implemented
 

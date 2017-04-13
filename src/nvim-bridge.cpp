@@ -1,4 +1,4 @@
-/* msgpack-rpc.cpp
+/* nvim-bridge.cpp
  *
  * Copyright (C) 2017 Tony Houghton
  *
