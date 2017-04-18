@@ -1,0 +1,332 @@
+/* nvim-grid-view.cpp
+ *
+ * Copyright (C) 2017 Tony Houghton
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "app.h"
+#include "nvim-grid-view.h"
+
+namespace Gnvim
+{
+
+enum FontSource
+{
+    FONT_SOURCE_GTK = 0,
+    FONT_SOURCE_SYS,
+    FONT_SOURCE_PREFS,
+};
+
+NvimGridView ::NvimGridView (NvimBridge &nvim, int columns, int lines,
+        const std::string &font_name)
+: TextGridView (columns, lines, font_name), nvim_ (nvim)
+{
+    add_events (Gdk::BUTTON1_MOTION_MASK | Gdk::BUTTON2_MOTION_MASK |
+            Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK |
+            Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK |
+            Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK |
+            Gdk::SCROLL_MASK | Gdk::SMOOTH_SCROLL_MASK);
+
+    auto app_settings = Application::app_gsettings ();
+    app_settings->signal_changed ("font").connect
+            (sigc::mem_fun (this, &NvimGridView::on_font_name_changed));
+    app_settings->signal_changed ("font-source").connect
+            (sigc::mem_fun (this, &NvimGridView::on_font_source_changed));
+    auto sys_settings = Application::sys_gsettings ();
+    sys_settings->signal_changed ("monospace-font-name").connect
+            (sigc::mem_fun (this, &NvimGridView::on_font_name_changed));
+
+    auto sc = get_style_context ();
+    if (!sc->has_class ("gnvim"))
+        sc->add_class ("gnvim");
+
+    update_font (true);
+    on_redraw_mode_change ("normal");
+}
+
+void NvimGridView::on_size_allocate (Gtk::Allocation &alloc)
+{
+    int old_cols = columns_;
+    int old_lines = lines_;
+    TextGridView::on_size_allocate (alloc);
+    if (old_cols != columns_ || old_lines != lines_)
+    {
+        ++gui_resize_counter_;
+        nvim_.nvim_ui_try_resize (columns_, lines_);
+    }
+}
+
+Glib::ustring modifier_string (guint state)
+{
+    std::string s;
+    if (state & GDK_MOD1_MASK)
+        s = "A-";
+    if (state & GDK_CONTROL_MASK)
+        s += "C-";
+    if (state & GDK_SHIFT_MASK)
+        s += "S-";
+    return s;
+}
+
+bool NvimGridView::on_key_press_event (GdkEventKey *event)
+{
+    if (event->is_modifier)
+    {
+        return true;
+    }
+
+    bool special = false;
+    gunichar uk = gdk_keyval_to_unicode (event->keyval);
+    Glib::ustring s = gdk_keyval_name (event->keyval);
+
+    bool kp = s.find ("KP_") == 0;
+    if (kp)
+    {
+        special = true;
+        s = s.substr (3);
+        if (s == "Add")
+            s = "Plus";
+        else if (s == "Subtract")
+            s = "Minus";
+        else if (s == "Decimal")
+            s = "Point";
+        s = Glib::ustring (1, 'k') + s;
+    }
+
+    if (g_unichar_isprint (uk))
+    {
+        s = Glib::ustring (1, uk);
+        if (s == "<")
+        {
+            special = true;
+            s = "lt";
+        }
+        else if (s == "\\")
+        {
+            special = true;
+            s = "Bslash";
+        }
+    }
+    else
+    {
+        special = true;
+        if (s == "BackSpace")
+            s = "BS";
+        else if (s == "Return" || s == "Enter")
+            s = "CR";
+        else if (s == "Escape")
+            s = "Esc";
+        else if (s == "Delete")
+            s = "Del";
+        else if (s == "Page_Up")
+            s = "PageUp";
+        else if (s == "Page_Down")
+            s = "PageDown";
+        else if (s == "ISO_Left_Tab")
+            s = "Tab";
+    }
+
+    if (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK))
+    {
+        special = true;
+        s = modifier_string (event->state) + s;
+    }
+
+    if (special)
+        s = Glib::ustring (1, '<') + s + '>';
+
+    //g_debug("Keypress %s", s.c_str ());
+
+    nvim_.nvim_input (s);
+    return true;
+}
+
+bool NvimGridView::on_button_press_event (GdkEventButton *event)
+{
+    return on_mouse_event (event->type, event->button,
+            event->state, event->x, event->y);
+}
+
+bool NvimGridView::on_button_release_event (GdkEventButton *event)
+{
+    return on_mouse_event (event->type, event->button,
+            event->state, event->x, event->y);
+}
+
+bool NvimGridView::on_motion_notify_event (GdkEventMotion *event)
+{
+    auto b = event->state;
+    if (b & GDK_BUTTON1_MASK)
+        b = 1;
+    else if (b & GDK_BUTTON2_MASK)
+        b = 2;
+    else if (b & GDK_BUTTON3_MASK)
+        b = 3;
+    else
+        return true;
+    return on_mouse_event (event->type, b, event->state, event->x, event->y);
+}
+
+bool NvimGridView::on_scroll_event (GdkEventScroll *event)
+{
+    switch (event->direction)
+    {
+        case GDK_SCROLL_UP:
+            do_scroll ("Up", event->state);
+            break;
+        case GDK_SCROLL_DOWN:
+            do_scroll ("Down", event->state);
+            break;
+        case GDK_SCROLL_LEFT:
+            do_scroll ("Left", event->state);
+            break;
+        case GDK_SCROLL_RIGHT:
+            do_scroll ("Right", event->state);
+            break;
+        case GDK_SCROLL_SMOOTH:
+            // Bit of a kludge, vim doesn't currently have a good way to do
+            // smooth scrolling
+            if (event->delta_x < 0)
+                do_scroll ("Left", event->state);
+            else if (event->delta_x > 0)
+                do_scroll ("Right", event->state);
+            if (event->delta_y < 0)
+                do_scroll ("Up", event->state);
+            else if (event->delta_y > 0)
+                do_scroll ("Down", event->state);
+            break;
+    }
+    return true;
+}
+
+static const char *mouse_button_name (guint button)
+{
+    switch (button)
+    {
+        case 1:
+            return "Left";
+        case 2:
+            return "Middle";
+        case 3:
+            return "Right";
+    }
+    return nullptr;
+}
+
+bool NvimGridView::on_mouse_event (GdkEventType etype, int button,
+        guint modifiers, int x, int y)
+{
+    if (!button || button >= 4)
+        return true;
+
+    Glib::ustring etype_str;
+    switch (etype)
+    {
+        case GDK_BUTTON_PRESS:
+        case GDK_2BUTTON_PRESS:
+        case GDK_3BUTTON_PRESS:
+            etype_str = "Mouse";
+            break;
+        case GDK_BUTTON_RELEASE:
+            etype_str = "Release";
+            break;
+        case GDK_MOTION_NOTIFY:
+            etype_str = "Drag";
+            break;
+        default:
+            return true;
+    }
+
+    Glib::ustring but_str;
+    if (button == 1 && etype == GDK_2BUTTON_PRESS)
+        but_str = "2-Left";
+    else if (button == 1 && etype == GDK_3BUTTON_PRESS)
+        but_str = "3-Left";
+    else
+        but_str = mouse_button_name (button);
+
+    convert_coords_to_cells (x, y);
+
+    char *inp = g_strdup_printf ("<%s%s%s><%d,%d>",
+            modifier_string (modifiers).c_str (),
+            but_str.c_str(), etype_str.c_str (),
+            x, y);
+    //g_debug ("Mouse event %s", inp);
+    nvim_.nvim_input (inp);
+    g_free (inp);
+
+    return true;
+}
+
+void on_redraw_start ();
+void on_redraw_mode_change (const std::string &mode);
+void on_redraw_resize (int columns, int rows);
+void on_redraw_bell ();
+void on_redraw_update_fg (int colour);
+void on_redraw_update_bg (int colour);
+void on_redraw_update_sp (int colour);
+void on_redraw_cursor_goto (int row, int col);
+void on_redraw_put (const msgpack::object_array &);
+void on_redraw_clear ();
+void on_redraw_eol_clear ();
+void on_redraw_highlight_set (const msgpack::object &map_o);
+void on_redraw_set_scroll_region (int top, int bot, int left, int right);
+void on_redraw_scroll (int count);
+void on_redraw_end ();
+
+void NvimGridView::do_scroll (const std::string &direction, int state)
+{
+    auto s = std::string (1, '<') + modifier_string (state)
+        + "ScrollWheel" + direction + '>';
+    nvim_.nvim_input (s);
+}
+
+// Used for both app and sys fonts, using key to work out which
+void NvimGridView::on_font_name_changed (const Glib::ustring &key)
+{
+    auto app_settings = Application::app_gsettings ();
+    if ((key == "font"
+            && app_settings->get_enum ("font-source") == FONT_SOURCE_PREFS)
+        || (key == "monospace-font-name"
+            && app_settings->get_enum ("font-source") == FONT_SOURCE_SYS))
+    {
+        update_font ();
+    }
+}
+
+void NvimGridView::on_font_source_changed (const Glib::ustring &)
+{
+    update_font ();
+}
+
+void NvimGridView::update_font (bool init)
+{
+    auto app_settings = Application::app_gsettings ();
+    switch (app_settings->get_enum ("font-source"))
+    {
+        case FONT_SOURCE_SYS:
+            set_font (Application::sys_gsettings ()->get_string
+                    ("monospace-font-name"), !init);
+            break;
+        case FONT_SOURCE_PREFS:
+            set_font (app_settings->get_string ("font"), !init);
+            break;
+        default:    // FONT_SOURCE_GTK
+            set_font (DEFAULT_FONT, !init);
+            break;
+    }
+}
+
+}

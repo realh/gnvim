@@ -71,7 +71,7 @@ protected:
             const override;
 
     TextGrid grid_;
-private:
+protected:
     /// Blanks the entire cached view in the grid's background colour.
     void clear_view ();
 

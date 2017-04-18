@@ -23,6 +23,7 @@
 
 #include <msgpack.hpp>
 
+#include "nvim-bridge.h"
 #include "text-grid-view.h"
 
 namespace Gnvim
@@ -31,7 +32,8 @@ namespace Gnvim
 // TextGridView specialised for neovim
 class NvimGridView : public TextGridView {
 public:
-    NvimGridView (int columns, int lines, const std::string &font_name = "");
+    NvimGridView (NvimBridge &nvim, int columns, int lines,
+            const std::string &font_name = "");
 protected:
     virtual void on_size_allocate (Gtk::Allocation &) override;
 
@@ -45,8 +47,6 @@ protected:
 
     virtual bool on_scroll_event (GdkEventScroll *) override;
 private:
-    void on_toplevel_size_allocate (Gtk::Allocation &);
-
     bool on_mouse_event (GdkEventType, int button,
             guint modifiers, int x, int y);
 
@@ -73,8 +73,7 @@ private:
 
     void on_font_source_changed (const Glib::ustring &key);
 
-    // If init is true, this is being called at construction, in which case
-    // don't set font if "font-source" pref is "gtk", and don't queue resize
+    // If init is true a resize is not requested
     void update_font (bool init = false);
 
     /* If we've asked nvim to resize in response to size-allocate from GUI we
@@ -86,6 +85,8 @@ private:
      * GUI-driven.
      */
     int gui_resize_counter_ {0};
+
+    NvimBridge &nvim_;
 };
 
 }
