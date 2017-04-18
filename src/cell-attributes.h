@@ -47,6 +47,8 @@ public:
 
     CellAttributes &operator=(CellAttributes &&);
 
+    void reset ();
+
     void set_foreground_rgb (guint32 rgb)
     {
         foreground_rgb_ = rgb;

@@ -54,6 +54,39 @@ NvimGridView ::NvimGridView (NvimBridge &nvim, int columns, int lines,
 
     update_font (true);
     on_redraw_mode_change ("normal");
+
+    nvim_.redraw_start.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_start));
+    nvim_.redraw_mode_change.connect
+        (sigc::mem_fun (this, &NvimGridView::on_redraw_mode_change));
+    nvim_.redraw_bell.connect
+        (sigc::mem_fun (this, &NvimGridView::on_redraw_bell));
+    nvim_.redraw_visual_bell.connect
+        (sigc::mem_fun (this, &NvimGridView::on_redraw_bell));
+    nvim_.redraw_resize.connect
+        (sigc::mem_fun (this, &NvimGridView::on_redraw_resize));
+    nvim_.redraw_update_bg.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_update_bg));
+    nvim_.redraw_update_fg.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_update_fg));
+    nvim_.redraw_update_sp.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_update_sp));
+    nvim_.redraw_cursor_goto.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_cursor_goto));
+    nvim_.redraw_put.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_put));
+    nvim_.redraw_clear.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_clear));
+    nvim_.redraw_eol_clear.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_eol_clear));
+    nvim_.redraw_highlight_set.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_highlight_set));
+    nvim_.redraw_set_scroll_region.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_set_scroll_region));
+    nvim_.redraw_scroll.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_scroll));
+    nvim_.redraw_end.connect
+            (sigc::mem_fun (this, &NvimGridView::on_redraw_end));
 }
 
 void NvimGridView::on_size_allocate (Gtk::Allocation &alloc)
@@ -270,21 +303,224 @@ bool NvimGridView::on_mouse_event (GdkEventType etype, int button,
     return true;
 }
 
-void on_redraw_start ();
-void on_redraw_mode_change (const std::string &mode);
-void on_redraw_resize (int columns, int rows);
-void on_redraw_bell ();
-void on_redraw_update_fg (int colour);
-void on_redraw_update_bg (int colour);
-void on_redraw_update_sp (int colour);
-void on_redraw_cursor_goto (int row, int col);
-void on_redraw_put (const msgpack::object_array &);
-void on_redraw_clear ();
-void on_redraw_eol_clear ();
-void on_redraw_highlight_set (const msgpack::object &map_o);
-void on_redraw_set_scroll_region (int top, int bot, int left, int right);
-void on_redraw_scroll (int count);
-void on_redraw_end ();
+void NvimGridView::on_redraw_start ()
+{
+    redraw_region_.left = columns_;
+    redraw_region_.top = lines_;
+    redraw_region_.right = 0;
+    redraw_region_.bottom = 0;
+}
+
+void NvimGridView::on_redraw_mode_change (const std::string &/*mode*/)
+{
+    // TODO: Change cursor
+}
+
+void NvimGridView::on_redraw_resize (int columns, int lines)
+{
+    if (columns != columns_ || lines != lines_)
+    {
+        columns_ = columns;
+        lines_ = lines;
+        grid_.resize (columns, lines);
+        if (gui_resize_counter_)
+            --gui_resize_counter_;
+        else
+            resize_window ();
+    }
+}
+
+void NvimGridView::on_redraw_bell ()
+{
+    get_window ()->beep ();
+}
+
+void NvimGridView::on_redraw_update_fg (int colour)
+{
+    grid_.get_default_attributes ().set_foreground_rgb (colour);
+}
+
+void NvimGridView::on_redraw_update_bg (int colour)
+{
+    grid_.get_default_attributes ().set_background_rgb (colour);
+}
+
+void NvimGridView::on_redraw_update_sp (int colour)
+{
+    grid_.get_default_attributes ().set_special_rgb (colour);
+}
+
+void NvimGridView::on_redraw_cursor_goto (int line, int col)
+{
+    cursor_col_ = col;
+    cursor_line_ = line;
+}
+
+void NvimGridView::on_redraw_put (const msgpack::object_array &text_ar)
+{
+    int start_col = cursor_col_;
+    for (gsize i = 1; i < text_ar.size; ++i)
+    {
+        const auto &o = text_ar.ptr[i];
+        if (o.type == msgpack::type::STR)
+        {
+            const auto &ms = o.via.str;
+            grid_.set_text_at (std::string (ms.ptr, ms.ptr + ms.size),
+                    cursor_col_++, cursor_line_);
+        }
+        else if (o.type == msgpack::type::ARRAY)
+        {
+            const auto &ma = o.via.array;
+            for (gsize j = 0; j < ma.size; ++j)
+            {
+                const auto &ms = ma.ptr[j].via.str;
+                grid_.set_text_at (std::string (ms.ptr, ms.ptr + ms.size),
+                        cursor_col_++, cursor_line_);
+            }
+        }
+    }
+
+    grid_.apply_attrs (current_attrs_,
+            start_col, cursor_line_, cursor_col_ - 1, cursor_line_);
+
+    update_redraw_region (start_col, cursor_line_, cursor_col_, cursor_line_);
+}
+
+void NvimGridView::update_redraw_region
+(int left, int top, int right, int bottom)
+{
+    if (left < redraw_region_.left)
+        redraw_region_.left = left;
+    if (right - 1 > redraw_region_.right)
+        redraw_region_.right = right - 1;
+    if (top < redraw_region_.top)
+        redraw_region_.top = top;
+    if (bottom > redraw_region_.bottom)
+        redraw_region_.bottom = bottom;
+}
+
+void NvimGridView::on_redraw_clear ()
+{
+    for (int line = 0; line < lines_; ++line)
+        for (int col = 0; col < columns_; ++col)
+            grid_.set_text_at (" ", col, line);
+    grid_.apply_attrs (grid_.get_default_attributes (), 0, 0,
+            columns_ - 1, lines_ - 1);
+    redraw_region_.left = 0;
+    redraw_region_.top = 0;
+    redraw_region_.right = columns_ - 1;
+    redraw_region_.bottom = lines_ - 1;
+}
+
+void NvimGridView::on_redraw_eol_clear ()
+{
+    int col;
+    for (col = cursor_col_; col < columns_; ++col)
+        grid_.set_text_at (" ", col, cursor_line_);
+    update_redraw_region (cursor_col_, cursor_line_, col, cursor_line_);
+}
+
+void NvimGridView::on_redraw_highlight_set (const msgpack::object &map_o)
+{
+    if (map_o.type != msgpack::type::MAP)
+    {
+        g_critical ("Got sent type %d as arg for highlight_set, expected MAP",
+                map_o.type);
+        return;
+    }
+    const auto &map_m = map_o.via.map;
+
+    if (!map_m.size)
+    {
+        current_attrs_ = grid_.get_default_attributes ();
+        return;
+    }
+
+    current_attrs_.reset ();
+
+    int foreground = -1, background = -1, special = -1;
+    bool reverse = false;
+    bool italic = false;
+    bool bold = false;
+    bool underline = false;
+    bool undercurl = false;
+
+    for (guint n = 0; n < map_m.size; ++n)
+    {
+        const auto &kv = map_m.ptr[n];
+        std::string k;
+        kv.key.convert (k);
+        if (k == "foreground")
+            kv.val.convert (foreground);
+        else if (k == "background")
+            kv.val.convert (background);
+        else if (k == "special")
+            kv.val.convert (special);
+        else if (k == "reverse")
+            kv.val.convert (reverse);
+        else if (k == "italic")
+            kv.val.convert (italic);
+        else if (k == "bold")
+            kv.val.convert (bold);
+        else if (k == "underline")
+            kv.val.convert (underline);
+        else if (k == "undercurl")
+            kv.val.convert (undercurl);
+    }
+
+    if (foreground == -1)
+        foreground = 0;
+    if (background == -1)
+        background = 0xffffff;
+    if (special == -1)
+        special = 0xff0000;
+
+    if (reverse)
+    {
+        current_attrs_.set_background_rgb (foreground);
+        current_attrs_.set_foreground_rgb (background);
+    }
+    else
+    {
+        current_attrs_.set_background_rgb (background);
+        current_attrs_.set_foreground_rgb (foreground);
+    }
+    current_attrs_.set_special_rgb (special);
+    current_attrs_.set_bold (bold);
+    current_attrs_.set_italic (italic);
+    current_attrs_.set_underline (underline);
+    current_attrs_.set_undercurl (undercurl);
+}
+
+void NvimGridView::on_redraw_set_scroll_region (int top, int bot,
+        int left, int right)
+{
+    scroll_region_.left = left;
+    scroll_region_.top = top;
+    scroll_region_.right = right;
+    scroll_region_.bottom = bot;
+}
+
+void NvimGridView::on_redraw_scroll (int count)
+{
+    grid_.scroll (scroll_region_.left, scroll_region_.top,
+            scroll_region_.right, scroll_region_.bottom, count);
+    update_redraw_region (scroll_region_.left, scroll_region_.top,
+            scroll_region_.right, scroll_region_.bottom);
+    for (int line = scroll_region_.top; line <= scroll_region_.bottom; ++line)
+    {
+        grid_.draw_line (grid_cr_, line,
+                scroll_region_.left, scroll_region_.right);
+    }
+}
+
+void NvimGridView::on_redraw_end ()
+{
+    queue_draw_area (redraw_region_.left * cell_width_px_,
+            redraw_region_.top * cell_width_px_,
+            (redraw_region_.right - redraw_region_.left + 1) * cell_width_px_,
+            (redraw_region_.bottom - redraw_region_.top + 1) * cell_height_px_);
+}
 
 void NvimGridView::do_scroll (const std::string &direction, int state)
 {

@@ -192,6 +192,11 @@ public:
      */
     void scroll (int left, int top, int right, int bottom, int count);
 
+    CellAttributes &get_default_attributes ()
+    {
+        return default_attrs_;
+    }
+
     guint32 get_default_background_rgb () const
     {
         return default_attrs_.get_background_rgb ();
@@ -201,7 +206,7 @@ private:
     int cell_width_, cell_height_;
     std::vector<TextCell> grid_;
     std::set<CellAttributes> attrs_;
-    const CellAttributes &default_attrs_;
+    CellAttributes &default_attrs_;
 };
 
 }

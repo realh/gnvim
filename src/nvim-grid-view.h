@@ -47,17 +47,19 @@ protected:
 
     virtual bool on_scroll_event (GdkEventScroll *) override;
 private:
+    void update_redraw_region (int left, int top, int right, int bottom);
+
     bool on_mouse_event (GdkEventType, int button,
             guint modifiers, int x, int y);
 
     void on_redraw_start ();
     void on_redraw_mode_change (const std::string &mode);
-    void on_redraw_resize (int columns, int rows);
+    void on_redraw_resize (int columns, int lines);
     void on_redraw_bell ();
     void on_redraw_update_fg (int colour);
     void on_redraw_update_bg (int colour);
     void on_redraw_update_sp (int colour);
-    void on_redraw_cursor_goto (int row, int col);
+    void on_redraw_cursor_goto (int line, int col);
     void on_redraw_put (const msgpack::object_array &);
     void on_redraw_clear ();
     void on_redraw_eol_clear ();
@@ -87,6 +89,15 @@ private:
     int gui_resize_counter_ {0};
 
     NvimBridge &nvim_;
+
+    // redraw limits are inclusive
+    struct {
+        int left, top, right, bottom;
+    } redraw_region_, scroll_region_;
+
+    int cursor_col_ {0}, cursor_line_ {0};
+
+    CellAttributes current_attrs_;
 };
 
 }

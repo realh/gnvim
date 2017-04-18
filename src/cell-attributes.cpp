@@ -58,6 +58,13 @@ CellAttributes &CellAttributes::operator= (CellAttributes &&other)
     return *this;
 }
 
+void CellAttributes::reset ()
+{
+    foreground_rgb_ = 0;
+    background_rgb_ = 0xffffff;
+    special_rgb_ = 0xff0000 | DIRTY_BIT;
+}
+
 void CellAttributes::set_bold (bool bold)
 {
     if (bold)
