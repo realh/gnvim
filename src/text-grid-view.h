@@ -29,6 +29,7 @@
 namespace Gnvim
 {
 
+/// Displays the TextGrid
 class TextGridView : public Gtk::DrawingArea {
 public:
     TextGridView (int columns, int lines, const std::string &font_name = "");
@@ -57,6 +58,8 @@ public:
         return grid_;
     }
 protected:
+    virtual bool on_draw (const Cairo::RefPtr<Cairo::Context> &cr) override;
+
     virtual void on_parent_changed (Gtk::Widget *old_parent) override;
 
     virtual void on_size_allocate (Gtk::Allocation &) override;
@@ -69,6 +72,12 @@ protected:
 
     TextGrid grid_;
 private:
+    /// Blanks the entire cached view in the grid's background colour.
+    void clear_view ();
+
+    /// Redraws the entire cached view (starting with clear_view ()).
+    void redraw_view ();
+
     void on_toplevel_size_allocate (Gtk::Allocation &);
 
     void calculate_metrics ();
@@ -84,6 +93,10 @@ private:
         y /= cell_height_px_;
     }
 
+    // Fills a Cairo context with the background colour,
+    // assuming size == allocation
+    void fill_background (Cairo::RefPtr<Cairo::Context> cr);
+
     int cell_width_px_, cell_height_px_;
     int columns_, lines_;
 
@@ -96,6 +109,10 @@ private:
     // vector has an element per grid line, first = left, second = right
     // (inclusive); -1 for no redraw queued
     std::vector<std::pair<int, int>> changed_lines_;
+
+    // For caching the grid display
+    Cairo::RefPtr<Cairo::Surface> grid_surface_;
+    Cairo::RefPtr<Cairo::Context> grid_cr_;
 };
 
 }

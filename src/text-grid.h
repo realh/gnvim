@@ -191,6 +191,11 @@ public:
      *              text up, negative for down. 
      */
     void scroll (int left, int top, int right, int bottom, int count);
+
+    guint32 get_default_background_rgb () const
+    {
+        return default_attrs_.get_background_rgb ();
+    }
 private:
     int columns_, lines_;
     int cell_width_, cell_height_;

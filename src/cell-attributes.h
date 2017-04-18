@@ -121,6 +121,12 @@ public:
     bool operator== (const CellAttributes &other) const;
 
     const Pango::AttrList &get_pango_attrs () const;
+
+    static Pango::AttrColor create_colour_attr (
+        Pango::AttrColor (*func)(guint16 r, guint16 g, guint16 b), guint32 rgb);
+
+    static void decompose_colour (guint32 rgb,
+            guint16 &red, guint16 &green, guint16 &blue);
 private:
     bool is_dirty () const
     {
@@ -131,12 +137,6 @@ private:
     {
         return special_rgb_ & (UNDERLINE_BIT | UNDERCURL_BIT);
     }
-
-    static Pango::AttrColor create_colour_attr (
-        Pango::AttrColor (*func)(guint16 r, guint16 g, guint16 b), guint32 rgb);
-
-    static void decompose_colour (guint32 rgb,
-            guint16 &red, guint16 &green, guint16 &blue);
 
     guint32 foreground_rgb_;
     guint32 background_rgb_;

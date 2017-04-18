@@ -85,14 +85,49 @@ void TextGridView::on_parent_changed (Gtk::Widget *old_parent)
 void TextGridView::on_size_allocate (Gtk::Allocation &allocation)
 {
     Gtk::DrawingArea::on_size_allocate (allocation);
+    int w = allocation.get_width ();
+    int h = allocation.get_height ();
     // Size requests and allocations appear not to include margins
-    columns_ = allocation.get_width () / cell_width_px_;
-    lines_ = allocation.get_height () / cell_height_px_;
+    columns_ = w / cell_width_px_;
+    lines_ = h / cell_height_px_;
 
     if (grid_.get_columns () != columns_ || grid_.get_lines () != lines_)
     {
         grid_.resize (columns_, lines_);
+        grid_cr_.clear ();
+        grid_surface_.clear ();
     }
+    if (!grid_cr_)
+    {
+        grid_surface_ = get_window ()->create_similar_surface
+            (Cairo::CONTENT_COLOR, w, h);
+        grid_cr_ = Cairo::Context::create (grid_surface_);
+        redraw_view ();
+    }
+}
+
+void TextGridView::clear_view ()
+{
+    fill_background (grid_cr_);
+}
+
+void TextGridView::redraw_view ()
+{
+    clear_view ();
+    for (int line = 0; line < lines_; ++line)
+        grid_.draw_line (grid_cr_, line, 0, columns_ - 1);
+}
+
+void TextGridView::fill_background (Cairo::RefPtr<Cairo::Context> cr)
+{
+    auto alloc = get_allocation ();
+    int w = alloc.get_width ();
+    int h = alloc.get_height ();
+    guint16 r, g, b;
+    CellAttributes::decompose_colour (grid_.get_default_background_rgb (),
+            r, g, b);
+    cr->set_source_rgb (r, g, b);
+    cr->rectangle (0, 0, w, h);
 }
 
 void TextGridView::calculate_metrics ()
@@ -130,6 +165,21 @@ void TextGridView::on_toplevel_size_allocate (Gtk::Allocation &)
 {
     static_cast<Gtk::Window *> (get_toplevel ())->get_size
         (toplevel_width_, toplevel_height_);
+}
+
+bool TextGridView::on_draw (const Cairo::RefPtr<Cairo::Context> &cr)
+{
+    auto alloc = get_allocation ();
+    int w = alloc.get_width ();
+    int h = alloc.get_height ();
+    grid_surface_->flush ();
+    cr->save ();
+    cr->rectangle (0, 0, w, h);
+    cr->clip ();
+    cr->set_source (grid_surface_, 0, 0);
+    cr->paint ();
+    cr->restore ();
+    return true;
 }
 
 }
