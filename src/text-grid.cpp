@@ -122,6 +122,9 @@ void TextGrid::draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
     auto last_attrs = grid_ [li + start_column].get_attrs ();
     int last_x = start_column;
     int y = line * cell_height_;
+
+    layout->set_font_description (*font_);
+
     for (int x = start_column; x <= end_column + 1; ++x)
     {
         const auto cell = (x <= end_column) ? &grid_ [li + x] : nullptr;

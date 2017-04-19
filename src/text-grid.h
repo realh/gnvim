@@ -201,12 +201,18 @@ public:
     {
         return default_attrs_.get_background_rgb ();
     }
+
+    void set_font (const Pango::FontDescription &font)
+    {
+        font_ = &font;
+    }
 private:
     int columns_, lines_;
     int cell_width_, cell_height_;
     std::vector<TextCell> grid_;
     std::set<CellAttributes> attrs_;
     CellAttributes default_attrs_;
+    const Pango::FontDescription *font_;
 };
 
 }
