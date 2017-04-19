@@ -206,7 +206,7 @@ private:
     int cell_width_, cell_height_;
     std::vector<TextCell> grid_;
     std::set<CellAttributes> attrs_;
-    CellAttributes &default_attrs_;
+    CellAttributes default_attrs_;
 };
 
 }

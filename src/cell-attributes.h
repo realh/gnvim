@@ -122,7 +122,7 @@ public:
 
     bool operator== (const CellAttributes &other) const;
 
-    const Pango::AttrList &get_pango_attrs () const;
+    Pango::AttrList &get_pango_attrs () const;
 
     static Pango::AttrColor create_colour_attr (
         Pango::AttrColor (*func)(guint16 r, guint16 g, guint16 b), guint32 rgb);

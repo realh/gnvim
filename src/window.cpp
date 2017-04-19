@@ -18,7 +18,7 @@
 
 #include "defns.h"
 
-#include "view.h"
+#include "nvim-grid-view.h"
 #include "window.h"
 
 namespace Gnvim
@@ -28,8 +28,7 @@ Window::Window (bool maximise, int width, int height,
         const std::string &init_file, RefPtr<Gio::ApplicationCommandLine> cl)
 {
     nvim_.start (cl, init_file);
-    buffer_ = Buffer::create (nvim_, width, height);
-    view_ = new View (buffer_);
+    view_ = new NvimGridView (nvim_, width, height);
     nvim_.start_ui (width, height);
     add (*view_);
     view_->show_all ();

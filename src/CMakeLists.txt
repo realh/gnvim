@@ -1,22 +1,26 @@
 set(GNVIM_SOURCES
     app.cpp
-    buffer.cpp
+    cell-attributes.cpp
     main.cpp
     msgpack-adapter.cpp
     msgpack-rpc.cpp
     nvim-bridge.cpp
-    view.cpp
+    nvim-grid-view.cpp
+    text-grid.cpp
+    text-grid-view.cpp
     window.cpp
 )
 
 set(GNVIM_HEADERS
     app.h
-    buffer.h
+    cell-attributes.h
     defns.h
     msgpack-adapter.h
     msgpack-rpc.h
     nvim-bridge.h
-    view.h
+    nvim-grid-view.h
+    text-grid.h
+    text-grid-view.h
     window.h
 )
 

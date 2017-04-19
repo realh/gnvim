@@ -155,7 +155,7 @@ bool CellAttributes::operator== (const CellAttributes &other) const
         && (foreground_rgb_ == other.foreground_rgb_);
 }
 
-const Pango::AttrList &CellAttributes::get_pango_attrs () const
+Pango::AttrList &CellAttributes::get_pango_attrs () const
 {
     if (is_dirty ())
     {

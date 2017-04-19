@@ -23,7 +23,6 @@
 
 #include <vector>
 
-#include "buffer.h"
 #include "nvim-bridge.h"
 
 namespace Gnvim
@@ -52,9 +51,8 @@ private:
 
     NvimBridge nvim_;
 
-    // These are just convenience pointers, life cycle is managed by GTK
-    View *view_;
-    Buffer *buffer_;
+    // This is just a convenience pointer, life cycle is managed by GTK
+    NvimGridView *view_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;
 };

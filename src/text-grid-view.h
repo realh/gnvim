@@ -104,7 +104,7 @@ protected:
     int toplevel_width_ {0}, toplevel_height_ {0};
 
     Pango::FontDescription font_;
-    constexpr static const char DEFAULT_FONT[] = "Monospace 11";
+    constexpr static const char *DEFAULT_FONT = "Monospace 11";
 
     // vector has an element per grid line, first = left, second = right
     // (inclusive); -1 for no redraw queued
