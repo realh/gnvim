@@ -52,6 +52,8 @@ private:
     bool on_mouse_event (GdkEventType, int button,
             guint modifiers, int x, int y);
 
+    std::string region_to_string ();
+
     void on_redraw_start ();
     void on_redraw_mode_change (const std::string &mode);
     void on_redraw_resize (int columns, int lines);
