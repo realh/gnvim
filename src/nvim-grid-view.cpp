@@ -38,6 +38,8 @@ NvimGridView ::NvimGridView (NvimBridge &nvim, int columns, int lines,
             Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK |
             Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK |
             Gdk::SCROLL_MASK | Gdk::SMOOTH_SCROLL_MASK);
+    set_can_focus ();
+    grab_focus ();
 
     auto app_settings = Application::app_gsettings ();
     app_settings->signal_changed ("font").connect

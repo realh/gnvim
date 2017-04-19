@@ -199,20 +199,29 @@ void NvimBridge::start_ui (int width, int height)
 {
     std::map<std::string, bool> options;
     // Don't actually need to set any options
+    g_debug ("nvim-bridge attaching ui");
     rpc_->notify ("nvim_ui_attach", width, height, options);
+    ui_attached_ = true;
 }
 
 void NvimBridge::stop ()
 {
     if (rpc_)
     {
-        rpc_->notify ("nvim_ui_detach");
+        if (ui_attached_)
+        {
+            g_debug ("nvim-bridge detaching ui");
+            rpc_->notify ("nvim_ui_detach");
+            rpc_->notify ("nvim_command", "qa!");
+            ui_attached_ = false;
+        }
         rpc_->stop ();
     }
 }
 
 void NvimBridge::nvim_input (const std::string &keys)
 {
+    g_debug ("nvim_input (%s)", keys.c_str ());
     rpc_->notify ("nvim_input", keys);
 }
 
@@ -245,7 +254,9 @@ void NvimBridge::on_notify (std::string method,
         std::ostringstream s;
         s << "nvim sent notification '" << method << "' (" << args << ")";
         g_debug ("%s", s.str ().c_str ());
+        return;
     }
+    g_debug ("nvim-bridge starting redraw");
     redraw_start.emit ();
     const msgpack::object_array &ar = args.via.array;
     for (guint32 i = 0; i < ar.size; ++i)
@@ -295,6 +306,7 @@ void NvimBridge::on_notify (std::string method,
         //}
     }
     redraw_end.emit ();
+    g_debug ("nvim-bridge completed redraw");
 }
 
 std::vector<std::string> NvimBridge::envp_;

@@ -109,6 +109,7 @@ private:
     RefPtr<MsgpackRpc> rpc_;
     Glib::Pid nvim_pid_;
     static std::vector<std::string> envp_;
+    bool ui_attached_ {false};
 };
 
 }

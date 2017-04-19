@@ -42,10 +42,19 @@ void MsgpackRpc::start (int pipe_to_nvim, int pipe_from_nvim)
 
 void MsgpackRpc::stop ()
 {
+    g_debug ("MsgpackRPC::stop");
+    if (stop_)
+    {
+        g_debug ("Already stopped");
+        return;
+    }
     stop_ = true;
     rcv_cancellable_->cancel ();
-    strm_from_nvim_->close ();
-    strm_to_nvim_->close ();
+    try {
+        strm_to_nvim_->close ();
+    } catch (Glib::Exception &e) {
+        g_warning ("Exception closing strm_to_nvim: %s", e.what ().c_str ());
+    }
 }
 
 void MsgpackRpc::do_request (const char *method, packer_fn arg_packer,
@@ -132,7 +141,16 @@ void MsgpackRpc::start_async_read ()
 
 void MsgpackRpc::async_read (RefPtr<Gio::AsyncResult> &result)
 {
-    if (!stop_)
+    if (stop_)
+    {
+        try {
+            strm_from_nvim_->close ();
+        } catch (Glib::Exception &e) {
+            g_warning ("Exception closing strm_from_nvim: %s",
+                    e.what ().c_str ());
+        }
+    }
+    else
     {
         gssize nread = 0;
         try

@@ -33,6 +33,8 @@ public:
     Window (bool maximise, int width, int height, const std::string &init_file,
             RefPtr<Gio::ApplicationCommandLine> cl);
 
+    ~Window();
+
     void force_close ();
 /*
 protected:

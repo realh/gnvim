@@ -111,10 +111,11 @@ bool Application::open_window (const RefPtr<Gio::ApplicationCommandLine> &cl)
     return false;
 }
 
-/*
 void Application::on_window_removed (Gtk::Window *win)
 {
     Gtk::Application::on_window_removed (win);
+    // We created window with new, so we also have to delete it
+    delete win;
     if (get_windows ().size () < 1)
     {
         g_debug ("No open windows, quitting");
@@ -125,7 +126,6 @@ void Application::on_window_removed (Gtk::Window *win)
         g_debug ("Window removed, but %ld left", get_windows ().size ());
     }
 }
-*/
 
 bool Application::on_opt_geometry (const Glib::ustring &,
         const Glib::ustring &geom, bool has_value)

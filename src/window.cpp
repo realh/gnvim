@@ -53,6 +53,13 @@ Window::Window (bool maximise, int width, int height,
         (sigc::mem_fun (this, &Window::on_redraw_set_title));
 }
 
+Window::~Window ()
+{
+    g_debug ("Window deleted");
+    nvim_.stop ();
+    delete view_;
+}
+
 void Window::force_close ()
 {
     force_close_ = true;
