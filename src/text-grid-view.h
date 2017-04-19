@@ -58,6 +58,8 @@ public:
         return grid_;
     }
 protected:
+    virtual void on_realize () override;
+
     virtual bool on_draw (const Cairo::RefPtr<Cairo::Context> &cr) override;
 
     virtual void on_parent_changed (Gtk::Widget *old_parent) override;
@@ -70,8 +72,8 @@ protected:
     virtual void get_preferred_height_vfunc (int &minimum, int &natural)
             const override;
 
-    TextGrid grid_;
-protected:
+    void create_cairo_surface ();
+
     /// Blanks the entire cached view in the grid's background colour.
     void clear_view ();
 
@@ -96,6 +98,8 @@ protected:
     // Fills a Cairo context with the background colour,
     // assuming size == allocation
     void fill_background (Cairo::RefPtr<Cairo::Context> cr);
+
+    TextGrid grid_;
 
     int cell_width_px_, cell_height_px_;
     int columns_, lines_;

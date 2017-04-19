@@ -127,7 +127,9 @@ void TextGrid::draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
         const auto cell = (x <= end_column) ? &grid_ [li + x] : nullptr;
         if (x > end_column || cell->get_attrs() != last_attrs) 
         {
-            layout->set_attributes (last_attrs->get_pango_attrs ());
+            layout->set_attributes
+                ((last_attrs ? last_attrs : &default_attrs_)->get_pango_attrs
+                    ());
             layout->set_text (s);
             cairo->move_to (last_x * cell_width_, y);
             // update shouldn't be necessary, but python-gui does it
@@ -135,7 +137,8 @@ void TextGrid::draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
             layout->show_in_cairo_context (cairo);
             s.clear ();
             last_x = x;
-            last_attrs = cell->get_attrs ();
+            if (cell)
+                last_attrs = cell->get_attrs ();
         }
         if (x <= end_column)
         {
