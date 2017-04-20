@@ -374,6 +374,7 @@ void NvimGridView::on_redraw_update_sp (int colour)
 
 void NvimGridView::on_redraw_cursor_goto (int line, int col)
 {
+    //g_debug ("cursor_goto %d, %d", col, line);
     cursor_col_ = col;
     cursor_line_ = line;
 }
@@ -548,11 +549,22 @@ void NvimGridView::on_redraw_end ()
             && redraw_region_.top <= redraw_region_.bottom)
     {
         queue_draw_area (redraw_region_.left * cell_width_px_,
-                redraw_region_.top * cell_width_px_,
+                redraw_region_.top * cell_height_px_,
                 (redraw_region_.right - redraw_region_.left + 1)
                     * cell_width_px_,
                 (redraw_region_.bottom - redraw_region_.top + 1)
                     * cell_height_px_);
+        /*
+        auto alloc = get_allocation ();
+        g_debug ("qda %d,%d+%dx%d; alloc %dx%d",
+                redraw_region_.left * cell_width_px_,
+                redraw_region_.top * cell_height_px_,
+                (redraw_region_.right - redraw_region_.left + 1)
+                    * cell_width_px_,
+                (redraw_region_.bottom - redraw_region_.top + 1)
+                    * cell_height_px_,
+                alloc.get_width (), alloc.get_height ());
+        */
     }
 }
 
