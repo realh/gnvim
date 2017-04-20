@@ -135,13 +135,30 @@ void TextGrid::draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
         const auto cell = (x <= end_column) ? &grid_ [li + x] : nullptr;
         if (x > end_column || cell->get_attrs() != last_attrs) 
         {
-            layout->set_attributes
-                ((last_attrs ? last_attrs : &default_attrs_)->get_pango_attrs
-                    ());
+            if (!last_attrs)
+                last_attrs = &default_attrs_;
+
+            // Need to fill background with attr's background colour
+            /*
+            guint16 r, g, b;
+            CellAttributes::decompose_colour (last_attrs->get_background_rgb (),
+                    r, g, b);
+            cairo->rectangle (last_x * cell_width_, y,
+                    (x - last_x) * cell_width_, cell_height_);
+            cairo->fill ();
+            */
+            /*
+            g_debug ("draw_line filling %d,%d+%dx%d with %06x", last_x, line,
+                    x - last_x, 1, last_attrs->get_background_rgb ());
+            g_debug ("draw_line writing '%s' at %d, %d", s.c_str (),
+                    last_x, line);
+            */
+
+            layout->set_attributes (last_attrs->get_pango_attrs ());
             layout->set_text (s);
             cairo->move_to (last_x * cell_width_, y);
             // update shouldn't be necessary, but python-gui does it
-            //layout->update_from_cairo_context (cairo);
+            layout->update_from_cairo_context (cairo);
             layout->show_in_cairo_context (cairo);
             s.clear ();
             last_x = x;

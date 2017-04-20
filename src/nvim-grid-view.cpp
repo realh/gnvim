@@ -360,16 +360,19 @@ void NvimGridView::on_redraw_bell ()
 void NvimGridView::on_redraw_update_fg (int colour)
 {
     grid_.get_default_attributes ().set_foreground_rgb (colour);
+    global_redraw_pending_ = true;
 }
 
 void NvimGridView::on_redraw_update_bg (int colour)
 {
     grid_.get_default_attributes ().set_background_rgb (colour);
+    global_redraw_pending_ = true;
 }
 
 void NvimGridView::on_redraw_update_sp (int colour)
 {
     grid_.get_default_attributes ().set_special_rgb (colour);
+    global_redraw_pending_ = true;
 }
 
 void NvimGridView::on_redraw_cursor_goto (int line, int col)
@@ -405,6 +408,10 @@ void NvimGridView::on_redraw_put (const msgpack::object_array &text_ar)
 
     grid_.apply_attrs (current_attrs_,
             start_col, cursor_line_, cursor_col_ - 1, cursor_line_);
+
+    if (global_redraw_pending_)
+        return;
+
     grid_.draw_line (grid_cr_, cursor_line_, start_col, cursor_col_ - 1);
 
     //g_debug("on_redraw_put:");
@@ -446,6 +453,7 @@ void NvimGridView::on_redraw_eol_clear ()
     //g_debug("on_redraw_eol_clear:");
     update_redraw_region (cursor_col_, cursor_line_,
             columns_ - 1, cursor_line_);
+    g_debug ("eol_clear");
     clear (cursor_col_, cursor_line_, columns_ - 1, cursor_line_);
 }
 
@@ -498,11 +506,11 @@ void NvimGridView::on_redraw_highlight_set (const msgpack::object &map_o)
     }
 
     if (foreground == -1)
-        foreground = 0;
+        foreground = grid_.get_default_foreground_rgb ();
     if (background == -1)
-        background = 0xffffff;
+        background = grid_.get_default_background_rgb ();
     if (special == -1)
-        special = 0xff0000;
+        special = grid_.get_default_special_rgb ();
 
     if (reverse)
     {
@@ -545,7 +553,13 @@ void NvimGridView::on_redraw_end ()
     g_debug ("on_redraw_end queueing redraw of: %s",
             region_to_string (). c_str ());
     */
-    if (redraw_region_.left <= redraw_region_.right
+    if (global_redraw_pending_)
+    {
+        global_redraw_pending_ = false;
+        redraw_view ();
+        queue_draw ();
+    }
+    else if (redraw_region_.left <= redraw_region_.right
             && redraw_region_.top <= redraw_region_.bottom)
     {
         queue_draw_area (redraw_region_.left * cell_width_px_,

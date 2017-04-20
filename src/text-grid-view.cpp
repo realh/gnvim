@@ -150,6 +150,9 @@ void TextGridView::scroll (int left, int top, int right, int bottom, int count)
 {
     grid_.scroll (left, top, right, bottom, count);
 
+    if (global_redraw_pending_)
+        return;
+
     int src_top, dest_top, clear_top, copy_height;
     int left_px = left * cell_width_px_;
     int width_px = (right - left + 1) * cell_width_px_;
@@ -191,6 +194,7 @@ void TextGridView::scroll (int left, int top, int right, int bottom, int count)
     // Clear the area "uncovered" by the moved region
     if (count < 0)
         count = -count;
+    //g_debug ("Scroll filling background");
     fill_background (grid_cr_, left, clear_top, right, clear_top + count - 1);
 }
 

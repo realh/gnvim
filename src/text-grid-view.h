@@ -74,14 +74,16 @@ public:
     void clear (int left, int top, int right, int bottom)
     {
         grid_.clear (left, top, right, bottom);
-        fill_background (grid_cr_, left, top, right, bottom);
+        if (!global_redraw_pending_)
+            fill_background (grid_cr_, left, top, right, bottom);
     }
 
     // Clear the entire view.
     void clear ()
     {
         grid_.clear ();
-        clear_view ();
+        if (!global_redraw_pending_)
+            clear_view ();
     }
 
     // Parameters are same as for TextGrid::Scroll, which this method calls
@@ -147,6 +149,9 @@ protected:
     // For caching the grid display
     Cairo::RefPtr<Cairo::Surface> grid_surface_;
     Cairo::RefPtr<Cairo::Context> grid_cr_;
+
+    // If true we needn't bother updating cached view at every change
+    bool global_redraw_pending_ {false};
 };
 
 }

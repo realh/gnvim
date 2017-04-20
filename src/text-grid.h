@@ -202,6 +202,16 @@ public:
         return default_attrs_.get_background_rgb ();
     }
 
+    guint32 get_default_foreground_rgb () const
+    {
+        return default_attrs_.get_foreground_rgb ();
+    }
+
+    guint32 get_default_special_rgb () const
+    {
+        return default_attrs_.get_special_rgb ();
+    }
+
     void set_font (const Pango::FontDescription &font)
     {
         font_ = &font;
