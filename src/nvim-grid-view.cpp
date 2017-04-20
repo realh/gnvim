@@ -423,11 +423,7 @@ void NvimGridView::update_redraw_region
 
 void NvimGridView::on_redraw_clear ()
 {
-    for (int line = 0; line < lines_; ++line)
-        for (int col = 0; col < columns_; ++col)
-            grid_.set_text_at (" ", col, line);
-    grid_.apply_attrs (grid_.get_default_attributes (), 0, 0,
-            columns_ - 1, lines_ - 1);
+    clear ();
     redraw_region_.left = 0;
     redraw_region_.top = 0;
     redraw_region_.right = columns_ - 1;
@@ -438,11 +434,10 @@ void NvimGridView::on_redraw_clear ()
 
 void NvimGridView::on_redraw_eol_clear ()
 {
-    int col;
-    for (col = cursor_col_; col < columns_; ++col)
-        grid_.set_text_at (" ", col, cursor_line_);
     g_debug("on_redraw_eol_clear:");
-    update_redraw_region (cursor_col_, cursor_line_, col, cursor_line_);
+    update_redraw_region (cursor_col_, cursor_line_,
+            columns_ - 1, cursor_line_);
+    clear (cursor_col_, cursor_line_, columns_ - 1, cursor_line_);
 }
 
 void NvimGridView::on_redraw_highlight_set (const msgpack::object &map_o)
@@ -528,16 +523,11 @@ void NvimGridView::on_redraw_set_scroll_region (int top, int bot,
 
 void NvimGridView::on_redraw_scroll (int count)
 {
-    grid_.scroll (scroll_region_.left, scroll_region_.top,
+    scroll (scroll_region_.left, scroll_region_.top,
             scroll_region_.right, scroll_region_.bottom, count);
     g_debug ("on_redraw_scroll:");
     update_redraw_region (scroll_region_.left, scroll_region_.top,
             scroll_region_.right, scroll_region_.bottom);
-    for (int line = scroll_region_.top; line <= scroll_region_.bottom; ++line)
-    {
-        grid_.draw_line (grid_cr_, line,
-                scroll_region_.left, scroll_region_.right);
-    }
 }
 
 void NvimGridView::on_redraw_end ()

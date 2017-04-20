@@ -135,11 +135,6 @@ void TextGridView::create_cairo_surface ()
     }
 }
 
-void TextGridView::clear_view ()
-{
-    fill_background (grid_cr_);
-}
-
 void TextGridView::redraw_view ()
 {
     clear_view ();
@@ -147,16 +142,63 @@ void TextGridView::redraw_view ()
         grid_.draw_line (grid_cr_, line, 0, columns_ - 1);
 }
 
-void TextGridView::fill_background (Cairo::RefPtr<Cairo::Context> cr)
+void TextGridView::scroll (int left, int top, int right, int bottom, int count)
 {
-    auto alloc = get_allocation ();
-    int w = alloc.get_width ();
-    int h = alloc.get_height ();
+    grid_.scroll (left, top, right, bottom, count);
+
+    int src_top, dest_top, clear_top, copy_height;
+    int left_px = left * cell_width_px_;
+    int width_px = (right - left + 1) * cell_width_px_;
+
+    if (count > 0)
+    {
+        dest_top = top;
+        src_top = top + count;
+        copy_height = bottom - top + 1 - count;
+        clear_top = bottom + 1 - count;
+    }
+    else
+    {
+        src_top = top;
+        dest_top = top - count;
+        copy_height = bottom - top + 1 + count;
+        clear_top = top;
+    }
+
+    src_top *= cell_height_px_;
+    dest_top *= cell_height_px_;
+    copy_height *= cell_height_px_;
+
+    // Create a surface which is a copy of the region to be moved.
+    auto copy_surf = Cairo::Surface::create (grid_surface_,
+            Cairo::CONTENT_COLOR, width_px, copy_height);
+    auto copy_cr = Cairo::Context::create (copy_surf);
+    copy_cr->set_source (grid_surface_, -left_px, -src_top);
+    copy_cr->paint ();
+
+    // Paint the movable surface to its new position
+    grid_cr_->save ();
+    grid_cr_->rectangle (left_px, dest_top, width_px, copy_height);
+    grid_cr_->clip ();
+    grid_cr_->set_source (copy_surf, left_px, dest_top);
+    grid_cr_->paint ();
+    grid_cr_->restore ();
+
+    // Clear the area "uncovered" by the moved region
+    fill_background (grid_cr_, left, clear_top, right, clear_top + count - 1);
+}
+
+void TextGridView::fill_background (Cairo::RefPtr<Cairo::Context> cr,
+        int left, int top, int right, int bottom)
+{
     guint16 r, g, b;
     CellAttributes::decompose_colour (grid_.get_default_background_rgb (),
             r, g, b);
     cr->set_source_rgb (r, g, b);
-    cr->rectangle (0, 0, w, h);
+    cr->rectangle (left * cell_width_px_, top * cell_height_px_,
+            (right - left + 1) * cell_width_px_,
+            (bottom - top + 1) * cell_height_px_);
+    cr->fill ();
 }
 
 void TextGridView::calculate_metrics ()

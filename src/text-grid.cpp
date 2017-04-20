@@ -45,13 +45,16 @@ void TextGrid::clear ()
         cell.clear ();
 }
 
-void TextGrid::clear_eol (int column, int line)
+void TextGrid::clear (int left, int top, int right, int bottom)
 {
-    line *= columns_;
-    while (column++ < columns_)
+    top *= columns_;
+    bottom *= columns_;
+    for (; top <= bottom; ++top)
     {
-        auto &cell = grid_ [line + column];
-        cell.clear ();
+        for (int col = left; col <= right; ++col)
+        {
+            grid_ [top + col].clear ();
+        }
     }
 }
 
@@ -86,12 +89,12 @@ void TextGrid::scroll (int left, int top, int right, int bottom, int count)
     {
         start = bottom;
         end = top - 1 - count;
-        step = 1;
+        step = -1;
     }
     for (auto y = start; y != end; y += step)
     {
         std::memmove (dat + y * columns_, dat + (y + count) * columns_,
-                right - left + 1);
+                (right - left + 1) * sizeof (TextCell));
     }
     if (count > 0)  // up
     {
@@ -101,7 +104,7 @@ void TextGrid::scroll (int left, int top, int right, int bottom, int count)
     else    // down
     {
         start = top * columns_;
-        end = (top + count) * columns_;
+        end = (top - count) * columns_;
     }
     for (auto y = start; y != end; y += columns_)
     {

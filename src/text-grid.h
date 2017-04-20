@@ -167,8 +167,8 @@ public:
     /// Clears the entire grid of text and styles.
     void clear ();
 
-    /// Clears text and styles from column (inclusive) to the end of the line.
-    void clear_eol (int column, int line);
+    /// Clears text and styles in the given rectangle (inclusive).
+    void clear (int left, int top, int right, int bottom);
 
     /**
      * @param attrs is not used directly, but looked up in attrs_ or copied

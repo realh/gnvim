@@ -57,6 +57,36 @@ public:
     {
         return grid_;
     }
+
+    // Try to resize the parent window to fit the desired number of columns
+    // and lines
+    void resize_window ();
+
+    // in = window coords eg from mouse event, out = vim text coords
+    void convert_coords_to_cells (int &x, int &y)
+    {
+        x /= cell_width_px_;
+        y /= cell_height_px_;
+    }
+
+    // Clears an area of text and the cached cairo surface. Limits are inclusive
+    // in units of text cells.
+    void clear (int left, int top, int right, int bottom)
+    {
+        grid_.clear (left, top, right, bottom);
+        fill_background (grid_cr_, left, top, right, bottom);
+    }
+
+    // Clear the entire view.
+    void clear ()
+    {
+        grid_.clear ();
+        clear_view ();
+    }
+
+    // Parameters are same as for TextGrid::Scroll, which this method calls
+    // in addition to updating the view.
+    void scroll (int left, int top, int right, int bottom, int count);
 protected:
     virtual void on_realize () override;
 
@@ -74,8 +104,23 @@ protected:
 
     void create_cairo_surface ();
 
+    // Fills the given region (inclusive text cells) with the background
+    // colour.
+    void fill_background (Cairo::RefPtr<Cairo::Context> cr, int left, int top,
+            int right, int bottom);
+
+    // Fills a Cairo context with the background colour,
+    // assuming size == allocation
+    void fill_background (Cairo::RefPtr<Cairo::Context> cr)
+    {
+        fill_background (cr, 0, 0, columns_ - 1, lines_ - 1);
+    }
+
     /// Blanks the entire cached view in the grid's background colour.
-    void clear_view ();
+    void clear_view ()
+    {
+        fill_background (grid_cr_);
+    }
 
     /// Redraws the entire cached view (starting with clear_view ()).
     void redraw_view ();
@@ -83,21 +128,6 @@ protected:
     void on_toplevel_size_allocate (Gtk::Allocation &);
 
     void calculate_metrics ();
-
-    // Try to resize the parent window to fit the desired number of columns
-    // and lines
-    void resize_window ();
-
-    // in = window coords eg from mouse event, out = vim text coords
-    void convert_coords_to_cells (int &x, int &y)
-    {
-        x /= cell_width_px_;
-        y /= cell_height_px_;
-    }
-
-    // Fills a Cairo context with the background colour,
-    // assuming size == allocation
-    void fill_background (Cairo::RefPtr<Cairo::Context> cr);
 
     TextGrid grid_;
 
