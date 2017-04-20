@@ -42,10 +42,10 @@ void MsgpackRpc::start (int pipe_to_nvim, int pipe_from_nvim)
 
 void MsgpackRpc::stop ()
 {
-    g_debug ("MsgpackRPC::stop");
+    //g_debug ("MsgpackRPC::stop");
     if (stop_)
     {
-        g_debug ("Already stopped");
+        //g_debug ("Already stopped");
         return;
     }
     stop_ = true;

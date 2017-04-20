@@ -55,7 +55,7 @@ Window::Window (bool maximise, int width, int height,
 
 Window::~Window ()
 {
-    g_debug ("Window deleted");
+    //g_debug ("Window deleted");
     nvim_.stop ();
     delete view_;
 }

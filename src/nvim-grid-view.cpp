@@ -319,8 +319,10 @@ void NvimGridView::on_redraw_start ()
     redraw_region_.top = lines_;
     redraw_region_.right = 0;
     redraw_region_.bottom = 0;
+    /*
     g_debug ("on_redraw_start, resetting region to %s",
             region_to_string ().c_str ());
+    */
 }
 
 void NvimGridView::on_redraw_mode_change (const std::string &/*mode*/)
@@ -336,8 +338,10 @@ void NvimGridView::on_redraw_resize (int columns, int lines)
         redraw_region_.top = 0;
         redraw_region_.right = columns_ - 1;
         redraw_region_.bottom = lines_ - 1;
+        /*
         g_debug ("on_redraw_resize, changing region to %s",
                 region_to_string ().c_str ());
+        */
         columns_ = columns;
         lines_ = lines;
         grid_.resize (columns, lines);
@@ -402,7 +406,7 @@ void NvimGridView::on_redraw_put (const msgpack::object_array &text_ar)
             start_col, cursor_line_, cursor_col_ - 1, cursor_line_);
     grid_.draw_line (grid_cr_, cursor_line_, start_col, cursor_col_ - 1);
 
-    g_debug("on_redraw_put:");
+    //g_debug("on_redraw_put:");
     update_redraw_region (start_col, cursor_line_, cursor_col_, cursor_line_);
 }
 
@@ -417,8 +421,10 @@ void NvimGridView::update_redraw_region
         redraw_region_.top = top;
     if (bottom > redraw_region_.bottom)
         redraw_region_.bottom = bottom;
+    /*
     g_debug ("update_redraw_region: merged L: %d T: %d R: %d B: %d to %s",
             left, top, right, bottom, region_to_string ().c_str ());
+    */
 }
 
 void NvimGridView::on_redraw_clear ()
@@ -428,13 +434,15 @@ void NvimGridView::on_redraw_clear ()
     redraw_region_.top = 0;
     redraw_region_.right = columns_ - 1;
     redraw_region_.bottom = lines_ - 1;
+    /*
     g_debug ("on_redraw_clear, setting region to %s",
             region_to_string ().c_str ());
+    */
 }
 
 void NvimGridView::on_redraw_eol_clear ()
 {
-    g_debug("on_redraw_eol_clear:");
+    //g_debug("on_redraw_eol_clear:");
     update_redraw_region (cursor_col_, cursor_line_,
             columns_ - 1, cursor_line_);
     clear (cursor_col_, cursor_line_, columns_ - 1, cursor_line_);
@@ -525,15 +533,17 @@ void NvimGridView::on_redraw_scroll (int count)
 {
     scroll (scroll_region_.left, scroll_region_.top,
             scroll_region_.right, scroll_region_.bottom, count);
-    g_debug ("on_redraw_scroll:");
+    //g_debug ("on_redraw_scroll:");
     update_redraw_region (scroll_region_.left, scroll_region_.top,
             scroll_region_.right, scroll_region_.bottom);
 }
 
 void NvimGridView::on_redraw_end ()
 {
+    /*
     g_debug ("on_redraw_end queueing redraw of: %s",
             region_to_string (). c_str ());
+    */
     if (redraw_region_.left <= redraw_region_.right
             && redraw_region_.top <= redraw_region_.bottom)
     {

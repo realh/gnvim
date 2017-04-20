@@ -98,7 +98,7 @@ void TextGrid::scroll (int left, int top, int right, int bottom, int count)
     }
     if (count > 0)  // up
     {
-        start = (bottom - count) * columns_;
+        start = (bottom - count + 1) * columns_;
         end = (bottom + 1) * columns_;
     }
     else    // down
@@ -106,6 +106,8 @@ void TextGrid::scroll (int left, int top, int right, int bottom, int count)
         start = top * columns_;
         end = (top - count) * columns_;
     }
+    //g_debug ("Scroll clearing text in lines %d-%d (count %d)",
+    //        start / columns_, end / columns_ - 1, count);
     for (auto y = start; y != end; y += columns_)
     {
         for (auto x = left; x <= right; ++x)

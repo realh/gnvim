@@ -97,14 +97,14 @@ void TextGridView::on_size_allocate (Gtk::Allocation &allocation)
         grid_cr_.clear ();
         grid_surface_.clear ();
     }
-    g_debug ("on_size_allocate");
+    //g_debug ("on_size_allocate");
     create_cairo_surface ();
 }
 
 void TextGridView::on_realize ()
 {
     Gtk::DrawingArea::on_realize ();
-    g_debug ("on_realize");
+    //g_debug ("on_realize");
     create_cairo_surface ();
 }
 
@@ -118,21 +118,25 @@ void TextGridView::create_cairo_surface ()
             auto allocation = get_allocation ();
             int w = allocation.get_width ();
             int h = allocation.get_height ();
-            g_debug ("Creating surface %d x %d", w, h);
+            //g_debug ("Creating surface %d x %d", w, h);
             grid_surface_ = gwin->create_similar_surface
                 (Cairo::CONTENT_COLOR, w, h);
             grid_cr_ = Cairo::Context::create (grid_surface_);
             redraw_view ();
         }
+        /*
         else
         {
             g_debug ("No GdkWindow");
         }
+        */
     }
+    /*
     else
     {
         g_debug ("Already have a cairo surface");
     }
+    */
 }
 
 void TextGridView::redraw_view ()
@@ -185,6 +189,8 @@ void TextGridView::scroll (int left, int top, int right, int bottom, int count)
     grid_cr_->restore ();
 
     // Clear the area "uncovered" by the moved region
+    if (count < 0)
+        count = -count;
     fill_background (grid_cr_, left, clear_top, right, clear_top + count - 1);
 }
 
@@ -250,7 +256,7 @@ bool TextGridView::on_draw (const Cairo::RefPtr<Cairo::Context> &cr)
     cr->clip ();
     double l, t, r, b;
     cr->get_clip_extents (l, t, r, b);
-    g_debug ("redraw clip extents L:%f T:%f R:%f B:%f", l, t, r, b);
+    //g_debug ("redraw clip extents L:%f T:%f R:%f B:%f", l, t, r, b);
     cr->set_source (grid_surface_, 0, 0);
     cr->paint ();
     cr->restore ();
