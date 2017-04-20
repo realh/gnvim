@@ -204,7 +204,8 @@ void TextGridView::fill_background (Cairo::RefPtr<Cairo::Context> cr,
     guint16 r, g, b;
     CellAttributes::decompose_colour (grid_.get_default_background_rgb (),
             r, g, b);
-    cr->set_source_rgb (r, g, b);
+    cr->set_source_rgb
+        (float (r) / 0xffff, float (g) / 0xffff, float (b) / 0xffff);
     cr->rectangle (left * cell_width_px_, top * cell_height_px_,
             (right - left + 1) * cell_width_px_,
             (bottom - top + 1) * cell_height_px_);
