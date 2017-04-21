@@ -315,6 +315,8 @@ std::string NvimGridView::region_to_string ()
 
 void NvimGridView::on_redraw_start ()
 {
+    cursor_rdrw_x_ = cursor_col_;
+    cursor_rdrw_y_ = cursor_line_;
     redraw_region_.left = columns_;
     redraw_region_.top = lines_;
     redraw_region_.right = 0;
@@ -360,12 +362,14 @@ void NvimGridView::on_redraw_bell ()
 void NvimGridView::on_redraw_update_fg (int colour)
 {
     grid_.get_default_attributes ().set_foreground_rgb (colour);
+    cursor_attr_.set_background_rgb (colour);
     global_redraw_pending_ = true;
 }
 
 void NvimGridView::on_redraw_update_bg (int colour)
 {
     grid_.get_default_attributes ().set_background_rgb (colour);
+    cursor_attr_.set_foreground_rgb (colour);
     global_redraw_pending_ = true;
 }
 
@@ -378,13 +382,13 @@ void NvimGridView::on_redraw_update_sp (int colour)
 void NvimGridView::on_redraw_cursor_goto (int line, int col)
 {
     //g_debug ("cursor_goto %d, %d", col, line);
-    cursor_col_ = col;
-    cursor_line_ = line;
+    cursor_rdrw_x_ = col;
+    cursor_rdrw_y_ = line;
 }
 
 void NvimGridView::on_redraw_put (const msgpack::object_array &text_ar)
 {
-    int start_col = cursor_col_;
+    int start_col = cursor_rdrw_x_;
     for (gsize i = 1; i < text_ar.size; ++i)
     {
         const auto &o = text_ar.ptr[i];
@@ -392,7 +396,7 @@ void NvimGridView::on_redraw_put (const msgpack::object_array &text_ar)
         {
             const auto &ms = o.via.str;
             grid_.set_text_at (std::string (ms.ptr, ms.ptr + ms.size),
-                    cursor_col_++, cursor_line_);
+                    cursor_rdrw_x_++, cursor_rdrw_y_);
         }
         else if (o.type == msgpack::type::ARRAY)
         {
@@ -401,21 +405,22 @@ void NvimGridView::on_redraw_put (const msgpack::object_array &text_ar)
             {
                 const auto &ms = ma.ptr[j].via.str;
                 grid_.set_text_at (std::string (ms.ptr, ms.ptr + ms.size),
-                        cursor_col_++, cursor_line_);
+                        cursor_rdrw_x_++, cursor_rdrw_y_);
             }
         }
     }
 
     grid_.apply_attrs (current_attrs_,
-            start_col, cursor_line_, cursor_col_ - 1, cursor_line_);
+            start_col, cursor_rdrw_y_, cursor_rdrw_x_ - 1, cursor_rdrw_y_);
 
     if (global_redraw_pending_)
         return;
 
-    grid_.draw_line (grid_cr_, cursor_line_, start_col, cursor_col_ - 1);
+    grid_.draw_line (grid_cr_, cursor_rdrw_y_, start_col, cursor_rdrw_x_ - 1);
 
     //g_debug("on_redraw_put:");
-    update_redraw_region (start_col, cursor_line_, cursor_col_, cursor_line_);
+    update_redraw_region (start_col, cursor_rdrw_y_,
+            cursor_rdrw_x_, cursor_rdrw_y_);
 }
 
 void NvimGridView::update_redraw_region
@@ -451,10 +456,9 @@ void NvimGridView::on_redraw_clear ()
 void NvimGridView::on_redraw_eol_clear ()
 {
     //g_debug("on_redraw_eol_clear:");
-    update_redraw_region (cursor_col_, cursor_line_,
-            columns_ - 1, cursor_line_);
-    g_debug ("eol_clear");
-    clear (cursor_col_, cursor_line_, columns_ - 1, cursor_line_);
+    update_redraw_region (cursor_rdrw_x_, cursor_rdrw_y_,
+            columns_ - 1, cursor_rdrw_y_);
+    clear (cursor_rdrw_x_, cursor_rdrw_y_, columns_ - 1, cursor_rdrw_y_);
 }
 
 void NvimGridView::on_redraw_highlight_set (const msgpack::object &map_o)
@@ -553,6 +557,16 @@ void NvimGridView::on_redraw_end ()
     g_debug ("on_redraw_end queueing redraw of: %s",
             region_to_string (). c_str ());
     */
+    if (cursor_rdrw_x_ != cursor_col_ || cursor_rdrw_y_ != cursor_line_)
+    {
+        update_redraw_region (cursor_col_, cursor_line_,
+                cursor_col_ + 1, cursor_line_ + 1);
+        cursor_col_ = cursor_rdrw_x_;
+        cursor_line_ = cursor_rdrw_y_;
+        update_redraw_region (cursor_col_, cursor_line_,
+                cursor_col_ + 1, cursor_line_ + 1);
+        show_cursor ();
+    }
     if (global_redraw_pending_)
     {
         global_redraw_pending_ = false;

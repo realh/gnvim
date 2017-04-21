@@ -18,6 +18,7 @@
 
 #include "defns.h"
 
+#include "app.h"
 #include "text-grid-view.h"
 
 namespace Gnvim
@@ -29,7 +30,33 @@ TextGridView::TextGridView (int columns, int lines,
     columns_ (columns), lines_ (lines),
     font_ (font_name.length () ? font_name : DEFAULT_FONT)
 {
+
     calculate_metrics ();
+
+    auto settings = Application::sys_gsettings ();
+    cursor_blinks_ = settings->get_boolean ("cursor-blink");
+    cursor_blink_cx_ = settings->signal_changed ("cursor-blink").connect
+        (sigc::mem_fun (*this, &TextGridView::on_cursor_gsetting_changed));
+    cursor_interval_ = settings->get_int ("cursor-blink-time") / 2;
+    cursor_blink_time_cx_ = settings->signal_changed
+        ("cursor-blink-time").connect
+            (sigc::mem_fun (*this, &TextGridView::on_cursor_gsetting_changed));
+    cursor_timeout_ = settings->get_int ("cursor-blink-timeout") * 1000000;
+    cursor_blink_timeout_cx_ = settings->signal_changed
+        ("cursor-blink-timeout").connect
+            (sigc::mem_fun (*this, &TextGridView::on_cursor_gsetting_changed));
+    cursor_attr_.set_background_rgb (grid_.get_default_foreground_rgb ());
+    cursor_attr_.set_foreground_rgb (grid_.get_default_background_rgb ());
+    show_cursor ();
+}
+
+TextGridView::~TextGridView ()
+{
+    cursor_blink_cx_.disconnect ();
+    cursor_blink_time_cx_.disconnect ();
+    cursor_blink_timeout_cx_.disconnect ();
+    if (cursor_cx_.connected ())
+        cursor_cx_.disconnect ();
 }
 
 void TextGridView::set_font (const Glib::ustring &desc, bool q_resize)
@@ -199,13 +226,11 @@ void TextGridView::scroll (int left, int top, int right, int bottom, int count)
 }
 
 void TextGridView::fill_background (Cairo::RefPtr<Cairo::Context> cr,
-        int left, int top, int right, int bottom)
+        int left, int top, int right, int bottom, guint32 rgb)
 {
-    guint16 r, g, b;
-    CellAttributes::decompose_colour (grid_.get_default_background_rgb (),
-            r, g, b);
-    cr->set_source_rgb
-        (float (r) / 0xffff, float (g) / 0xffff, float (b) / 0xffff);
+    float r, g, b;
+    CellAttributes::decompose_colour_float (rgb, r, g, b);
+    cr->set_source_rgb (r, g, b);
     cr->rectangle (left * cell_width_px_, top * cell_height_px_,
             (right - left + 1) * cell_width_px_,
             (bottom - top + 1) * cell_height_px_);
@@ -259,13 +284,64 @@ bool TextGridView::on_draw (const Cairo::RefPtr<Cairo::Context> &cr)
     cr->save ();
     cr->rectangle (0, 0, w, h);
     cr->clip ();
-    double l, t, r, b;
-    cr->get_clip_extents (l, t, r, b);
+    //double l, t, r, b;
+    //cr->get_clip_extents (l, t, r, b);
     //g_debug ("redraw clip extents L:%f T:%f R:%f B:%f", l, t, r, b);
     cr->set_source (grid_surface_, 0, 0);
     cr->paint ();
+
+    if (cursor_visible_)
+    {
+        fill_background (cr,
+                cursor_col_, cursor_line_, cursor_col_, cursor_line_,
+                cursor_attr_.get_background_rgb ());
+        grid_.draw_line (cr, cursor_line_, cursor_col_, cursor_col_,
+                &cursor_attr_);
+    }
+
     cr->restore ();
     return true;
+}
+
+void TextGridView::show_cursor ()
+{
+    cursor_idle_at_ = g_get_monotonic_time () + cursor_timeout_;
+    cursor_visible_ = false;
+    on_cursor_blink ();
+    if (cursor_cx_.connected ())
+        cursor_cx_.disconnect ();
+    if (cursor_blinks_)
+    {
+        cursor_cx_ = Glib::signal_timeout ().connect
+            (sigc::mem_fun (*this, &TextGridView::on_cursor_blink),
+             cursor_interval_);
+    }
+}
+
+bool TextGridView::on_cursor_blink ()
+{
+    bool no_blink = (g_get_monotonic_time () - cursor_idle_at_ > 0)
+        || !cursor_blinks_;
+    cursor_visible_ = no_blink ? true : !cursor_visible_;
+    queue_draw_area (cursor_col_ * cell_width_px_,
+            cursor_line_ * cell_height_px_,
+            cell_width_px_, cell_height_px_);
+    return !no_blink;
+}
+
+void TextGridView::on_cursor_gsetting_changed (const Glib::ustring &key)
+{
+    auto settings = Application::sys_gsettings ();
+    if (key == "cursor-blink")
+        cursor_blinks_ = settings->get_int ("cursor-blink");
+    else if (key == "cursor-blink-time")
+        cursor_interval_ = settings->get_int ("cursor-blink-time") / 2;
+    else if (key == "cursor-blink-timeout")
+    {
+        cursor_timeout_ = settings->get_int ("cursor-blink-timeout") * 1000000;
+        return;
+    }
+    show_cursor ();
 }
 
 }

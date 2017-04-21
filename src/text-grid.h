@@ -181,9 +181,12 @@ public:
     /**
      * Draws (part of) the line of text in the given cairo context.
      * Columns are inclusive.
+     * @param  attrs can be used to override the grid's attributes eg to draw
+     *         a block cursor.
      */
     void draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
-            int line, int start_column, int end_column);
+            int line, int start_column, int end_column,
+            const CellAttributes *attrs = nullptr);
 
     /** Scroll a region of the grid. 
      * The limits are all inclusive.

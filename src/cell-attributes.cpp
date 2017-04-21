@@ -215,4 +215,14 @@ void CellAttributes::decompose_colour (guint32 rgb,
     blue = (b << 8) | b;
 }
 
+void CellAttributes::decompose_colour_float (guint32 rgb,
+        float &red, float &green, float &blue)
+{
+    guint16 r, g, b;
+    decompose_colour (rgb, r, g, b);
+    red = float (r) / 0xffff;
+    green = float (g) / 0xffff;
+    blue = float (b) / 0xffff;
+}
+
 }

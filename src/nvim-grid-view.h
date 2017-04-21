@@ -97,7 +97,7 @@ private:
         int left, top, right, bottom;
     } redraw_region_, scroll_region_;
 
-    int cursor_col_ {0}, cursor_line_ {0};
+    int cursor_rdrw_x_, cursor_rdrw_y_;
 
     CellAttributes current_attrs_;
 };

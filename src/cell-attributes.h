@@ -129,6 +129,9 @@ public:
 
     static void decompose_colour (guint32 rgb,
             guint16 &red, guint16 &green, guint16 &blue);
+
+    static void decompose_colour_float (guint32 rgb,
+            float &red, float &green, float &blue);
 private:
     bool is_dirty () const
     {

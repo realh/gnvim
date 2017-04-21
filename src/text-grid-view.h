@@ -34,6 +34,8 @@ class TextGridView : public Gtk::DrawingArea {
 public:
     TextGridView (int columns, int lines, const std::string &font_name = "");
 
+    ~TextGridView ();
+
     int get_allocated_columns () const
     {
         return columns_;
@@ -106,10 +108,18 @@ protected:
 
     void create_cairo_surface ();
 
+    // Fills the given region (inclusive text cells) with the given rgb colour.
+    void fill_background (Cairo::RefPtr<Cairo::Context> cr, int left, int top,
+            int right, int bottom, guint32 rgb);
+
     // Fills the given region (inclusive text cells) with the background
     // colour.
     void fill_background (Cairo::RefPtr<Cairo::Context> cr, int left, int top,
-            int right, int bottom);
+            int right, int bottom)
+    {
+        fill_background (cr, left, top, right, bottom,
+                grid_.get_default_background_rgb ());
+    }
 
     // Fills a Cairo context with the background colour,
     // assuming size == allocation
@@ -130,6 +140,12 @@ protected:
     void on_toplevel_size_allocate (Gtk::Allocation &);
 
     void calculate_metrics ();
+
+    void show_cursor ();
+
+    bool on_cursor_blink ();
+
+    void on_cursor_gsetting_changed (const Glib::ustring &key);
 
     TextGrid grid_;
 
@@ -152,6 +168,18 @@ protected:
 
     // If true we needn't bother updating cached view at every change
     bool global_redraw_pending_ {false};
+
+    int cursor_col_ {0}, cursor_line_ {0};
+
+    sigc::connection cursor_cx_;
+    sigc::connection cursor_blink_cx_, cursor_blink_time_cx_,
+        cursor_blink_timeout_cx_;
+    bool cursor_visible_ {false};
+    bool cursor_blinks_;
+    unsigned cursor_interval_;
+    guint64 cursor_timeout_;
+    gint64 cursor_idle_at_;
+    CellAttributes cursor_attr_;
 };
 
 }

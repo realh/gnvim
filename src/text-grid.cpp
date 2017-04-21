@@ -119,12 +119,14 @@ void TextGrid::scroll (int left, int top, int right, int bottom, int count)
 }
 
 void TextGrid::draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
-        int line, int start_column, int end_column)
+        int line, int start_column, int end_column,
+        const CellAttributes *override_attrs)
 {
     auto layout = Pango::Layout::create (cairo);
     auto li = line * columns_;
     Glib::ustring s;
-    auto last_attrs = grid_ [li + start_column].get_attrs ();
+    auto last_attrs = override_attrs ? override_attrs
+        : grid_ [li + start_column].get_attrs ();
     int last_x = start_column;
     int y = line * cell_height_;
 
@@ -133,7 +135,9 @@ void TextGrid::draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
     for (int x = start_column; x <= end_column + 1; ++x)
     {
         const auto cell = (x <= end_column) ? &grid_ [li + x] : nullptr;
-        if (x > end_column || cell->get_attrs() != last_attrs) 
+        auto current_attrs = override_attrs ? override_attrs
+            : (cell ? cell->get_attrs () : nullptr);
+        if (x > end_column || current_attrs != last_attrs)
         {
             if (!last_attrs)
                 last_attrs = &default_attrs_;
@@ -162,8 +166,7 @@ void TextGrid::draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
             layout->show_in_cairo_context (cairo);
             s.clear ();
             last_x = x;
-            if (cell)
-                last_attrs = cell->get_attrs ();
+            last_attrs = current_attrs;
         }
         if (x <= end_column)
         {
