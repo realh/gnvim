@@ -2,7 +2,6 @@ bin_PROGRAMS = gnvim
 
 gnvim_SOURCES = \
 	app.cpp			app.h			\
-	buffer.cpp		buffer.h		\
 	cell-attributes.cpp	cell-attributes.h	\
 	defns.h						\
 	main.cpp					\
