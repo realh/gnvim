@@ -36,7 +36,7 @@ NvimGridView ::NvimGridView (NvimBridge &nvim, int columns, int lines,
     add_events (Gdk::BUTTON1_MOTION_MASK | Gdk::BUTTON2_MOTION_MASK |
             Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK |
             Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK |
-            Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK |
+            Gdk::FOCUS_CHANGE_MASK |
             Gdk::SCROLL_MASK | Gdk::SMOOTH_SCROLL_MASK);
     set_can_focus ();
     grab_focus ();

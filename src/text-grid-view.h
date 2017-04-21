@@ -100,6 +100,10 @@ protected:
 
     virtual void on_size_allocate (Gtk::Allocation &) override;
 
+    virtual bool on_focus_in_event (GdkEventFocus *) override;
+
+    virtual bool on_focus_out_event (GdkEventFocus *) override;
+
     virtual void get_preferred_width_vfunc (int &minimum, int &natural)
             const override;
 

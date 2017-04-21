@@ -30,7 +30,6 @@ TextGridView::TextGridView (int columns, int lines,
     columns_ (columns), lines_ (lines),
     font_ (font_name.length () ? font_name : DEFAULT_FONT)
 {
-
     calculate_metrics ();
 
     auto settings = Application::sys_gsettings ();
@@ -292,11 +291,28 @@ bool TextGridView::on_draw (const Cairo::RefPtr<Cairo::Context> &cr)
 
     if (cursor_visible_)
     {
-        fill_background (cr,
-                cursor_col_, cursor_line_, cursor_col_, cursor_line_,
-                cursor_attr_.get_background_rgb ());
-        grid_.draw_line (cr, cursor_line_, cursor_col_, cursor_col_,
-                &cursor_attr_);
+        guint32 curs_colour = cursor_attr_.get_background_rgb ();
+
+        if (has_focus ())
+        {
+            fill_background (cr,
+                    cursor_col_, cursor_line_, cursor_col_, cursor_line_,
+                    curs_colour);
+            grid_.draw_line (cr, cursor_line_, cursor_col_, cursor_col_,
+                    &cursor_attr_);
+        }
+        else
+        {
+            float r, g, b;
+            CellAttributes::decompose_colour_float (curs_colour, r, g, b);
+            cr->begin_new_path ();
+            cr->set_source_rgb (r, g, b);
+            cr->rectangle (cursor_col_ * cell_width_px_,
+                    cursor_line_ * cell_height_px_,
+                    cell_width_px_, cell_height_px_);
+            cr->set_line_width (1);
+            cr->stroke ();
+        }
     }
 
     cr->restore ();
@@ -310,7 +326,7 @@ void TextGridView::show_cursor ()
     on_cursor_blink ();
     if (cursor_cx_.connected ())
         cursor_cx_.disconnect ();
-    if (cursor_blinks_)
+    if (cursor_blinks_ && has_focus ())
     {
         cursor_cx_ = Glib::signal_timeout ().connect
             (sigc::mem_fun (*this, &TextGridView::on_cursor_blink),
@@ -321,7 +337,7 @@ void TextGridView::show_cursor ()
 bool TextGridView::on_cursor_blink ()
 {
     bool no_blink = (g_get_monotonic_time () - cursor_idle_at_ > 0)
-        || !cursor_blinks_;
+        || !cursor_blinks_ || !has_focus ();
     cursor_visible_ = no_blink ? true : !cursor_visible_;
     queue_draw_area (cursor_col_ * cell_width_px_,
             cursor_line_ * cell_height_px_,
@@ -342,6 +358,18 @@ void TextGridView::on_cursor_gsetting_changed (const Glib::ustring &key)
         return;
     }
     show_cursor ();
+}
+
+bool TextGridView::on_focus_in_event (GdkEventFocus *e)
+{
+    show_cursor ();
+    return Gtk::DrawingArea::on_focus_in_event (e);
+}
+
+bool TextGridView::on_focus_out_event (GdkEventFocus *e)
+{
+    show_cursor ();
+    return Gtk::DrawingArea::on_focus_out_event (e);
 }
 
 }
