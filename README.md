@@ -4,18 +4,12 @@ A GTK3 GUI for neovim.
 
 ## Status
 
-I'm not sure how far I can take this project, because neovim poses big
-difficulties when trying to implement the sort of GUI I want for an all-purpose
-text editor. The current implementation is too inefficient, causing lag when
-scrolling, so I think I have to abandon GtkTextView and use a custom
-implementation similar to
-[python-gui](https://github.com/neovim/python-gui/tree/master/neovim_gui)'s. 
-
-Ideally I would like to use GTK scrollbars, but neovim's architecture/API
-wasn't designed to support that and I'd be foreced to use some sort of kludge,
-if it's possibe at all. Overall there are too many problems and I think I'll
-have to look elsewhere for the ideal of a Swiss Army text editor that combines
-a rich set of vi(m) keystrokes and features with a first class GUI.
+At the moment this seems to be usable but doesn't yet offer anything that you
+can't do with neovim in a terminal. The text view widget has just been
+completely rewritten with a custom drawing system using Cairo/Pango directly
+because using GtkTextView in this way was too inefficient. That's not to say
+that GtkTextView is inefficient in general, but it was just never designed to
+manage a viewport by moving text around instead of using standard scrollbars.
 
 ## Features currently implemented
 
@@ -23,7 +17,15 @@ a rich set of vi(m) keystrokes and features with a first class GUI.
 
 * Multiple windows, one nvim instance per window
 
+* Basic flashing cursor
+
 ## High priority future features
+
+* Change cursor shape for insert mode etc
+
+* Configurable cursor colour
+
+* Use options from the vim instance where possible
 
 * Preferences dialog
 
@@ -45,7 +47,7 @@ Not all of these may be possible.
 
 * Better support for "smooth" touchpad scrolling
 
-* Scrollbars (one for each vim split window ie multiple per GU window) might
+* Scrollbars (one for each vim split window ie multiple per GUI window) might
   even be possible
 
 ## Building and installing
@@ -77,35 +79,7 @@ have the path `/uk/co/realh/gnvim/`.
 ### New windows sometimes stay blank
 
 This is usually caused by trying to load a file for which a vim swap file,
-exists, a mistake in `init.nvim` or an invalid command line. Unfortunately
-these issues cause neovim to stall waiting for input before allowing a remote
-UI to attach. Close the window and run nvim in a terminal to deal with the
-situation.
-
-### Various redraw glitches
-
-I'm not really sure whether this is the fault of gnvim or nvim. The source for
-the [python-gui](https://github.com/neovim/python-gui) mentions redraw glitches
-but also claims to have a workaround I may be able to copy. For now press
-`Ctrl-L` to refresh the view.
-
-### The cursor is the wrong colour/hard to see in insert mode
-
-gnvim doesn't (currently) provide options for this, but you can configure it by
-adding something like the following to `gtk.css`, usually found in
-`~/.config/gtk-3.0/`:
-
-```css
-textview.gnvim {
-    -GtkWidget-cursor-aspect-ratio: 0.12;
-    caret-color: #ef2929;
-}
-```
-
-## Other technical points of interest
-
-gnvim uses GtkTextView to display the text, with a GtkTextBuffer that shadows
-the currently displayed vim text and highlights. It's a rather novel way of
-using GtkTextView, but it's easy and at first it seemed ideal for the job. But
-in practice it works out to very inefficient, and fixing that would require
-nearly as much work as writing a specialised widget.
+exists, an error in `init.nvim` or an invalid command line. Unfortunately
+these issues cause neovim to stall on waiting for input before allowing a
+remote UI to attach. Close the window and run nvim in a terminal to deal with
+the situation.
