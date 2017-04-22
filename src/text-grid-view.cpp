@@ -227,12 +227,19 @@ void TextGridView::scroll (int left, int top, int right, int bottom, int count)
 void TextGridView::fill_background (Cairo::RefPtr<Cairo::Context> cr,
         int left, int top, int right, int bottom, guint32 rgb)
 {
+    fill_background_px (cr,
+            left * cell_width_px_, top * cell_height_px_,
+            (right - left + 1) * cell_width_px_,
+            (bottom - top + 1) * cell_height_px_, rgb);
+}
+
+void TextGridView::fill_background_px (Cairo::RefPtr<Cairo::Context> cr,
+        int left, int top, int width, int height, guint32 rgb)
+{
     float r, g, b;
     CellAttributes::decompose_colour_float (rgb, r, g, b);
     cr->set_source_rgb (r, g, b);
-    cr->rectangle (left * cell_width_px_, top * cell_height_px_,
-            (right - left + 1) * cell_width_px_,
-            (bottom - top + 1) * cell_height_px_);
+    cr->rectangle (left, top, width, height);
     cr->fill ();
 }
 
@@ -295,11 +302,22 @@ bool TextGridView::on_draw (const Cairo::RefPtr<Cairo::Context> &cr)
 
         if (has_focus ())
         {
-            fill_background (cr,
-                    cursor_col_, cursor_line_, cursor_col_, cursor_line_,
-                    curs_colour);
-            grid_.draw_line (cr, cursor_line_, cursor_col_, cursor_col_,
-                    &cursor_attr_);
+            if (cursor_width_)
+            {
+                fill_background_px (cr,
+                        cursor_col_ * cell_width_px_,
+                        cursor_line_ * cell_height_px_,
+                        cursor_width_, cell_height_px_,
+                        curs_colour);
+            }
+            else
+            {
+                fill_background (cr,
+                        cursor_col_, cursor_line_, cursor_col_, cursor_line_,
+                        curs_colour);
+                grid_.draw_line (cr, cursor_line_, cursor_col_, cursor_col_,
+                        &cursor_attr_);
+            }
         }
         else
         {

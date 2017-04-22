@@ -46,6 +46,9 @@ NvimGridView ::NvimGridView (NvimBridge &nvim, int columns, int lines,
             (sigc::mem_fun (this, &NvimGridView::on_font_name_changed));
     app_settings->signal_changed ("font-source").connect
             (sigc::mem_fun (this, &NvimGridView::on_font_source_changed));
+    app_settings->signal_changed ("cursor-width").connect
+            (sigc::mem_fun (this, &NvimGridView::on_cursor_width_changed));
+    beam_cursor_width_ = app_settings->get_uint ("cursor-width");
     auto sys_settings = Application::sys_gsettings ();
     sys_settings->signal_changed ("monospace-font-name").connect
             (sigc::mem_fun (this, &NvimGridView::on_font_name_changed));
@@ -327,9 +330,13 @@ void NvimGridView::on_redraw_start ()
     */
 }
 
-void NvimGridView::on_redraw_mode_change (const std::string &/*mode*/)
+void NvimGridView::on_redraw_mode_change (const std::string &mode)
 {
-    // TODO: Change cursor
+    if (mode == "insert")
+        cursor_width_ = beam_cursor_width_;
+    else
+        cursor_width_ = 0;
+    show_cursor ();
 }
 
 void NvimGridView::on_redraw_resize (int columns, int lines)
@@ -637,6 +644,13 @@ void NvimGridView::update_font (bool init)
             set_font (DEFAULT_FONT, !init);
             break;
     }
+}
+
+void NvimGridView::on_cursor_width_changed (const Glib::ustring &key)
+{
+    beam_cursor_width_ = Application::app_gsettings ()->get_uint (key);
+    if (cursor_width_)
+        cursor_width_ = beam_cursor_width_;
 }
 
 }

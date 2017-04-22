@@ -50,5 +50,12 @@
             <description>Pathname of an alternative init.vim file
             (blank for default)</description>
         </key>
+        <key name="cursor-width" type="u">
+            <default>2</default>
+            <range min="1" max="16"/>
+            <summary>Width of beam cursor</summary>
+            <description>Width of the beam cursor used in insert
+            mode, in pixels</description>
+        </key>
     </schema>
 </schemalist>

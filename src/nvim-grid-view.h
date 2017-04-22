@@ -77,6 +77,8 @@ private:
 
     void on_font_source_changed (const Glib::ustring &key);
 
+    void on_cursor_width_changed (const Glib::ustring &key);
+
     // If init is true a resize is not requested
     void update_font (bool init = false);
 
@@ -100,6 +102,8 @@ private:
     int cursor_rdrw_x_, cursor_rdrw_y_;
 
     CellAttributes current_attrs_;
+
+    unsigned beam_cursor_width_;
 };
 
 }

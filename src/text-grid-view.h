@@ -138,6 +138,17 @@ protected:
         fill_background (grid_cr_);
     }
 
+    // As fill_background but in pixel units
+    void fill_background_px (Cairo::RefPtr<Cairo::Context> cr,
+            int left, int top, int width, int height, guint32 rgb);
+
+    void fill_background_px (Cairo::RefPtr<Cairo::Context> cr,
+            int left, int top, int width, int height)
+    {
+        fill_background_px (cr, left, top, width, height,
+                grid_.get_default_background_rgb ());
+    }
+
     /// Redraws the entire cached view (starting with clear_view ()).
     void redraw_view ();
 
@@ -184,6 +195,7 @@ protected:
     guint64 cursor_timeout_;
     gint64 cursor_idle_at_;
     CellAttributes cursor_attr_;
+    int cursor_width_ {0};      // 0 for block cursor
 };
 
 }
