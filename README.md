@@ -19,9 +19,9 @@ manage a viewport by moving text around instead of using standard scrollbars.
 
 * Flashing cursor (optional, using gsettings), caret style in insert mode
 
-## High priority future features
-
 * Configurable cursor colour
+
+## High priority future features
 
 * Use options from the vim instance where possible
 
