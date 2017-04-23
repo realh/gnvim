@@ -48,7 +48,13 @@ NvimGridView ::NvimGridView (NvimBridge &nvim, int columns, int lines,
             (sigc::mem_fun (this, &NvimGridView::on_font_source_changed));
     app_settings->signal_changed ("cursor-width").connect
             (sigc::mem_fun (this, &NvimGridView::on_cursor_width_changed));
-    beam_cursor_width_ = app_settings->get_uint ("cursor-width");
+    on_cursor_width_changed ("");
+    app_settings->signal_changed ("cursor-bg").connect
+            (sigc::mem_fun (this, &NvimGridView::on_cursor_bg_changed));
+    on_cursor_bg_changed ("");
+    app_settings->signal_changed ("cursor-fg").connect
+            (sigc::mem_fun (this, &NvimGridView::on_cursor_fg_changed));
+    on_cursor_fg_changed ("");
     auto sys_settings = Application::sys_gsettings ();
     sys_settings->signal_changed ("monospace-font-name").connect
             (sigc::mem_fun (this, &NvimGridView::on_font_name_changed));
@@ -648,9 +654,34 @@ void NvimGridView::update_font (bool init)
 
 void NvimGridView::on_cursor_width_changed (const Glib::ustring &key)
 {
-    beam_cursor_width_ = Application::app_gsettings ()->get_uint (key);
+    beam_cursor_width_ =
+        Application::app_gsettings ()->get_uint ("cursor-width");
     if (cursor_width_)
         cursor_width_ = beam_cursor_width_;
+    if (key.size ())
+        show_cursor ();
+}
+
+void NvimGridView::on_cursor_bg_changed (const Glib::ustring &key)
+{
+    auto c = Application::app_gsettings ()->get_string ("cursor-bg");
+    if (c.size ())
+        cursor_attr_.set_background_rgb (CellAttributes::parse_colour (c));
+    else
+        cursor_attr_.set_background_rgb (grid_.get_default_foreground_rgb ());
+    if (key.size ())
+        show_cursor ();
+}
+
+void NvimGridView::on_cursor_fg_changed (const Glib::ustring &key)
+{
+    auto c = Application::app_gsettings ()->get_string ("cursor-fg");
+    if (c.size ())
+        cursor_attr_.set_foreground_rgb (CellAttributes::parse_colour (c));
+    else
+        cursor_attr_.set_foreground_rgb (grid_.get_default_background_rgb ());
+    if (key.size ())
+        show_cursor ();
 }
 
 }

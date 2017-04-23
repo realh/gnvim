@@ -57,5 +57,19 @@
             <description>Width of the beam cursor used in insert
             mode, in pixels</description>
         </key>
+        <key name="cursor-bg" type="s">
+            <default>""</default>
+            <summary>Cursor background colour</summary>
+            <description>The cursor's main/background colour in #rrggbb or
+            rgb(r,g,b) notation etc or blank for default (inverse of
+            default background colour)</description>
+        </key>
+        <key name="cursor-fg" type="s">
+            <default>""</default>
+            <summary>Cursor foreground colour</summary>
+            <description>Foreground colour of text under the cursor in #rrggbb
+            or rgb(r,g,b) notation etc or blank for default (inverse of
+            default text colour)</description>
+        </key>
     </schema>
 </schemalist>

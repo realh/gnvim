@@ -17,11 +17,9 @@ manage a viewport by moving text around instead of using standard scrollbars.
 
 * Multiple windows, one nvim instance per window
 
-* Basic flashing cursor
+* Flashing cursor (optional, using gsettings), caret style in insert mode
 
 ## High priority future features
-
-* Change cursor shape for insert mode etc
 
 * Configurable cursor colour
 
@@ -34,6 +32,8 @@ manage a viewport by moving text around instead of using standard scrollbars.
 * Options to connect to remote nvim instances
 
 * Share state between nvim instances
+
+* Detect unsaved files before closing
 
 ## Slightly lower priority future features
 

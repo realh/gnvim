@@ -225,4 +225,12 @@ void CellAttributes::decompose_colour_float (guint32 rgb,
     blue = float (b) / 0xffff;
 }
 
+guint32 CellAttributes::parse_colour (const Glib::ustring &xcolour)
+{
+    Gdk::RGBA c (xcolour);
+    return ((guint32 (c.get_red_u ()) & 0xff00) << 8)
+        | (guint32 (c.get_green_u ()) & 0xff00)
+        | ((guint32 (c.get_blue_u ()) & 0xff00) >> 8);
+}
+
 }

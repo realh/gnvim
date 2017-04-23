@@ -132,6 +132,9 @@ public:
 
     static void decompose_colour_float (guint32 rgb,
             float &red, float &green, float &blue);
+
+    // xcolour as understood by gdk_rgba_parse ()
+    static guint32 parse_colour (const Glib::ustring &xcolour);
 private:
     bool is_dirty () const
     {

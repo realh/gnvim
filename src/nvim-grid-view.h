@@ -77,7 +77,13 @@ private:
 
     void on_font_source_changed (const Glib::ustring &key);
 
+    /* These are called with an empty key during init to signify that they're
+     * being used to retrieve init values and the view isn't necessarily ready
+     * to show the cursor yet.
+     */
     void on_cursor_width_changed (const Glib::ustring &key);
+    void on_cursor_fg_changed (const Glib::ustring &key);
+    void on_cursor_bg_changed (const Glib::ustring &key);
 
     // If init is true a resize is not requested
     void update_font (bool init = false);
