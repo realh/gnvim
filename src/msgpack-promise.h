@@ -36,13 +36,14 @@ class MsgpackPromise {
 public:
     static std::shared_ptr<MsgpackPromise> create ()
     {
-        return std::shared_ptr<MsgpackPromise> (new MsgpackPromise);
+        // Can't use make_shared here because constructor is protected
+        return std::shared_ptr<MsgpackPromise> (new MsgpackPromise ());
     }
 
     MsgpackPromise (const MsgpackPromise &) = delete;
-    MsgpackPromise (MsgpackPromise &&) = delete;
     MsgpackPromise &operator=(const MsgpackPromise &) = delete;
-    MsgpackPromise &operator=(MsgpackPromise &&) = delete;
+
+    virtual ~MsgpackPromise() = default;
 
     sigc::signal<void, const msgpack::object &> &value_signal ()
     {
@@ -64,10 +65,8 @@ public:
         error_sig_.emit (error);
     }
 protected:
-    MsgpackPromise ()
-    {}
+    MsgpackPromise () = default;
 private:
-
     sigc::signal<void, const msgpack::object &> value_sig_;
     sigc::signal<void, const msgpack::object &> error_sig_;
 };

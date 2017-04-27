@@ -10,6 +10,7 @@ gnvim_SOURCES = \
 	msgpack-rpc.cpp		msgpack-rpc.h		\
 	nvim-bridge.cpp		nvim-bridge.h		\
 	nvim-grid-view.cpp	nvim-grid-view.h	\
+	request-set.cpp		request-set.h		\
 	text-grid.cpp		text-grid.h		\
 	text-grid-view.cpp	text-grid-view.h	\
 	window.cpp		window.h

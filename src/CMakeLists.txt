@@ -6,6 +6,7 @@ set(GNVIM_SOURCES
     msgpack-rpc.cpp
     nvim-bridge.cpp
     nvim-grid-view.cpp
+    request-set.cpp
     text-grid.cpp
     text-grid-view.cpp
     window.cpp
@@ -19,6 +20,7 @@ set(GNVIM_HEADERS
     msgpack-rpc.h
     nvim-bridge.h
     nvim-grid-view.h
+    request-set.h
     text-grid.h
     text-grid-view.h
     window.h
