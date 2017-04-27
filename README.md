@@ -81,5 +81,8 @@ have the path `/uk/co/realh/gnvim/`.
 This is usually caused by trying to load a file for which a vim swap file,
 exists, an error in `init.nvim` or an invalid command line. Unfortunately
 these issues cause neovim to stall on waiting for input before allowing a
-remote UI to attach. Close the window and run nvim in a terminal to deal with
+remote UI to attach. See
+[neovim issue 3901](https://github.com/neovim/neovim/issues/3901).
+
+Close the window and run nvim in a terminal to deal with
 the situation.
