@@ -375,14 +375,16 @@ void NvimGridView::on_redraw_bell ()
 void NvimGridView::on_redraw_update_fg (int colour)
 {
     grid_.get_default_attributes ().set_foreground_rgb (colour);
-    cursor_attr_.set_background_rgb (colour);
+    if (!colour_cursor_)
+        cursor_attr_.set_background_rgb (colour);
     global_redraw_pending_ = true;
 }
 
 void NvimGridView::on_redraw_update_bg (int colour)
 {
     grid_.get_default_attributes ().set_background_rgb (colour);
-    cursor_attr_.set_foreground_rgb (colour);
+    if (!colour_cursor_)
+        cursor_attr_.set_foreground_rgb (colour);
     global_redraw_pending_ = true;
 }
 
@@ -666,9 +668,15 @@ void NvimGridView::on_cursor_bg_changed (const Glib::ustring &key)
 {
     auto c = Application::app_gsettings ()->get_string ("cursor-bg");
     if (c.size ())
+    {
         cursor_attr_.set_background_rgb (CellAttributes::parse_colour (c));
+        colour_cursor_ = true;
+    }
     else
+    {
         cursor_attr_.set_background_rgb (grid_.get_default_foreground_rgb ());
+        colour_cursor_ = false;
+    }
     if (key.size ())
         show_cursor ();
 }
@@ -677,9 +685,15 @@ void NvimGridView::on_cursor_fg_changed (const Glib::ustring &key)
 {
     auto c = Application::app_gsettings ()->get_string ("cursor-fg");
     if (c.size ())
+    {
         cursor_attr_.set_foreground_rgb (CellAttributes::parse_colour (c));
+        colour_cursor_ = true;
+    }
     else
+    {
         cursor_attr_.set_foreground_rgb (grid_.get_default_background_rgb ());
+        colour_cursor_ = false;
+    }
     if (key.size ())
         show_cursor ();
 }

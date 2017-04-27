@@ -195,6 +195,8 @@ protected:
     guint64 cursor_timeout_;
     gint64 cursor_idle_at_;
     CellAttributes cursor_attr_;
+    bool colour_cursor_;        // Whether cursor has its own colour or it
+                                // depends on fg/bg
     int cursor_width_ {0};      // 0 for block cursor
 };
 
