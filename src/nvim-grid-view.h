@@ -74,6 +74,12 @@ private:
     void on_redraw_scroll (int count);
     void on_redraw_end ();
 
+    /* I don't think nvim sets the scroll region before scrolling the entire
+     * screen so we need to initialise it; probably best called whenever the 
+     * viewport size changes.
+     */
+    void reset_scroll_region ();
+
     void do_scroll (const std::string &direction, int state);
 
     // Used for both app and sys fonts, using key to work out which

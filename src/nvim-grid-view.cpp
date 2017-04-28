@@ -70,6 +70,8 @@ NvimGridView ::NvimGridView (NvimBridge &nvim, int columns, int lines,
     update_font (true);
     on_redraw_mode_change ("normal");
 
+    reset_scroll_region ();
+
     nvim_.redraw_start.connect
             (sigc::mem_fun (this, &NvimGridView::on_redraw_start));
     nvim_.redraw_mode_change.connect
@@ -364,6 +366,7 @@ void NvimGridView::on_redraw_resize (int columns, int lines)
         columns_ = columns;
         lines_ = lines;
         grid_.resize (columns, lines);
+        reset_scroll_region ();
         if (gui_resize_counter_)
             --gui_resize_counter_;
         else
@@ -440,6 +443,14 @@ void NvimGridView::on_redraw_put (const msgpack::object_array &text_ar)
     //g_debug("on_redraw_put:");
     update_redraw_region (start_col, cursor_rdrw_y_,
             cursor_rdrw_x_, cursor_rdrw_y_);
+}
+
+void NvimGridView::reset_scroll_region ()
+{
+    scroll_region_.left = 0;
+    scroll_region_.top = 0;
+    scroll_region_.right = columns_ - 1;
+    scroll_region_.bottom = lines_ - 1;
 }
 
 void NvimGridView::update_redraw_region
