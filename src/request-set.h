@@ -35,7 +35,8 @@ private:
             (RequestSetBase &rset, std::shared_ptr<MsgpackPromise> promise)
         {
             return std::static_pointer_cast<MsgpackPromise>
-            ((new ProxiedPromise (rset, promise))->this_shared_);
+                (std::shared_ptr<ProxiedPromise>
+                    (new ProxiedPromise (rset, promise)));
         }
     protected:
         ProxiedPromise (RequestSetBase &rset,
@@ -47,7 +48,6 @@ private:
     private:
         RequestSetBase &rset_;
         std::shared_ptr<MsgpackPromise> promise_;
-        std::shared_ptr<ProxiedPromise> this_shared_;
     };
 public:
     virtual ~RequestSetBase () = default;

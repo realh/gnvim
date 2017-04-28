@@ -25,7 +25,7 @@ namespace Gnvim
 
 RequestSetBase::ProxiedPromise::ProxiedPromise (RequestSetBase &rset,
                 std::shared_ptr<MsgpackPromise> promise)
-    : rset_ (rset), promise_ (promise), this_shared_ (this)
+    : rset_ (rset), promise_ (promise)
 {
     promise->value_signal ().connect
         (sigc::mem_fun (*this, &ProxiedPromise::on_value));
@@ -37,14 +37,12 @@ void RequestSetBase::ProxiedPromise::on_value (const msgpack::object &value)
 {
     value_signal ().emit (value);
     rset_.promise_fulfilled ();
-    this_shared_.reset ();
 }
 
 void RequestSetBase::ProxiedPromise::on_error (const msgpack::object &error)
 {
     error_signal ().emit (error);
     rset_.promise_fulfilled ();
-    this_shared_.reset ();
 }
 
 }
