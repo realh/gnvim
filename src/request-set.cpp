@@ -18,6 +18,9 @@
  */
 
 #include "defns.h"
+
+#include <sstream>
+
 #include "request-set.h"
 
 namespace Gnvim
@@ -41,6 +44,9 @@ void RequestSetBase::ProxiedPromise::on_value (const msgpack::object &value)
 
 void RequestSetBase::ProxiedPromise::on_error (const msgpack::object &error)
 {
+    std::ostringstream s;
+    s << error;
+    g_debug ("Error response to ProxiedPromise request %s", s.str ().c_str ());
     promise_->error_signal ().emit (error);
     rset_.promise_fulfilled ();
 }

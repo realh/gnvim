@@ -30,14 +30,14 @@ Window::Window (bool maximise, int width, int height,
 rqset_ (RequestSetBase::create (sigc::mem_fun (*this, &Window::ready_to_start)))
 {
     nvim_.start (cl, init_file);
-    view_ = new NvimGridView (nvim_, width, height);
     if (width == -1)
     {
         columns_ = 80;
         auto prom = MsgpackPromise::create ();
         prom->value_signal ().connect
             (sigc::mem_fun (*this, &Window::on_columns_response));
-        nvim_.nvim_get_option ("columns", rqset_->get_proxied_promise (prom));
+        auto proxy = rqset_->get_proxied_promise (prom);
+        nvim_.nvim_get_option ("columns", proxy);
     }
     if (height == -1)
     {
@@ -45,7 +45,8 @@ rqset_ (RequestSetBase::create (sigc::mem_fun (*this, &Window::ready_to_start)))
         auto prom = MsgpackPromise::create ();
         prom->value_signal ().connect
             (sigc::mem_fun (*this, &Window::on_lines_response));
-        nvim_.nvim_get_option ("lines", rqset_->get_proxied_promise (prom));
+        auto proxy = rqset_->get_proxied_promise (prom);
+        nvim_.nvim_get_option ("lines", proxy);
     }
     rqset_->ready ();
 }
@@ -59,7 +60,8 @@ Window::~Window ()
 
 void Window::ready_to_start ()
 {
-    g_debug ("ready_to_start");
+    g_debug ("ready_to_start, %d columns x %d lines", columns_, lines_);
+    view_ = new NvimGridView (nvim_, columns_, lines_);
     rqset_.release ();
     nvim_.start_ui (columns_, lines_);
     add (*view_);
@@ -106,13 +108,11 @@ void Window::on_redraw_set_title (const std::string &title)
 void Window::on_columns_response (const msgpack::object &o)
 {
     o.convert_if_not_nil (columns_);
-    g_debug ("columns response %d", columns_);
 }
 
 void Window::on_lines_response (const msgpack::object &o)
 {
     o.convert_if_not_nil (lines_);
-    g_debug ("lines response %d", lines_);
 }
 
 /*

@@ -295,7 +295,7 @@ bool MsgpackRpc::dispatch_response (const msgpack::object &msg)
     const auto &response = ar.ptr[3];
     if (!this->stop_)
     {
-        if (error.is_nil ())
+        if (!error.is_nil ())
             promise->emit_error (error);
         else
             promise->emit_value (response);

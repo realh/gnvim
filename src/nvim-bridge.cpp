@@ -82,6 +82,14 @@ void NvimBridge::start (RefPtr<Gio::ApplicationCommandLine> cl,
         args.push_back ("-u");
         args.push_back (init_file);
     }
+    /*
+    std::ostringstream s;
+    for (const auto &a: args)
+    {
+        s << a << ' ';
+    }
+    g_debug ("%s", s.str ().c_str ());
+    */
 
     for (int n = 1; n < argc; ++n)
     {

@@ -262,8 +262,8 @@ void TextGridView::get_preferred_width_vfunc (int &minimum, int &natural) const
     auto cols = grid_.get_columns ();
     minimum = 5 * cell_width_px_;
     natural = cols * cell_width_px_;
-    //g_debug ("Preferred width bw %d + %d columns * %dpx = %d",
-    //        bw, cols, cell_width_px_, natural);
+    //g_debug ("Preferred width %d columns * %dpx = %d",
+    //        cols, cell_width_px_, natural);
 }
 
 void TextGridView::get_preferred_height_vfunc (int &minimum, int &natural) const
@@ -271,8 +271,8 @@ void TextGridView::get_preferred_height_vfunc (int &minimum, int &natural) const
     auto lines = grid_.get_lines ();
     minimum = 5 * cell_height_px_;
     natural = lines * cell_height_px_;
-    //g_debug ("Preferred height bh %d + %d lines * %dpx = %d",
-    //        bh, lines, cell_height_px_, natural);
+    //g_debug ("Preferred height %d lines * %dpx = %d",
+    //        lines, cell_height_px_, natural);
 }
 
 void TextGridView::on_toplevel_size_allocate (Gtk::Allocation &)
