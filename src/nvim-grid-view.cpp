@@ -709,7 +709,8 @@ void NvimGridView::on_sync_shada_changed (const Glib::ustring &)
 
 bool NvimGridView::on_focus_in_event (GdkEventFocus *e)
 {
-    nvim_.nvim_command ("doauto FocusGained");
+    nvim_.nvim_command ("if exists('#FocusGained')|doauto FocusGained|endif");
+    //nvim_.nvim_command ("silent doauto FocusGained");
     if (sync_shada_)
         nvim_.nvim_command ("rshada");
     return Gtk::DrawingArea::on_focus_in_event (e);
@@ -717,7 +718,8 @@ bool NvimGridView::on_focus_in_event (GdkEventFocus *e)
 
 bool NvimGridView::on_focus_out_event (GdkEventFocus *e)
 {
-    nvim_.nvim_command ("doauto FocusLost");
+    nvim_.nvim_command ("if exists('#FocusLost')|doauto FocusLost|endif");
+    //nvim_.nvim_command ("silent doauto FocusLost");
     if (sync_shada_)
         nvim_.nvim_command ("wshada");
     return Gtk::DrawingArea::on_focus_out_event (e);
