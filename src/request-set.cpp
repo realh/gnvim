@@ -27,21 +27,21 @@ RequestSetBase::ProxiedPromise::ProxiedPromise (RequestSetBase &rset,
                 std::shared_ptr<MsgpackPromise> promise)
     : rset_ (rset), promise_ (promise)
 {
-    promise->value_signal ().connect
+    value_signal ().connect
         (sigc::mem_fun (*this, &ProxiedPromise::on_value));
-    promise->error_signal ().connect
+    error_signal ().connect
         (sigc::mem_fun (*this, &ProxiedPromise::on_error));
 }
 
 void RequestSetBase::ProxiedPromise::on_value (const msgpack::object &value)
 {
-    value_signal ().emit (value);
+    promise_->value_signal ().emit (value);
     rset_.promise_fulfilled ();
 }
 
 void RequestSetBase::ProxiedPromise::on_error (const msgpack::object &error)
 {
-    error_signal ().emit (error);
+    promise_->error_signal ().emit (error);
     rset_.promise_fulfilled ();
 }
 

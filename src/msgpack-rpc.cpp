@@ -69,7 +69,6 @@ void MsgpackRpc::do_request (const char *method, packer_fn arg_packer,
     arg_packer (packer);
     response_promises_[msgid_] = promise;
     send (s.str());
-    g_debug ("Sent request method %s id %d", method, msgid_);
 }
 
 void MsgpackRpc::do_notify (const char *method, packer_fn arg_packer)
@@ -289,10 +288,6 @@ bool MsgpackRpc::dispatch_response (const msgpack::object &msg)
     {
         g_critical ("Response with unexpected msgid %d", msgid);
         return false;
-    }
-    else
-    {
-        g_debug ("Received response to msgid %d", msgid);
     }
     std::shared_ptr<MsgpackPromise> promise = it->second;
 
