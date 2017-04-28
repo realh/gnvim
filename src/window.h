@@ -21,9 +21,11 @@
 
 #include "defns.h"
 
+#include <memory>
 #include <vector>
 
 #include "nvim-bridge.h"
+#include "request-set.h"
 
 namespace Gnvim
 {
@@ -41,9 +43,15 @@ protected:
     virtual void on_size_allocate (Gtk::Allocation &alloc) override;
 */
 private:
+    void ready_to_start ();
+
     void on_nvim_error (Glib::ustring desc);
 
     void on_redraw_set_title (const std::string &);
+
+    void on_columns_response (const msgpack::object &o);
+
+    void on_lines_response (const msgpack::object &o);
 
     // Geometry hints have a history of breakage and serve almost no useful
     // purpose in current desktops
@@ -57,6 +65,10 @@ private:
     NvimGridView *view_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;
+
+    bool maximise_;
+    int columns_, lines_;
+    std::unique_ptr<RequestSetBase> rqset_;
 };
 
 }

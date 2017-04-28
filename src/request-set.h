@@ -25,6 +25,8 @@
 namespace Gnvim
 {
 
+template<class T> class RequestSet;
+
 /// Abstract base class for RequestSet.
 class RequestSetBase {
 private:
@@ -50,6 +52,12 @@ private:
         std::shared_ptr<MsgpackPromise> promise_;
     };
 public:
+    /// Enables creation of an mplementation with automatic type deduction.
+    template<class T> static RequestSetBase *create (T finished)
+    {
+        return new RequestSet<T> (finished);
+    }
+
     virtual ~RequestSetBase () = default;
 
     /** Creates a proxy for a given promise.
@@ -70,6 +78,12 @@ public:
     {
         ready_ = true;
         if (!outstanding_) emit_finished ();
+    }
+
+    void reset ()
+    {
+        ready_ = false;
+        outstanding_ = 0;
     }
 protected:
     virtual void emit_finished () = 0;

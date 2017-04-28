@@ -26,13 +26,45 @@ namespace Gnvim
 
 Window::Window (bool maximise, int width, int height,
         const std::string &init_file, RefPtr<Gio::ApplicationCommandLine> cl)
+: maximise_ (maximise), columns_ (width), lines_ (height),
+rqset_ (RequestSetBase::create (sigc::mem_fun (*this, &Window::ready_to_start)))
 {
     nvim_.start (cl, init_file);
     view_ = new NvimGridView (nvim_, width, height);
-    nvim_.start_ui (width, height);
+    if (width == -1)
+    {
+        columns_ = 80;
+        auto prom = MsgpackPromise::create ();
+        prom->value_signal ().connect
+            (sigc::mem_fun (*this, &Window::on_columns_response));
+        nvim_.nvim_get_option ("columns", rqset_->get_proxied_promise (prom));
+    }
+    if (height == -1)
+    {
+        lines_ = 30;
+        auto prom = MsgpackPromise::create ();
+        prom->value_signal ().connect
+            (sigc::mem_fun (*this, &Window::on_lines_response));
+        nvim_.nvim_get_option ("lines", rqset_->get_proxied_promise (prom));
+    }
+    rqset_->ready ();
+}
+
+Window::~Window ()
+{
+    //g_debug ("Window deleted");
+    nvim_.stop ();
+    delete view_;
+}
+
+void Window::ready_to_start ()
+{
+    g_debug ("ready_to_start");
+    rqset_.release ();
+    nvim_.start_ui (columns_, lines_);
     add (*view_);
     view_->show_all ();
-    if (maximise)
+    if (maximise_)
     {
         maximize ();
     }
@@ -53,13 +85,6 @@ Window::Window (bool maximise, int width, int height,
         (sigc::mem_fun (this, &Window::on_redraw_set_title));
 }
 
-Window::~Window ()
-{
-    //g_debug ("Window deleted");
-    nvim_.stop ();
-    delete view_;
-}
-
 void Window::force_close ()
 {
     force_close_ = true;
@@ -76,6 +101,18 @@ void Window::on_nvim_error (Glib::ustring desc)
 void Window::on_redraw_set_title (const std::string &title)
 {
     set_title (title);
+}
+
+void Window::on_columns_response (const msgpack::object &o)
+{
+    o.convert_if_not_nil (columns_);
+    g_debug ("columns response %d", columns_);
+}
+
+void Window::on_lines_response (const msgpack::object &o)
+{
+    o.convert_if_not_nil (lines_);
+    g_debug ("lines response %d", lines_);
 }
 
 /*

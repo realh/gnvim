@@ -72,8 +72,8 @@ int Application::on_command_line (const RefPtr<Gio::ApplicationCommandLine> &cl)
     char **argv = cl->get_arguments (argc);
     auto settings = app_gsettings ();
     opt_max_ = settings->get_boolean ("maximise");
-    opt_width_ = settings->get_uint ("columns");
-    opt_height_ = settings->get_uint ("lines");
+    opt_width_ = -1;
+    opt_height_ = -1;
     opt_help_nvim_ = false;
     if (!options_.parse (argc, argv))
         return 1;
