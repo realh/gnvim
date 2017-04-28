@@ -46,6 +46,10 @@ protected:
     virtual bool on_motion_notify_event (GdkEventMotion *) override;
 
     virtual bool on_scroll_event (GdkEventScroll *) override;
+
+    virtual bool on_focus_in_event (GdkEventFocus *) override;
+
+    virtual bool on_focus_out_event (GdkEventFocus *) override;
 private:
     void update_redraw_region (int left, int top, int right, int bottom);
 
@@ -84,6 +88,7 @@ private:
     void on_cursor_width_changed (const Glib::ustring &key);
     void on_cursor_fg_changed (const Glib::ustring &key);
     void on_cursor_bg_changed (const Glib::ustring &key);
+    void on_sync_shada_changed (const Glib::ustring &key);
 
     // If init is true a resize is not requested
     void update_font (bool init = false);
@@ -110,6 +115,8 @@ private:
     CellAttributes current_attrs_;
 
     unsigned beam_cursor_width_;
+
+    bool sync_shada_;
 };
 
 }

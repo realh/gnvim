@@ -225,6 +225,11 @@ void NvimBridge::nvim_input (const std::string &keys)
     rpc_->notify ("nvim_input", keys);
 }
 
+void NvimBridge::nvim_command (const std::string &command)
+{
+    rpc_->notify ("nvim_command", command);
+}
+
 void NvimBridge::nvim_get_option (const std::string &name,
         std::shared_ptr<MsgpackPromise> promise)
 {

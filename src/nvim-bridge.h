@@ -49,6 +49,8 @@ public:
 
     void nvim_input (const std::string &keys);
 
+    void nvim_command (const std::string &command);
+
     void nvim_get_option (const std::string &name,
             std::shared_ptr<MsgpackPromise> promise);
 
@@ -91,7 +93,6 @@ public:
     sigc::signal<void, int> redraw_popupmenu_select;
     sigc::signal<void> redraw_popupmenu_hide;
     */
-
 private:
     void map_adapters ();
 

@@ -71,5 +71,12 @@
             or rgb(r,g,b) notation etc or blank for default (inverse of
             default text colour)</description>
         </key>
+        <key name="sync-shada" type="b">
+            <default>true</default>
+            <summary>Sync shared data on focus changes</summary>
+            <description>If true, the UI will request that nvim instances save
+            the shada file (formerly known as viminfo) when they lose focus and
+            load it when they gain focus</description>
+        </key>
     </schema>
 </schemalist>

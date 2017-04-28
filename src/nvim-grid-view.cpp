@@ -55,6 +55,10 @@ NvimGridView ::NvimGridView (NvimBridge &nvim, int columns, int lines,
     app_settings->signal_changed ("cursor-fg").connect
             (sigc::mem_fun (this, &NvimGridView::on_cursor_fg_changed));
     on_cursor_fg_changed ("");
+    app_settings->signal_changed ("sync-shada").connect
+            (sigc::mem_fun (this, &NvimGridView::on_sync_shada_changed));
+    on_sync_shada_changed ("");
+
     auto sys_settings = Application::sys_gsettings ();
     sys_settings->signal_changed ("monospace-font-name").connect
             (sigc::mem_fun (this, &NvimGridView::on_font_name_changed));
@@ -696,6 +700,27 @@ void NvimGridView::on_cursor_fg_changed (const Glib::ustring &key)
     }
     if (key.size ())
         show_cursor ();
+}
+
+void NvimGridView::on_sync_shada_changed (const Glib::ustring &)
+{
+    sync_shada_ = Application::app_gsettings ()->get_boolean ("sync-shada");
+}
+
+bool NvimGridView::on_focus_in_event (GdkEventFocus *e)
+{
+    nvim_.nvim_command ("doauto FocusGained");
+    if (sync_shada_)
+        nvim_.nvim_command ("rshada");
+    return Gtk::DrawingArea::on_focus_in_event (e);
+}
+
+bool NvimGridView::on_focus_out_event (GdkEventFocus *e)
+{
+    nvim_.nvim_command ("doauto FocusLost");
+    if (sync_shada_)
+        nvim_.nvim_command ("wshada");
+    return Gtk::DrawingArea::on_focus_out_event (e);
 }
 
 }
