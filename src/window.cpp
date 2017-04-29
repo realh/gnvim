@@ -60,10 +60,8 @@ Window::~Window()
 
 void Window::ready_to_start(RequestSet *)
 {
-    g_debug("ready_to_start, %d columns x %d lines", columns_, lines_);
     bufs_and_tabs_.signal_got_all_info ().connect([this]()
     {
-        g_debug("Got bufs_and_tabs info");
         view_ = new NvimGridView(nvim_, columns_, lines_);
         rqset_.release();
         nvim_.start_ui(columns_, lines_);

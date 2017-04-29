@@ -60,9 +60,6 @@ void BufsAndTabs::list_buffers()
 
 void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
 {
-    std::ostringstream s;
-    s << o;
-    g_debug("on_bufs_listed: %s", s.str().c_str());
     const msgpack::object_array &ar = o.via.array;
     struct BufListing {
         std::vector<BufferInfo> bufs;
@@ -76,7 +73,6 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
     {
         buf_info->bufs[n].handle = MsgpackRpc::ext_to_int(ar.ptr[n]);
         buf_info->bufs[n].modified = false;
-        g_debug("Buf %ld has handle %ld", n, buf_info->bufs[n].handle);
     }
 
     delete rqset_;
@@ -99,7 +95,6 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
                         {
                             return b.handle == handle;
                         });
-                g_debug("Current buffer handle %ld", handle);
                 sig_bufs_listed_.emit(buffers_);
             });
             prom->error_signal ().connect ([this](const msgpack::object &o)
@@ -128,7 +123,6 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         prom->value_signal().connect([buf_info, n](const msgpack::object &o)
         {
             o.convert(buf_info->bufs[n].number);
-            g_debug("Buf %ld has number %d", n, buf_info->bufs[n].number);
         });
         prom->error_signal().connect(error_lambda);
         nvim_.nvim_buf_get_number (buf_info->bufs[n].handle,
@@ -138,7 +132,6 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         prom->value_signal().connect([buf_info, n](const msgpack::object &o)
         {
             o.convert(buf_info->bufs[n].name);
-            g_debug("Buf %ld has name %s", n, buf_info->bufs[n].name.c_str());
         });
         prom->error_signal().connect(error_lambda);
         nvim_.nvim_buf_get_name (buf_info->bufs[n].handle,
