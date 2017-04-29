@@ -75,14 +75,14 @@ int Application::on_command_line(const RefPtr<Gio::ApplicationCommandLine> &cl)
     opt_width_ = -1;
     opt_height_ = -1;
     opt_help_nvim_ = false;
-    if(!options_.parse(argc, argv))
+    if (!options_.parse(argc, argv))
         return 1;
-    if(opt_help_nvim_)
+    if (opt_help_nvim_)
     {
         Glib::spawn_command_line_sync("nvim --help");
         return 0;
     }
-    if(!open_window(cl))
+    if (!open_window(cl))
     {
         g_warning("Failed to open window, exiting this instance");
         return 1;
@@ -116,7 +116,7 @@ void Application::on_window_removed(Gtk::Window *win)
     Gtk::Application::on_window_removed(win);
     // We created window with new, so we also have to delete it
     delete win;
-    if(get_windows().size() < 1)
+    if (get_windows().size() < 1)
     {
         g_debug("No open windows, quitting");
         //quit();
@@ -130,13 +130,13 @@ void Application::on_window_removed(Gtk::Window *win)
 bool Application::on_opt_geometry(const Glib::ustring &,
         const Glib::ustring &geom, bool has_value)
 {
-    if(!has_value)
+    if (!has_value)
     {
         g_critical("--geometry needs an argument");
         return false;
     }
 
-    if(geom.find("max") == 0)
+    if (geom.find("max") == 0)
     {
         opt_max_ = true;
         return true;
@@ -144,7 +144,7 @@ bool Application::on_opt_geometry(const Glib::ustring &,
     else
     {
         int w = 0, h = 0;
-        if(sscanf(geom.c_str(), "%dx%d", &w, &h) != 2
+        if (sscanf(geom.c_str(), "%dx%d", &w, &h) != 2
                 || w <= 0 || h <= 0)
         {
             g_critical("--geometry argument must be WxH or 'max'");
@@ -161,14 +161,14 @@ bool Application::on_opt_geometry(const Glib::ustring &,
 
 RefPtr<Gio::Settings> Application::app_gsettings()
 {
-    if(!app_gsettings_)
+    if (!app_gsettings_)
         app_gsettings_ = Gio::Settings::create("uk.co.realh.gnvim");
     return app_gsettings_;
 }
 
 RefPtr<Gio::Settings> Application::sys_gsettings()
 {
-    if(!sys_gsettings_)
+    if (!sys_gsettings_)
         sys_gsettings_ = Gio::Settings::create("org.gnome.desktop.interface");
     return sys_gsettings_;
 }

@@ -77,7 +77,7 @@ public:
     void ready()
     {
         ready_ = true;
-        if(!outstanding_) emit_finished();
+        if (!outstanding_) emit_finished();
     }
 
     void reset()
@@ -90,7 +90,7 @@ protected:
 private:
     void promise_fulfilled()
     {
-        if(!--outstanding_ && ready_) emit_finished();
+        if (!--outstanding_ && ready_) emit_finished();
     }
 
     int outstanding_ {0};

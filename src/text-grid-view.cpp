@@ -54,7 +54,7 @@ TextGridView::~TextGridView()
     cursor_blink_cx_.disconnect();
     cursor_blink_time_cx_.disconnect();
     cursor_blink_timeout_cx_.disconnect();
-    if(cursor_cx_.connected())
+    if (cursor_cx_.connected())
         cursor_cx_.disconnect();
 }
 
@@ -62,7 +62,7 @@ void TextGridView::set_font(const Glib::ustring &desc, bool q_resize)
 {
     font_ = Pango::FontDescription(desc.length() ? desc : DEFAULT_FONT);
     calculate_metrics();
-    if(q_resize)
+    if (q_resize)
         resize_window();
 }
 
@@ -75,7 +75,7 @@ void TextGridView::resize_window()
     bool changed = nat_width != view_alloc.get_width()
                 || nat_height != view_alloc.get_height();
     auto win = static_cast<Gtk::Window *> (get_toplevel());
-    if(changed)
+    if (changed)
     {
         // I wasn't sure whether the queue_resize and set_size_request were
         // necessary. Things seem to work correctly without them, whereas with
@@ -84,7 +84,7 @@ void TextGridView::resize_window()
         // gains some of it back the next time the window is focused. Weird.
 
         //queue_resize();
-        if(win)
+        if (win)
         {
             int w = nat_width + toplevel_width_ - view_alloc.get_width();
             int h = nat_height + toplevel_height_ - view_alloc.get_height();
@@ -101,7 +101,7 @@ void TextGridView::on_parent_changed(Gtk::Widget *old_parent)
     // because of CSD and Wayland issues, so we're supposed to use
     // gtk_window_get_size. But that should only be used during certain signal
     // handlers, size-allocate being one of them.
-    if(old_parent && toplevel_size_allocate_connection_)
+    if (old_parent && toplevel_size_allocate_connection_)
         toplevel_size_allocate_connection_.disconnect();
     toplevel_size_allocate_connection_
         = get_toplevel()->signal_size_allocate().connect
@@ -117,7 +117,7 @@ void TextGridView::on_size_allocate(Gtk::Allocation &allocation)
     columns_ = w / cell_width_px_;
     lines_ = h / cell_height_px_;
 
-    if(grid_.get_columns() != columns_ || grid_.get_lines() != lines_)
+    if (grid_.get_columns() != columns_ || grid_.get_lines() != lines_)
     {
         grid_.resize(columns_, lines_);
         grid_cr_.clear();
@@ -136,10 +136,10 @@ void TextGridView::on_realize()
 
 void TextGridView::create_cairo_surface()
 {
-    if(!grid_cr_)
+    if (!grid_cr_)
     {
         auto gwin = get_window();
-        if(gwin)
+        if (gwin)
         {
             auto allocation = get_allocation();
             int w = allocation.get_width();
@@ -176,14 +176,14 @@ void TextGridView::scroll(int left, int top, int right, int bottom, int count)
 {
     grid_.scroll(left, top, right, bottom, count);
 
-    if(global_redraw_pending_)
+    if (global_redraw_pending_)
         return;
 
     int src_top, dest_top, clear_top, copy_height;
     int left_px = left * cell_width_px_;
     int width_px = (right - left + 1) * cell_width_px_;
 
-    if(count > 0)
+    if (count > 0)
     {
         dest_top = top;
         src_top = top + count;
@@ -218,7 +218,7 @@ void TextGridView::scroll(int left, int top, int right, int bottom, int count)
     grid_cr_->restore();
 
     // Clear the area "uncovered" by the moved region
-    if(count < 0)
+    if (count < 0)
         count = -count;
     //g_debug("Scroll filling background");
     fill_background(grid_cr_, left, clear_top, right, clear_top + count - 1);
@@ -296,13 +296,13 @@ bool TextGridView::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
     cr->set_source(grid_surface_, 0, 0);
     cr->paint();
 
-    if(cursor_visible_)
+    if (cursor_visible_)
     {
         guint32 curs_colour = cursor_attr_.get_background_rgb();
 
-        if(has_focus())
+        if (has_focus())
         {
-            if(cursor_width_)
+            if (cursor_width_)
             {
                 fill_background_px(cr,
                         cursor_col_ * cell_width_px_,
@@ -342,9 +342,9 @@ void TextGridView::show_cursor()
     cursor_idle_at_ = g_get_monotonic_time() + cursor_timeout_;
     cursor_visible_ = false;
     on_cursor_blink();
-    if(cursor_cx_.connected())
+    if (cursor_cx_.connected())
         cursor_cx_.disconnect();
-    if(cursor_blinks_ && has_focus())
+    if (cursor_blinks_ && has_focus())
     {
         cursor_cx_ = Glib::signal_timeout().connect
             (sigc::mem_fun(*this, &TextGridView::on_cursor_blink),
@@ -366,11 +366,11 @@ bool TextGridView::on_cursor_blink()
 void TextGridView::on_cursor_gsetting_changed(const Glib::ustring &key)
 {
     auto settings = Application::sys_gsettings();
-    if(key == "cursor-blink")
+    if (key == "cursor-blink")
         cursor_blinks_ = settings->get_int("cursor-blink");
-    else if(key == "cursor-blink-time")
+    else if (key == "cursor-blink-time")
         cursor_interval_ = settings->get_int("cursor-blink-time") / 2;
-    else if(key == "cursor-blink-timeout")
+    else if (key == "cursor-blink-timeout")
     {
         cursor_timeout_ = settings->get_int("cursor-blink-timeout") * 1000000;
         return;

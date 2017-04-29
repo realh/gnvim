@@ -75,11 +75,11 @@ void TextGrid::apply_attrs(const CellAttributes &attrs,
 
 void TextGrid::scroll(int left, int top, int right, int bottom, int count)
 {
-    if(!count)
+    if (!count)
         return;
     int start, end, step;
     auto dat = grid_.data();
-    if(count > 0)  // up
+    if (count > 0)  // up
     {
         start = top;
         end = bottom + 1 - count;
@@ -96,7 +96,7 @@ void TextGrid::scroll(int left, int top, int right, int bottom, int count)
         std::memmove(dat + y * columns_, dat + (y + count) * columns_,
                 (right - left + 1) * sizeof(TextCell));
     }
-    if(count > 0)  // up
+    if (count > 0)  // up
     {
         start = (bottom - count + 1) * columns_;
         end = (bottom + 1) * columns_;
@@ -137,9 +137,9 @@ void TextGrid::draw_line(const Cairo::RefPtr<Cairo::Context> &cairo,
         const auto cell = (x <= end_column) ? &grid_[li + x] : nullptr;
         auto current_attrs = override_attrs ? override_attrs
             : (cell ? cell->get_attrs() : nullptr);
-        if(x > end_column || current_attrs != last_attrs)
+        if (x > end_column || current_attrs != last_attrs)
         {
-            if(!last_attrs)
+            if (!last_attrs)
                 last_attrs = &default_attrs_;
 
             // Need to fill background with attr's background colour
@@ -168,7 +168,7 @@ void TextGrid::draw_line(const Cairo::RefPtr<Cairo::Context> &cairo,
             last_x = x;
             last_attrs = current_attrs;
         }
-        if(x <= end_column)
+        if (x <= end_column)
         {
             s += cell->get_char();
         }

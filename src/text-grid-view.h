@@ -76,7 +76,7 @@ public:
     void clear(int left, int top, int right, int bottom)
     {
         grid_.clear(left, top, right, bottom);
-        if(!global_redraw_pending_)
+        if (!global_redraw_pending_)
             fill_background(grid_cr_, left, top, right, bottom);
     }
 
@@ -84,7 +84,7 @@ public:
     void clear()
     {
         grid_.clear();
-        if(!global_redraw_pending_)
+        if (!global_redraw_pending_)
             clear_view();
     }
 

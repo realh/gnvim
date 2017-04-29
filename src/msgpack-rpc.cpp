@@ -43,7 +43,7 @@ void MsgpackRpc::start(int pipe_to_nvim, int pipe_from_nvim)
 void MsgpackRpc::stop()
 {
     //g_debug("MsgpackRPC::stop");
-    if(stop_)
+    if (stop_)
     {
         //g_debug("Already stopped");
         return;
@@ -96,12 +96,12 @@ void MsgpackRpc::do_response(guint32 msgid,
 
 void MsgpackRpc::send(std::string &&s)
 {
-    if(stop_)
+    if (stop_)
         return;
     gsize nwritten = 0;
     try
     {
-        if(strm_to_nvim_->write_all(s, nwritten))
+        if (strm_to_nvim_->write_all(s, nwritten))
         {
             strm_to_nvim_->flush();
         }
@@ -123,7 +123,7 @@ void MsgpackRpc::send(std::string &&s)
                 ("msgpack stream write std::exception: ") + e.what());
         nwritten = 0;
     }
-    if(!nwritten)
+    if (!nwritten)
     {
         stop();
     }
@@ -131,7 +131,7 @@ void MsgpackRpc::send(std::string &&s)
 
 void MsgpackRpc::start_async_read()
 {
-    if(stop_)
+    if (stop_)
         return;
     unpacker_.reserve_buffer(BUFLEN);
     reference();
@@ -141,7 +141,7 @@ void MsgpackRpc::start_async_read()
 
 void MsgpackRpc::async_read(RefPtr<Gio::AsyncResult> &result)
 {
-    if(stop_)
+    if (stop_)
     {
         try {
             strm_from_nvim_->close();
@@ -156,7 +156,7 @@ void MsgpackRpc::async_read(RefPtr<Gio::AsyncResult> &result)
         try
         {
             nread = strm_from_nvim_->read_finish(result);
-            if(nread <= 0)
+            if (nread <= 0)
                 io_error_signal_.emit(_("No bytes read from nvim"));
         }
         catch(Glib::Exception &e)
@@ -171,7 +171,7 @@ void MsgpackRpc::async_read(RefPtr<Gio::AsyncResult> &result)
                     ("msgpack stream read std::exception: ") + e.what());
             nread = 0;
         }
-        if(nread <= 0)
+        if (nread <= 0)
         {
             stop();
         }
@@ -179,7 +179,7 @@ void MsgpackRpc::async_read(RefPtr<Gio::AsyncResult> &result)
         {
             unpacker_.buffer_consumed(nread);
             msgpack::unpacked unpacked;
-            while(!stop_ && unpacker_.next(unpacked))
+            while (!stop_ && unpacker_.next(unpacked))
             {
                 object_received(unpacked.get());
             }
@@ -200,7 +200,7 @@ bool MsgpackRpc::object_error(char *raw_msg)
 
 bool MsgpackRpc::object_received(const msgpack::object &mob)
 {
-    if(mob.type != msgpack::type::ARRAY)
+    if (mob.type != msgpack::type::ARRAY)
     {
         return object_error(g_strdup_printf(
                     _("msgpack expected ARRAY, received type %d"), mob.type));
@@ -208,7 +208,7 @@ bool MsgpackRpc::object_received(const msgpack::object &mob)
 
     const msgpack::object_array &array = mob.via.array;
     msgpack::object &msg_type_o = array.ptr[0];
-    if(msg_type_o.type != msgpack::type::POSITIVE_INTEGER)
+    if (msg_type_o.type != msgpack::type::POSITIVE_INTEGER)
     {
         return object_error(g_strdup_printf(
                     _("msgpack expected type field POSITIVE_INTEGER, "
@@ -237,13 +237,13 @@ bool MsgpackRpc::object_received(const msgpack::object &mob)
 bool MsgpackRpc::dispatch_request(const msgpack::object &msg)
 {
     const msgpack::object_array ar = msg.via.array;
-    if(ar.size != 4)
+    if (ar.size != 4)
     {
         return object_error(g_strdup_printf(
                     _("msgpack request should have 4 elements, got %d"),
                         ar.size));
     }
-    if(ar.ptr[1].type != msgpack::type::POSITIVE_INTEGER)
+    if (ar.ptr[1].type != msgpack::type::POSITIVE_INTEGER)
     {
         return object_error(g_strdup_printf(
                     _("msgpack request msgid field should be "
@@ -251,7 +251,7 @@ bool MsgpackRpc::dispatch_request(const msgpack::object &msg)
                         ar.ptr[1].type));
         return false;
     }
-    if(ar.ptr[2].type != msgpack::type::STR)
+    if (ar.ptr[2].type != msgpack::type::STR)
     {
         return object_error(g_strdup_printf(
                     _("msgpack request method field should be "
@@ -259,7 +259,7 @@ bool MsgpackRpc::dispatch_request(const msgpack::object &msg)
                         ar.ptr[2].type));
         return false;
     }
-    if(ar.ptr[3].type != msgpack::type::ARRAY)
+    if (ar.ptr[3].type != msgpack::type::ARRAY)
     {
         return object_error(g_strdup_printf(
                     _("msgpack request args field should be "
@@ -268,7 +268,7 @@ bool MsgpackRpc::dispatch_request(const msgpack::object &msg)
         return false;
     }
 
-    if(!this->stop_)
+    if (!this->stop_)
     {
         guint32 msgid = ar.ptr[1].via.i64;
         std::string method;
@@ -284,7 +284,7 @@ bool MsgpackRpc::dispatch_response(const msgpack::object &msg)
     const auto &ar = msg.via.array;
     guint32 msgid = ar.ptr[1].via.i64;
     auto it = response_promises_.find(msgid);
-    if(it == response_promises_.end())
+    if (it == response_promises_.end())
     {
         g_critical("Response with unexpected msgid %d", msgid);
         return false;
@@ -293,9 +293,9 @@ bool MsgpackRpc::dispatch_response(const msgpack::object &msg)
 
     const auto &error = ar.ptr[2];
     const auto &response = ar.ptr[3];
-    if(!this->stop_)
+    if (!this->stop_)
     {
-        if(!error.is_nil())
+        if (!error.is_nil())
             promise->emit_error(error);
         else
             promise->emit_value(response);
@@ -308,13 +308,13 @@ bool MsgpackRpc::dispatch_response(const msgpack::object &msg)
 bool MsgpackRpc::dispatch_notify(const msgpack::object &msg)
 {
     const auto &ar = msg.via.array;
-    if(ar.size != 3)
+    if (ar.size != 3)
     {
         return object_error(g_strdup_printf(
                     _("msgpack notify should have 3 elements, got %d"),
                         ar.size));
     }
-    if(ar.ptr[1].type != msgpack::type::STR)
+    if (ar.ptr[1].type != msgpack::type::STR)
     {
         return object_error(g_strdup_printf(
                     _("msgpack notify method field should be "
@@ -322,7 +322,7 @@ bool MsgpackRpc::dispatch_notify(const msgpack::object &msg)
                         ar.ptr[1].type));
         return false;
     }
-    if(ar.ptr[2].type != msgpack::type::ARRAY)
+    if (ar.ptr[2].type != msgpack::type::ARRAY)
     {
         return object_error(g_strdup_printf(
                     _("msgpack request args field should be "
@@ -331,7 +331,7 @@ bool MsgpackRpc::dispatch_notify(const msgpack::object &msg)
         return false;
     }
 
-    if(!this->stop_)
+    if (!this->stop_)
     {
         std::string method;
         ar.ptr[1].convert(method);

@@ -67,7 +67,7 @@ void CellAttributes::reset()
 
 void CellAttributes::set_bold(bool bold)
 {
-    if(bold)
+    if (bold)
     {
         special_rgb_ |= BOLD_BIT | DIRTY_BIT;
     }
@@ -80,7 +80,7 @@ void CellAttributes::set_bold(bool bold)
 
 void CellAttributes::set_italic(bool italic)
 {
-    if(italic)
+    if (italic)
     {
         special_rgb_ |= ITALIC_BIT | DIRTY_BIT;
     }
@@ -93,7 +93,7 @@ void CellAttributes::set_italic(bool italic)
 
 void CellAttributes::set_reverse(bool reverse)
 {
-    if(reverse)
+    if (reverse)
     {
         special_rgb_ |= REVERSE_BIT | DIRTY_BIT;
     }
@@ -106,7 +106,7 @@ void CellAttributes::set_reverse(bool reverse)
 
 void CellAttributes::set_underline(bool underline)
 {
-    if(underline)
+    if (underline)
     {
         special_rgb_ &= ~UNDERCURL_BIT;
         special_rgb_ |= UNDERLINE_BIT | DIRTY_BIT;
@@ -120,7 +120,7 @@ void CellAttributes::set_underline(bool underline)
 
 void CellAttributes::set_undercurl(bool undercurl)
 {
-    if(undercurl)
+    if (undercurl)
     {
         special_rgb_ &= ~UNDERLINE_BIT;
         special_rgb_ |= UNDERCURL_BIT | DIRTY_BIT;
@@ -135,9 +135,9 @@ void CellAttributes::set_undercurl(bool undercurl)
 // Hashability for std::set etc
 bool CellAttributes::operator< (const CellAttributes &other) const
 {
-    if((special_rgb_ & ~DIRTY_BIT) == (other.special_rgb_ & ~DIRTY_BIT))
+    if ((special_rgb_ & ~DIRTY_BIT) == (other.special_rgb_ & ~DIRTY_BIT))
     {
-        if(foreground_rgb_ == other.foreground_rgb_)
+        if (foreground_rgb_ == other.foreground_rgb_)
             return background_rgb_ < other.background_rgb_;
         else
             return foreground_rgb_ < other.foreground_rgb_;
@@ -147,7 +147,7 @@ bool CellAttributes::operator< (const CellAttributes &other) const
 
 bool CellAttributes::operator== (const CellAttributes &other) const
 {
-    if(this == &other)
+    if (this == &other)
         return true;
     return((special_rgb_ & ~DIRTY_BIT)
             == (other.special_rgb_ & ~DIRTY_BIT))
@@ -157,7 +157,7 @@ bool CellAttributes::operator== (const CellAttributes &other) const
 
 Pango::AttrList &CellAttributes::get_pango_attrs() const
 {
-    if(is_dirty())
+    if (is_dirty())
     {
         pango_attrs_ = Pango::AttrList();
         auto c = create_colour_attr 
@@ -168,7 +168,7 @@ Pango::AttrList &CellAttributes::get_pango_attrs() const
                 (Pango::Attribute::create_attr_background,
                  get_reverse() ? foreground_rgb_ : background_rgb_);
         pango_attrs_.insert(c);
-        if(has_underline_or_curl())
+        if (has_underline_or_curl())
         {
             // pangomm is missing Pango::Attribute::create_attr_underline_color
             // https://bugzilla.gnome.org/show_bug.cgi?id=781059
@@ -182,12 +182,12 @@ Pango::AttrList &CellAttributes::get_pango_attrs() const
                  ? Pango::UNDERLINE_SINGLE : Pango::UNDERLINE_ERROR);
             pango_attrs_.insert(uls);
         }
-        if(get_bold())
+        if (get_bold())
         {
             auto b = Pango::Attribute::create_attr_weight(Pango::WEIGHT_BOLD);
             pango_attrs_.insert(b);
         }
-        if(get_italic())
+        if (get_italic())
         {
             auto i = Pango::Attribute::create_attr_style(Pango::STYLE_ITALIC);
             pango_attrs_.insert(i);

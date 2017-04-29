@@ -41,16 +41,16 @@ static void modify_env(std::vector<std::string> &env,
         bool overwrite = true)
 {
     auto l = name.size();
-    auto it = std::find_if(env.begin(), env.end(),
+    auto it = std::find_if (env.begin(), env.end(),
             [l, name](const std::string &a)
     {
         return a.compare(0, l, name) == 0;
     });
-    if(it == env.end())
+    if (it == env.end())
     {
         env.push_back(name + '=' + value);
     }
-    else if(overwrite)
+    else if (overwrite)
     {
         *it = name + '=' + value;
     }
@@ -67,17 +67,17 @@ void NvimBridge::start(RefPtr<Gio::ApplicationCommandLine> cl,
     bool u = false, embed = false;
     for (int n = 1; n < argc; ++n)
     {
-        if(!strcmp(argv[n], "-u"))
+        if (!strcmp(argv[n], "-u"))
             u = true;
-        else if(!strcmp(argv[n], "--embed"))
+        else if (!strcmp(argv[n], "--embed"))
             embed = true;
     }
 
-    if(!embed)
+    if (!embed)
         args.push_back("--embed");
 
     // Load custom init file if present and -u wasn't overridden
-    if(!u && init_file.size())
+    if (!u && init_file.size())
     {
         args.push_back("-u");
         args.push_back(init_file);
@@ -110,7 +110,7 @@ void NvimBridge::start(RefPtr<Gio::ApplicationCommandLine> cl,
 
     // Only the first call to Application::on_command_line has an enviroment,
     // on subsequent calls it's empty. glib(mm) bug?
-    if(envp.size() && !envp_.size())
+    if (envp.size() && !envp_.size())
     {
         //g_debug("Replacing empty envp_ with %ld", envp.size());
         envp_ = envp;
@@ -139,7 +139,7 @@ void NvimBridge::start(RefPtr<Gio::ApplicationCommandLine> cl,
 NvimBridge::~NvimBridge()
 {
     stop();
-    if(nvim_pid_)
+    if (nvim_pid_)
     {
         Glib::spawn_close_pid(nvim_pid_);
         nvim_pid_ = 0;
@@ -214,9 +214,9 @@ void NvimBridge::start_ui(int width, int height)
 
 void NvimBridge::stop()
 {
-    if(rpc_)
+    if (rpc_)
     {
-        if(ui_attached_)
+        if (ui_attached_)
         {
             //g_debug("nvim-bridge detaching ui");
             rpc_->notify("nvim_ui_detach");
@@ -244,9 +244,32 @@ void NvimBridge::nvim_get_option(const std::string &name,
     rpc_->request("nvim_get_option", promise, name);
 }
 
+void NvimBridge::nvim_get_current_buf(std::shared_ptr<MsgpackPromise> promise)
+{
+    rpc_->request("nvim_get_current_buf", promise);
+}
+
 void NvimBridge::nvim_list_bufs(std::shared_ptr<MsgpackPromise> promise)
 {
     rpc_->request("nvim_list_bufs", promise);
+}
+
+void NvimBridge::nvim_buf_get_number(int buf_handle,
+        std::shared_ptr<MsgpackPromise> promise)
+{
+    rpc_->request("nvim_buf_get_number", promise, buf_handle);
+}
+
+void NvimBridge::nvim_buf_get_name(int buf_handle,
+        std::shared_ptr<MsgpackPromise> promise)
+{
+    rpc_->request("nvim_buf_get_name", promise, buf_handle);
+}
+
+void NvimBridge::nvim_buf_get_changed_tick(int buf_handle,
+        std::shared_ptr<MsgpackPromise> promise)
+{
+    rpc_->request("nvim_buf_get_changed_tick", promise, buf_handle);
 }
 
 void NvimBridge::nvim_ui_try_resize(int width, int height)
@@ -267,7 +290,7 @@ void NvimBridge::on_request(guint32 msgid, std::string method,
 void NvimBridge::on_notify(std::string method,
         const msgpack::object &args)
 {
-    if(method != "redraw")
+    if (method != "redraw")
     {
         std::ostringstream s;
         s << "nvim sent notification '" << method << "' (" << args << ")";
@@ -283,21 +306,21 @@ void NvimBridge::on_notify(std::string method,
         std::string method_name;
         method_ar.ptr[0].convert(method_name);
         const auto &it = redraw_adapters_.find(method_name);
-        if(it != redraw_adapters_.end())
+        if (it != redraw_adapters_.end())
         {
             const auto &emitter = it->second;
             try {
                 // put is weird, encoded as["put", [char], [char], ...]
                 // (where each char is encoded as a utf-8 str)
                 // instead of["put", [str]].
-                if(emitter->num_args() == 0 || method_name == "put")
+                if (emitter->num_args() == 0 || method_name == "put")
                 {
                     emitter->emit(method_ar);
                 }
                 // highlight_set is also weird, may be sent as
                 // ["highlight_set", [{}], [{useful}]] in addition to
                 // expected["highlight_set", [{useful}]]
-                else if(method_name == "highlight_set"
+                else if (method_name == "highlight_set"
                         && method_ar.size > 2)
                 {
                     emitter->emit(method_ar.ptr[2].via.array);

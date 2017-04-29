@@ -54,7 +54,18 @@ public:
     void nvim_get_option(const std::string &name,
             std::shared_ptr<MsgpackPromise> promise);
 
+    void nvim_get_current_buf(std::shared_ptr<MsgpackPromise> promise);
+
     void nvim_list_bufs(std::shared_ptr<MsgpackPromise> promise);
+
+    void nvim_buf_get_number(int buf_handle,
+            std::shared_ptr<MsgpackPromise> promise);
+
+    void nvim_buf_get_name(int buf_handle,
+            std::shared_ptr<MsgpackPromise> promise);
+
+    void nvim_buf_get_changed_tick(int buf_handle,
+            std::shared_ptr<MsgpackPromise> promise);
 
     void nvim_ui_try_resize(int width, int height);
 

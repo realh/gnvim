@@ -30,7 +30,7 @@ void MsgpackAdapterBase::emit(const msgpack::object_array &mp_args)
     // When emitting a method with no args, mp_args is the entire notification,
     // including the method name. It may have an empty array as its second
     // member, so its size should be 1 or 2
-    if(nmpa != na && (na > 0 || (na == 0 && nmpa > 2)))
+    if (nmpa != na && (na > 0 || (na == 0 && nmpa > 2)))
     {
         g_critical("Wrong number of args in msgpack callback; "
                 "expected %d, got %d", num_args(), mp_args.size);
