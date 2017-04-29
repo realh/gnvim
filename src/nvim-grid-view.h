@@ -1,6 +1,6 @@
 /* nvim-grid-view.h
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,72 +32,72 @@ namespace Gnvim
 // TextGridView specialised for neovim
 class NvimGridView : public TextGridView {
 public:
-    NvimGridView (NvimBridge &nvim, int columns, int lines,
+    NvimGridView(NvimBridge &nvim, int columns, int lines,
             const std::string &font_name = "");
 protected:
-    virtual void on_size_allocate (Gtk::Allocation &) override;
+    virtual void on_size_allocate(Gtk::Allocation &) override;
 
-    virtual bool on_key_press_event (GdkEventKey *) override;
+    virtual bool on_key_press_event(GdkEventKey *) override;
 
-    virtual bool on_button_press_event (GdkEventButton *) override;
+    virtual bool on_button_press_event(GdkEventButton *) override;
 
-    virtual bool on_button_release_event (GdkEventButton *) override;
+    virtual bool on_button_release_event(GdkEventButton *) override;
 
-    virtual bool on_motion_notify_event (GdkEventMotion *) override;
+    virtual bool on_motion_notify_event(GdkEventMotion *) override;
 
-    virtual bool on_scroll_event (GdkEventScroll *) override;
+    virtual bool on_scroll_event(GdkEventScroll *) override;
 
-    virtual bool on_focus_in_event (GdkEventFocus *) override;
+    virtual bool on_focus_in_event(GdkEventFocus *) override;
 
-    virtual bool on_focus_out_event (GdkEventFocus *) override;
+    virtual bool on_focus_out_event(GdkEventFocus *) override;
 private:
-    void update_redraw_region (int left, int top, int right, int bottom);
+    void update_redraw_region(int left, int top, int right, int bottom);
 
-    bool on_mouse_event (GdkEventType, int button,
+    bool on_mouse_event(GdkEventType, int button,
             guint modifiers, int x, int y);
 
-    std::string region_to_string ();
+    std::string region_to_string();
 
-    void on_redraw_start ();
-    void on_redraw_mode_change (const std::string &mode);
-    void on_redraw_resize (int columns, int lines);
-    void on_redraw_bell ();
-    void on_redraw_update_fg (int colour);
-    void on_redraw_update_bg (int colour);
-    void on_redraw_update_sp (int colour);
-    void on_redraw_cursor_goto (int line, int col);
-    void on_redraw_put (const msgpack::object_array &);
-    void on_redraw_clear ();
-    void on_redraw_eol_clear ();
-    void on_redraw_highlight_set (const msgpack::object &map_o);
-    void on_redraw_set_scroll_region (int top, int bot, int left, int right);
-    void on_redraw_scroll (int count);
-    void on_redraw_end ();
+    void on_redraw_start();
+    void on_redraw_mode_change(const std::string &mode);
+    void on_redraw_resize(int columns, int lines);
+    void on_redraw_bell();
+    void on_redraw_update_fg(int colour);
+    void on_redraw_update_bg(int colour);
+    void on_redraw_update_sp(int colour);
+    void on_redraw_cursor_goto(int line, int col);
+    void on_redraw_put(const msgpack::object_array &);
+    void on_redraw_clear();
+    void on_redraw_eol_clear();
+    void on_redraw_highlight_set(const msgpack::object &map_o);
+    void on_redraw_set_scroll_region(int top, int bot, int left, int right);
+    void on_redraw_scroll(int count);
+    void on_redraw_end();
 
     /* I don't think nvim sets the scroll region before scrolling the entire
      * screen so we need to initialise it; probably best called whenever the 
      * viewport size changes.
      */
-    void reset_scroll_region ();
+    void reset_scroll_region();
 
-    void do_scroll (const std::string &direction, int state);
+    void do_scroll(const std::string &direction, int state);
 
     // Used for both app and sys fonts, using key to work out which
-    void on_font_name_changed (const Glib::ustring &key);
+    void on_font_name_changed(const Glib::ustring &key);
 
-    void on_font_source_changed (const Glib::ustring &key);
+    void on_font_source_changed(const Glib::ustring &key);
 
     /* These are called with an empty key during init to signify that they're
      * being used to retrieve init values and the view isn't necessarily ready
      * to show the cursor yet.
      */
-    void on_cursor_width_changed (const Glib::ustring &key);
-    void on_cursor_fg_changed (const Glib::ustring &key);
-    void on_cursor_bg_changed (const Glib::ustring &key);
-    void on_sync_shada_changed (const Glib::ustring &key);
+    void on_cursor_width_changed(const Glib::ustring &key);
+    void on_cursor_fg_changed(const Glib::ustring &key);
+    void on_cursor_bg_changed(const Glib::ustring &key);
+    void on_sync_shada_changed(const Glib::ustring &key);
 
     // If init is true a resize is not requested
-    void update_font (bool init = false);
+    void update_font(bool init = false);
 
     /* If we've asked nvim to resize in response to size-allocate from GUI we
      * shouldn't then try to resize the GUI in response to nvim's redraw_resize

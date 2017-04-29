@@ -1,7 +1,7 @@
 
 /* request-set.h
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,29 +26,29 @@
 namespace Gnvim
 {
 
-RequestSetBase::ProxiedPromise::ProxiedPromise (RequestSetBase &rset,
+RequestSetBase::ProxiedPromise::ProxiedPromise(RequestSetBase &rset,
                 std::shared_ptr<MsgpackPromise> promise)
     : rset_ (rset), promise_ (promise)
 {
-    value_signal ().connect
-        (sigc::mem_fun (*this, &ProxiedPromise::on_value));
-    error_signal ().connect
-        (sigc::mem_fun (*this, &ProxiedPromise::on_error));
+    value_signal().connect
+        (sigc::mem_fun(*this, &ProxiedPromise::on_value));
+    error_signal().connect
+        (sigc::mem_fun(*this, &ProxiedPromise::on_error));
 }
 
-void RequestSetBase::ProxiedPromise::on_value (const msgpack::object &value)
+void RequestSetBase::ProxiedPromise::on_value(const msgpack::object &value)
 {
-    promise_->value_signal ().emit (value);
-    rset_.promise_fulfilled ();
+    promise_->value_signal().emit(value);
+    rset_.promise_fulfilled();
 }
 
-void RequestSetBase::ProxiedPromise::on_error (const msgpack::object &error)
+void RequestSetBase::ProxiedPromise::on_error(const msgpack::object &error)
 {
     std::ostringstream s;
     s << error;
-    g_debug ("Error response to ProxiedPromise request %s", s.str ().c_str ());
-    promise_->error_signal ().emit (error);
-    rset_.promise_fulfilled ();
+    g_debug("Error response to ProxiedPromise request %s", s.str().c_str());
+    promise_->error_signal().emit(error);
+    rset_.promise_fulfilled();
 }
 
 }

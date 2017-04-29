@@ -1,6 +1,6 @@
 /* text-grid.h
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,45 +41,45 @@ private:
         /**
          * @param attrs this does not take ownership of attrs
          */
-        TextCell (gunichar c = ' ', CellAttributes *attrs = nullptr)
+        TextCell(gunichar c = ' ', CellAttributes *attrs = nullptr)
             : c_ (c), attrs_ (attrs)
         {}
 
         /**
          * @param attrs this does not take ownership of attrs
          */
-        TextCell (const Glib::ustring &c, CellAttributes *attrs = nullptr)
+        TextCell(const Glib::ustring &c, CellAttributes *attrs = nullptr)
             : attrs_ (attrs)
         {
-            set_text (c);
+            set_text(c);
         }
 
-        void set_char (gunichar c)
+        void set_char(gunichar c)
         {
             c_ = c;
         }
 
-        void clear ()
+        void clear()
         {
-            set_char (' ');
-            clear_attrs ();
+            set_char(' ');
+            clear_attrs();
         }
 
         /**
          * @param text should contain a single unicode char which is copied
          *              into this
          */
-        void set_text (const Glib::ustring &text)
+        void set_text(const Glib::ustring &text)
         {
             c_ = text[0];
         }
 
-        gunichar get_char () const
+        gunichar get_char() const
         {
             return c_;
         }
 
-        const CellAttributes *get_attrs () const
+        const CellAttributes *get_attrs() const
         {
             return attrs_;
         }
@@ -87,12 +87,12 @@ private:
         /**
          * @param attrs this does not take ownership of attrs
          */
-        void set_attrs (const CellAttributes &attrs)
+        void set_attrs(const CellAttributes &attrs)
         {
             attrs_ = &attrs;
         }
 
-        void clear_attrs ()
+        void clear_attrs()
         {
             attrs_ = nullptr;
         }
@@ -107,50 +107,50 @@ public:
      * @param cell_width    Width of each text cell in pixels.
      * @param cell_height   Height of each text cell in pixels.
      * Cell size need not be given at construction, but must be set before
-     * calling draw_line ().
+     * calling draw_line().
      */
-    TextGrid (int columns, int lines, int cell_width = 0, int cell_height = 0);
+    TextGrid(int columns, int lines, int cell_width = 0, int cell_height = 0);
 
-    TextGrid (const TextGrid &) = delete;
+    TextGrid(const TextGrid &) = delete;
     TextGrid &operator=(const TextGrid &) = delete;
-    TextGrid (TextGrid &&) = delete;
+    TextGrid(TextGrid &&) = delete;
     TextGrid &operator=(TextGrid &&) = delete;
 
-    void resize (int columns, int lines);
+    void resize(int columns, int lines);
 
-    int get_columns () const
+    int get_columns() const
     {
         return columns_;
     }
 
-    int get_lines () const
+    int get_lines() const
     {
         return lines_;
     }
 
-    void get_size (int &columns, int &lines)
+    void get_size(int &columns, int &lines)
     {
         columns = columns_;
         lines = lines_;
     }
 
-    void set_cell_size (int cell_width, int cell_height)
+    void set_cell_size(int cell_width, int cell_height)
     {
         cell_width_ = cell_width;
         cell_height_ = cell_height;
     }
 
-    int get_cell_width () const
+    int get_cell_width() const
     {
         return cell_width_;
     }
 
-    int get_cell_height () const
+    int get_cell_height() const
     {
         return cell_height_;
     }
 
-    void get_cell_size (int &width, int &height)
+    void get_cell_size(int &width, int &height)
     {
         width = cell_width_;
         height = cell_height_;
@@ -159,32 +159,32 @@ public:
     /**
      * @param text Consisting of a single unichar which is copied.
      */
-    void set_text_at (const Glib::ustring &text, int column, int line)
+    void set_text_at(const Glib::ustring &text, int column, int line)
     {
-        grid_[line * columns_ + column].set_text (text);
+        grid_[line * columns_ + column].set_text(text);
     }
 
     /// Clears the entire grid of text and styles.
-    void clear ();
+    void clear();
 
-    /// Clears text and styles in the given rectangle (inclusive).
-    void clear (int left, int top, int right, int bottom);
+    /// Clears text and styles in the given rectangle(inclusive).
+    void clear(int left, int top, int right, int bottom);
 
     /**
      * @param attrs is not used directly, but looked up in attrs_ or copied
      *              into attrs_ first.
      * The column and line values are all inclusive.
      */
-    void apply_attrs (const CellAttributes &attrs,
+    void apply_attrs(const CellAttributes &attrs,
             int start_column, int start_line, int end_column, int end_line);
 
     /**
-     * Draws (part of) the line of text in the given cairo context.
+     * Draws(part of) the line of text in the given cairo context.
      * Columns are inclusive.
      * @param  attrs can be used to override the grid's attributes eg to draw
      *         a block cursor.
      */
-    void draw_line (const Cairo::RefPtr<Cairo::Context> &cairo,
+    void draw_line(const Cairo::RefPtr<Cairo::Context> &cairo,
             int line, int start_column, int end_column,
             const CellAttributes *attrs = nullptr);
 
@@ -193,29 +193,29 @@ public:
      * @param count Distance to move by in units of lines; positive to move
      *              text up, negative for down. 
      */
-    void scroll (int left, int top, int right, int bottom, int count);
+    void scroll(int left, int top, int right, int bottom, int count);
 
-    CellAttributes &get_default_attributes ()
+    CellAttributes &get_default_attributes()
     {
         return default_attrs_;
     }
 
-    guint32 get_default_background_rgb () const
+    guint32 get_default_background_rgb() const
     {
-        return default_attrs_.get_background_rgb ();
+        return default_attrs_.get_background_rgb();
     }
 
-    guint32 get_default_foreground_rgb () const
+    guint32 get_default_foreground_rgb() const
     {
-        return default_attrs_.get_foreground_rgb ();
+        return default_attrs_.get_foreground_rgb();
     }
 
-    guint32 get_default_special_rgb () const
+    guint32 get_default_special_rgb() const
     {
-        return default_attrs_.get_special_rgb ();
+        return default_attrs_.get_special_rgb();
     }
 
-    void set_font (const Pango::FontDescription &font)
+    void set_font(const Pango::FontDescription &font)
     {
         font_ = &font;
     }

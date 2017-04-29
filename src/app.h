@@ -1,6 +1,6 @@
 /* app.h
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,33 +26,33 @@ namespace Gnvim
 
 class Application : public Gtk::Application {
 protected:
-    Application ();
+    Application();
 public:
-    static RefPtr<Application> create ()
+    static RefPtr<Application> create()
     {
-        return RefPtr<Application> (new Application ());
+        return RefPtr<Application> (new Application());
     }
 
-    virtual int on_command_line (const RefPtr<Gio::ApplicationCommandLine> &)
+    virtual int on_command_line(const RefPtr<Gio::ApplicationCommandLine> &)
             override;
 
-    bool open_window (const RefPtr<Gio::ApplicationCommandLine> &);
+    bool open_window(const RefPtr<Gio::ApplicationCommandLine> &);
 
-    static RefPtr<Gio::Settings> app_gsettings ();
+    static RefPtr<Gio::Settings> app_gsettings();
 
     // "org.gnome.desktop.interface" for reading "monospace-font-name"
-    static RefPtr<Gio::Settings> sys_gsettings ();
+    static RefPtr<Gio::Settings> sys_gsettings();
 
-    Glib::PropertyProxy<bool> property_dark_theme ()
+    Glib::PropertyProxy<bool> property_dark_theme()
     {
-        return prop_dark_theme_.get_proxy ();
+        return prop_dark_theme_.get_proxy();
     }
 protected:
-    virtual void on_window_removed (Gtk::Window *win) override;
+    virtual void on_window_removed(Gtk::Window *win) override;
 private:
-    bool on_opt_geometry (const Glib::ustring &, const Glib::ustring &, bool);
+    bool on_opt_geometry(const Glib::ustring &, const Glib::ustring &, bool);
 
-    void on_prop_dark_theme_changed ();
+    void on_prop_dark_theme_changed();
 
     Glib::OptionContext options_;
     Glib::OptionGroup main_opt_group_;

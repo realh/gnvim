@@ -1,6 +1,6 @@
 /* msgpack-rpc.h
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,29 +36,31 @@ namespace Gnvim
 
 class NvimBridge {
 public:
-    NvimBridge ();
+    NvimBridge();
 
-    ~NvimBridge ();
+    ~NvimBridge();
 
-    void start (RefPtr<Gio::ApplicationCommandLine> cl,
+    void start(RefPtr<Gio::ApplicationCommandLine> cl,
             const std::string &init_file);
 
-    void start_ui (int width, int height);
+    void start_ui(int width, int height);
 
-    void stop ();
+    void stop();
 
-    void nvim_input (const std::string &keys);
+    void nvim_input(const std::string &keys);
 
-    void nvim_command (const std::string &command);
+    void nvim_command(const std::string &command);
 
-    void nvim_get_option (const std::string &name,
+    void nvim_get_option(const std::string &name,
             std::shared_ptr<MsgpackPromise> promise);
 
-    void nvim_ui_try_resize (int width, int height);
+    void nvim_list_bufs(std::shared_ptr<MsgpackPromise> promise);
 
-    sigc::signal<void, Glib::ustring> &io_error_signal ()
+    void nvim_ui_try_resize(int width, int height);
+
+    sigc::signal<void, Glib::ustring> &io_error_signal()
     {
-        return rpc_->io_error_signal ();
+        return rpc_->io_error_signal();
     }
 
     sigc::signal<void> redraw_start;
@@ -94,12 +96,12 @@ public:
     sigc::signal<void> redraw_popupmenu_hide;
     */
 private:
-    void map_adapters ();
+    void map_adapters();
 
-    void on_request (guint32 msgid, std::string method,
+    void on_request(guint32 msgid, std::string method,
             const msgpack::object &args);
 
-    void on_notify (std::string method, const msgpack::object &args);
+    void on_notify(std::string method, const msgpack::object &args);
 
     using adapter_ptr_t = std::unique_ptr<MsgpackAdapterBase>;
     using map_t = std::map<std::string, adapter_ptr_t>;

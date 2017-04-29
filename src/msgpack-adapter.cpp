@@ -1,6 +1,6 @@
 /* msgpack-adapter.cpp
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,20 +23,20 @@
 namespace Gnvim
 {
 
-void MsgpackAdapterBase::emit (const msgpack::object_array &mp_args)
+void MsgpackAdapterBase::emit(const msgpack::object_array &mp_args)
 {
-    int na =  num_args ();
+    int na =  num_args();
     int nmpa = (int) mp_args.size;
     // When emitting a method with no args, mp_args is the entire notification,
     // including the method name. It may have an empty array as its second
     // member, so its size should be 1 or 2
-    if (nmpa != na && (na > 0 || (na == 0 && nmpa > 2)))
+    if(nmpa != na && (na > 0 || (na == 0 && nmpa > 2)))
     {
-        g_critical ("Wrong number of args in msgpack callback; "
-                "expected %d, got %d", num_args (), mp_args.size);
+        g_critical("Wrong number of args in msgpack callback; "
+                "expected %d, got %d", num_args(), mp_args.size);
         return;
     }
-    do_emit (mp_args);
+    do_emit(mp_args);
 }
 
 }

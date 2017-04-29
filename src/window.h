@@ -1,6 +1,6 @@
 /* window.h
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,30 +32,30 @@ namespace Gnvim
 
 class Window : public Gtk::ApplicationWindow {
 public:
-    Window (bool maximise, int width, int height, const std::string &init_file,
+    Window(bool maximise, int width, int height, const std::string &init_file,
             RefPtr<Gio::ApplicationCommandLine> cl);
 
     ~Window();
 
-    void force_close ();
+    void force_close();
 /*
 protected:
-    virtual void on_size_allocate (Gtk::Allocation &alloc) override;
+    virtual void on_size_allocate(Gtk::Allocation &alloc) override;
 */
 private:
-    void ready_to_start ();
+    void ready_to_start();
 
-    void on_nvim_error (Glib::ustring desc);
+    void on_nvim_error(Glib::ustring desc);
 
-    void on_redraw_set_title (const std::string &);
+    void on_redraw_set_title(const std::string &);
 
-    void on_columns_response (const msgpack::object &o);
+    void on_columns_response(const msgpack::object &o);
 
-    void on_lines_response (const msgpack::object &o);
+    void on_lines_response(const msgpack::object &o);
 
     // Geometry hints have a history of breakage and serve almost no useful
     // purpose in current desktops
-    void set_geometry_hints () {}
+    void set_geometry_hints() {}
 
     bool force_close_ {false};
 

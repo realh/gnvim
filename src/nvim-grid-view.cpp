@@ -1,6 +1,6 @@
 /* nvim-grid-view.cpp
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,141 +29,141 @@ enum FontSource
     FONT_SOURCE_PREFS,
 };
 
-NvimGridView ::NvimGridView (NvimBridge &nvim, int columns, int lines,
+NvimGridView ::NvimGridView(NvimBridge &nvim, int columns, int lines,
         const std::string &font_name)
-: TextGridView (columns, lines, font_name), nvim_ (nvim)
+: TextGridView(columns, lines, font_name), nvim_ (nvim)
 {
-    add_events (Gdk::BUTTON1_MOTION_MASK | Gdk::BUTTON2_MOTION_MASK |
+    add_events(Gdk::BUTTON1_MOTION_MASK | Gdk::BUTTON2_MOTION_MASK |
             Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK |
             Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK |
             Gdk::FOCUS_CHANGE_MASK |
             Gdk::SCROLL_MASK | Gdk::SMOOTH_SCROLL_MASK);
-    set_can_focus ();
-    grab_focus ();
+    set_can_focus();
+    grab_focus();
 
-    auto app_settings = Application::app_gsettings ();
-    app_settings->signal_changed ("font").connect
-            (sigc::mem_fun (this, &NvimGridView::on_font_name_changed));
-    app_settings->signal_changed ("font-source").connect
-            (sigc::mem_fun (this, &NvimGridView::on_font_source_changed));
-    app_settings->signal_changed ("cursor-width").connect
-            (sigc::mem_fun (this, &NvimGridView::on_cursor_width_changed));
-    on_cursor_width_changed ("");
-    app_settings->signal_changed ("cursor-bg").connect
-            (sigc::mem_fun (this, &NvimGridView::on_cursor_bg_changed));
-    on_cursor_bg_changed ("");
-    app_settings->signal_changed ("cursor-fg").connect
-            (sigc::mem_fun (this, &NvimGridView::on_cursor_fg_changed));
-    on_cursor_fg_changed ("");
-    app_settings->signal_changed ("sync-shada").connect
-            (sigc::mem_fun (this, &NvimGridView::on_sync_shada_changed));
-    on_sync_shada_changed ("");
+    auto app_settings = Application::app_gsettings();
+    app_settings->signal_changed("font").connect
+            (sigc::mem_fun(this, &NvimGridView::on_font_name_changed));
+    app_settings->signal_changed("font-source").connect
+            (sigc::mem_fun(this, &NvimGridView::on_font_source_changed));
+    app_settings->signal_changed("cursor-width").connect
+            (sigc::mem_fun(this, &NvimGridView::on_cursor_width_changed));
+    on_cursor_width_changed("");
+    app_settings->signal_changed("cursor-bg").connect
+            (sigc::mem_fun(this, &NvimGridView::on_cursor_bg_changed));
+    on_cursor_bg_changed("");
+    app_settings->signal_changed("cursor-fg").connect
+            (sigc::mem_fun(this, &NvimGridView::on_cursor_fg_changed));
+    on_cursor_fg_changed("");
+    app_settings->signal_changed("sync-shada").connect
+            (sigc::mem_fun(this, &NvimGridView::on_sync_shada_changed));
+    on_sync_shada_changed("");
 
-    auto sys_settings = Application::sys_gsettings ();
-    sys_settings->signal_changed ("monospace-font-name").connect
-            (sigc::mem_fun (this, &NvimGridView::on_font_name_changed));
+    auto sys_settings = Application::sys_gsettings();
+    sys_settings->signal_changed("monospace-font-name").connect
+            (sigc::mem_fun(this, &NvimGridView::on_font_name_changed));
 
-    auto sc = get_style_context ();
-    if (!sc->has_class ("gnvim"))
-        sc->add_class ("gnvim");
+    auto sc = get_style_context();
+    if(!sc->has_class("gnvim"))
+        sc->add_class("gnvim");
 
-    update_font (true);
-    on_redraw_mode_change ("normal");
+    update_font(true);
+    on_redraw_mode_change("normal");
 
-    reset_scroll_region ();
+    reset_scroll_region();
 
     nvim_.redraw_start.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_start));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_start));
     nvim_.redraw_mode_change.connect
-        (sigc::mem_fun (this, &NvimGridView::on_redraw_mode_change));
+        (sigc::mem_fun(this, &NvimGridView::on_redraw_mode_change));
     nvim_.redraw_bell.connect
-        (sigc::mem_fun (this, &NvimGridView::on_redraw_bell));
+        (sigc::mem_fun(this, &NvimGridView::on_redraw_bell));
     nvim_.redraw_visual_bell.connect
-        (sigc::mem_fun (this, &NvimGridView::on_redraw_bell));
+        (sigc::mem_fun(this, &NvimGridView::on_redraw_bell));
     nvim_.redraw_resize.connect
-        (sigc::mem_fun (this, &NvimGridView::on_redraw_resize));
+        (sigc::mem_fun(this, &NvimGridView::on_redraw_resize));
     nvim_.redraw_update_bg.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_update_bg));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_update_bg));
     nvim_.redraw_update_fg.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_update_fg));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_update_fg));
     nvim_.redraw_update_sp.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_update_sp));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_update_sp));
     nvim_.redraw_cursor_goto.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_cursor_goto));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_cursor_goto));
     nvim_.redraw_put.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_put));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_put));
     nvim_.redraw_clear.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_clear));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_clear));
     nvim_.redraw_eol_clear.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_eol_clear));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_eol_clear));
     nvim_.redraw_highlight_set.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_highlight_set));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_highlight_set));
     nvim_.redraw_set_scroll_region.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_set_scroll_region));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_set_scroll_region));
     nvim_.redraw_scroll.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_scroll));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_scroll));
     nvim_.redraw_end.connect
-            (sigc::mem_fun (this, &NvimGridView::on_redraw_end));
+            (sigc::mem_fun(this, &NvimGridView::on_redraw_end));
 }
 
-void NvimGridView::on_size_allocate (Gtk::Allocation &alloc)
+void NvimGridView::on_size_allocate(Gtk::Allocation &alloc)
 {
     int old_cols = columns_;
     int old_lines = lines_;
-    TextGridView::on_size_allocate (alloc);
-    if (old_cols != columns_ || old_lines != lines_)
+    TextGridView::on_size_allocate(alloc);
+    if(old_cols != columns_ || old_lines != lines_)
     {
         ++gui_resize_counter_;
-        nvim_.nvim_ui_try_resize (columns_, lines_);
+        nvim_.nvim_ui_try_resize(columns_, lines_);
     }
 }
 
-Glib::ustring modifier_string (guint state)
+Glib::ustring modifier_string(guint state)
 {
     std::string s;
-    if (state & GDK_MOD1_MASK)
+    if(state & GDK_MOD1_MASK)
         s = "A-";
-    if (state & GDK_CONTROL_MASK)
+    if(state & GDK_CONTROL_MASK)
         s += "C-";
-    if (state & GDK_SHIFT_MASK)
+    if(state & GDK_SHIFT_MASK)
         s += "S-";
     return s;
 }
 
-bool NvimGridView::on_key_press_event (GdkEventKey *event)
+bool NvimGridView::on_key_press_event(GdkEventKey *event)
 {
-    if (event->is_modifier)
+    if(event->is_modifier)
     {
         return true;
     }
 
     bool special = false;
-    gunichar uk = gdk_keyval_to_unicode (event->keyval);
-    Glib::ustring s = gdk_keyval_name (event->keyval);
+    gunichar uk = gdk_keyval_to_unicode(event->keyval);
+    Glib::ustring s = gdk_keyval_name(event->keyval);
 
-    bool kp = s.find ("KP_") == 0;
-    if (kp)
+    bool kp = s.find("KP_") == 0;
+    if(kp)
     {
         special = true;
-        s = s.substr (3);
-        if (s == "Add")
+        s = s.substr(3);
+        if(s == "Add")
             s = "Plus";
-        else if (s == "Subtract")
+        else if(s == "Subtract")
             s = "Minus";
-        else if (s == "Decimal")
+        else if(s == "Decimal")
             s = "Point";
-        s = Glib::ustring (1, 'k') + s;
+        s = Glib::ustring(1, 'k') + s;
     }
 
-    if (g_unichar_isprint (uk))
+    if(g_unichar_isprint(uk))
     {
-        s = Glib::ustring (1, uk);
-        if (s == "<")
+        s = Glib::ustring(1, uk);
+        if(s == "<")
         {
             special = true;
             s = "lt";
         }
-        else if (s == "\\")
+        else if(s == "\\")
         {
             special = true;
             s = "Bslash";
@@ -172,98 +172,98 @@ bool NvimGridView::on_key_press_event (GdkEventKey *event)
     else
     {
         special = true;
-        if (s == "BackSpace")
+        if(s == "BackSpace")
             s = "BS";
-        else if (s == "Return" || s == "Enter")
+        else if(s == "Return" || s == "Enter")
             s = "CR";
-        else if (s == "Escape")
+        else if(s == "Escape")
             s = "Esc";
-        else if (s == "Delete")
+        else if(s == "Delete")
             s = "Del";
-        else if (s == "Page_Up")
+        else if(s == "Page_Up")
             s = "PageUp";
-        else if (s == "Page_Down")
+        else if(s == "Page_Down")
             s = "PageDown";
-        else if (s == "ISO_Left_Tab")
+        else if(s == "ISO_Left_Tab")
             s = "Tab";
     }
 
-    if (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK))
+    if(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK))
     {
         special = true;
-        s = modifier_string (event->state) + s;
+        s = modifier_string(event->state) + s;
     }
 
-    if (special)
-        s = Glib::ustring (1, '<') + s + '>';
+    if(special)
+        s = Glib::ustring(1, '<') + s + '>';
 
-    //g_debug("Keypress %s", s.c_str ());
+    //g_debug("Keypress %s", s.c_str());
 
-    nvim_.nvim_input (s);
+    nvim_.nvim_input(s);
     return true;
 }
 
-bool NvimGridView::on_button_press_event (GdkEventButton *event)
+bool NvimGridView::on_button_press_event(GdkEventButton *event)
 {
-    return on_mouse_event (event->type, event->button,
+    return on_mouse_event(event->type, event->button,
             event->state, event->x, event->y);
 }
 
-bool NvimGridView::on_button_release_event (GdkEventButton *event)
+bool NvimGridView::on_button_release_event(GdkEventButton *event)
 {
-    return on_mouse_event (event->type, event->button,
+    return on_mouse_event(event->type, event->button,
             event->state, event->x, event->y);
 }
 
-bool NvimGridView::on_motion_notify_event (GdkEventMotion *event)
+bool NvimGridView::on_motion_notify_event(GdkEventMotion *event)
 {
     auto b = event->state;
-    if (b & GDK_BUTTON1_MASK)
+    if(b & GDK_BUTTON1_MASK)
         b = 1;
-    else if (b & GDK_BUTTON2_MASK)
+    else if(b & GDK_BUTTON2_MASK)
         b = 2;
-    else if (b & GDK_BUTTON3_MASK)
+    else if(b & GDK_BUTTON3_MASK)
         b = 3;
     else
         return true;
-    return on_mouse_event (event->type, b, event->state, event->x, event->y);
+    return on_mouse_event(event->type, b, event->state, event->x, event->y);
 }
 
-bool NvimGridView::on_scroll_event (GdkEventScroll *event)
+bool NvimGridView::on_scroll_event(GdkEventScroll *event)
 {
-    switch (event->direction)
+    switch(event->direction)
     {
         case GDK_SCROLL_UP:
-            do_scroll ("Up", event->state);
+            do_scroll("Up", event->state);
             break;
         case GDK_SCROLL_DOWN:
-            do_scroll ("Down", event->state);
+            do_scroll("Down", event->state);
             break;
         case GDK_SCROLL_LEFT:
-            do_scroll ("Left", event->state);
+            do_scroll("Left", event->state);
             break;
         case GDK_SCROLL_RIGHT:
-            do_scroll ("Right", event->state);
+            do_scroll("Right", event->state);
             break;
         case GDK_SCROLL_SMOOTH:
             // Bit of a kludge, vim doesn't currently have a good way to do
             // smooth scrolling
-            if (event->delta_x < 0)
-                do_scroll ("Left", event->state);
-            else if (event->delta_x > 0)
-                do_scroll ("Right", event->state);
-            if (event->delta_y < 0)
-                do_scroll ("Up", event->state);
-            else if (event->delta_y > 0)
-                do_scroll ("Down", event->state);
+            if(event->delta_x < 0)
+                do_scroll("Left", event->state);
+            else if(event->delta_x > 0)
+                do_scroll("Right", event->state);
+            if(event->delta_y < 0)
+                do_scroll("Up", event->state);
+            else if(event->delta_y > 0)
+                do_scroll("Down", event->state);
             break;
     }
     return true;
 }
 
-static const char *mouse_button_name (guint button)
+static const char *mouse_button_name(guint button)
 {
-    switch (button)
+    switch(button)
     {
         case 1:
             return "Left";
@@ -275,14 +275,14 @@ static const char *mouse_button_name (guint button)
     return nullptr;
 }
 
-bool NvimGridView::on_mouse_event (GdkEventType etype, int button,
+bool NvimGridView::on_mouse_event(GdkEventType etype, int button,
         guint modifiers, int x, int y)
 {
-    if (!button || button >= 4)
+    if(!button || button >= 4)
         return true;
 
     Glib::ustring etype_str;
-    switch (etype)
+    switch(etype)
     {
         case GDK_BUTTON_PRESS:
         case GDK_2BUTTON_PRESS:
@@ -300,35 +300,35 @@ bool NvimGridView::on_mouse_event (GdkEventType etype, int button,
     }
 
     Glib::ustring but_str;
-    if (button == 1 && etype == GDK_2BUTTON_PRESS)
+    if(button == 1 && etype == GDK_2BUTTON_PRESS)
         but_str = "2-Left";
-    else if (button == 1 && etype == GDK_3BUTTON_PRESS)
+    else if(button == 1 && etype == GDK_3BUTTON_PRESS)
         but_str = "3-Left";
     else
-        but_str = mouse_button_name (button);
+        but_str = mouse_button_name(button);
 
-    convert_coords_to_cells (x, y);
+    convert_coords_to_cells(x, y);
 
-    char *inp = g_strdup_printf ("<%s%s%s><%d,%d>",
-            modifier_string (modifiers).c_str (),
-            but_str.c_str(), etype_str.c_str (),
+    char *inp = g_strdup_printf("<%s%s%s><%d,%d>",
+            modifier_string(modifiers).c_str(),
+            but_str.c_str(), etype_str.c_str(),
             x, y);
-    //g_debug ("Mouse event %s", inp);
-    nvim_.nvim_input (inp);
-    g_free (inp);
+    //g_debug("Mouse event %s", inp);
+    nvim_.nvim_input(inp);
+    g_free(inp);
 
     return true;
 }
 
-std::string NvimGridView::region_to_string ()
+std::string NvimGridView::region_to_string()
 {
     std::ostringstream s;
     s << "L:" << redraw_region_.left << " T:" << redraw_region_.top
         << " R:" << redraw_region_.right << " B:" << redraw_region_.bottom;
-    return s.str ();
+    return s.str();
 }
 
-void NvimGridView::on_redraw_start ()
+void NvimGridView::on_redraw_start()
 {
     cursor_rdrw_x_ = cursor_col_;
     cursor_rdrw_y_ = cursor_line_;
@@ -337,115 +337,115 @@ void NvimGridView::on_redraw_start ()
     redraw_region_.right = 0;
     redraw_region_.bottom = 0;
     /*
-    g_debug ("on_redraw_start, resetting region to %s",
-            region_to_string ().c_str ());
+    g_debug("on_redraw_start, resetting region to %s",
+            region_to_string().c_str());
     */
 }
 
-void NvimGridView::on_redraw_mode_change (const std::string &mode)
+void NvimGridView::on_redraw_mode_change(const std::string &mode)
 {
-    if (mode == "insert")
+    if(mode == "insert")
         cursor_width_ = beam_cursor_width_;
     else
         cursor_width_ = 0;
-    show_cursor ();
+    show_cursor();
 }
 
-void NvimGridView::on_redraw_resize (int columns, int lines)
+void NvimGridView::on_redraw_resize(int columns, int lines)
 {
-    if (columns != columns_ || lines != lines_)
+    if(columns != columns_ || lines != lines_)
     {
         redraw_region_.left = 0;
         redraw_region_.top = 0;
         redraw_region_.right = columns_ - 1;
         redraw_region_.bottom = lines_ - 1;
         /*
-        g_debug ("on_redraw_resize, changing region to %s",
-                region_to_string ().c_str ());
+        g_debug("on_redraw_resize, changing region to %s",
+                region_to_string().c_str());
         */
         columns_ = columns;
         lines_ = lines;
-        grid_.resize (columns, lines);
-        reset_scroll_region ();
-        if (gui_resize_counter_)
+        grid_.resize(columns, lines);
+        reset_scroll_region();
+        if(gui_resize_counter_)
             --gui_resize_counter_;
         else
-            resize_window ();
+            resize_window();
     }
 }
 
-void NvimGridView::on_redraw_bell ()
+void NvimGridView::on_redraw_bell()
 {
-    get_window ()->beep ();
+    get_window()->beep();
 }
 
-void NvimGridView::on_redraw_update_fg (int colour)
+void NvimGridView::on_redraw_update_fg(int colour)
 {
-    grid_.get_default_attributes ().set_foreground_rgb (colour);
-    if (!colour_cursor_)
-        cursor_attr_.set_background_rgb (colour);
+    grid_.get_default_attributes().set_foreground_rgb(colour);
+    if(!colour_cursor_)
+        cursor_attr_.set_background_rgb(colour);
     global_redraw_pending_ = true;
 }
 
-void NvimGridView::on_redraw_update_bg (int colour)
+void NvimGridView::on_redraw_update_bg(int colour)
 {
-    grid_.get_default_attributes ().set_background_rgb (colour);
-    if (!colour_cursor_)
-        cursor_attr_.set_foreground_rgb (colour);
+    grid_.get_default_attributes().set_background_rgb(colour);
+    if(!colour_cursor_)
+        cursor_attr_.set_foreground_rgb(colour);
     global_redraw_pending_ = true;
 }
 
-void NvimGridView::on_redraw_update_sp (int colour)
+void NvimGridView::on_redraw_update_sp(int colour)
 {
-    grid_.get_default_attributes ().set_special_rgb (colour);
+    grid_.get_default_attributes().set_special_rgb(colour);
     global_redraw_pending_ = true;
 }
 
-void NvimGridView::on_redraw_cursor_goto (int line, int col)
+void NvimGridView::on_redraw_cursor_goto(int line, int col)
 {
-    //g_debug ("cursor_goto %d, %d", col, line);
+    //g_debug("cursor_goto %d, %d", col, line);
     cursor_rdrw_x_ = col;
     cursor_rdrw_y_ = line;
 }
 
-void NvimGridView::on_redraw_put (const msgpack::object_array &text_ar)
+void NvimGridView::on_redraw_put(const msgpack::object_array &text_ar)
 {
     int start_col = cursor_rdrw_x_;
     for (gsize i = 1; i < text_ar.size; ++i)
     {
         const auto &o = text_ar.ptr[i];
-        if (o.type == msgpack::type::STR)
+        if(o.type == msgpack::type::STR)
         {
             const auto &ms = o.via.str;
-            grid_.set_text_at (std::string (ms.ptr, ms.ptr + ms.size),
+            grid_.set_text_at(std::string(ms.ptr, ms.ptr + ms.size),
                     cursor_rdrw_x_++, cursor_rdrw_y_);
         }
-        else if (o.type == msgpack::type::ARRAY)
+        else if(o.type == msgpack::type::ARRAY)
         {
             const auto &ma = o.via.array;
             for (gsize j = 0; j < ma.size; ++j)
             {
                 const auto &ms = ma.ptr[j].via.str;
-                grid_.set_text_at (std::string (ms.ptr, ms.ptr + ms.size),
+                grid_.set_text_at(std::string(ms.ptr, ms.ptr + ms.size),
                         cursor_rdrw_x_++, cursor_rdrw_y_);
             }
         }
     }
 
-    grid_.apply_attrs (current_attrs_,
+    grid_.apply_attrs(current_attrs_,
             start_col, cursor_rdrw_y_, cursor_rdrw_x_ - 1, cursor_rdrw_y_);
 
-    if (global_redraw_pending_)
+    if(global_redraw_pending_)
         return;
 
-    grid_.draw_line (grid_cr_, cursor_rdrw_y_, start_col, cursor_rdrw_x_ - 1);
+    grid_.draw_line(grid_cr_, cursor_rdrw_y_, start_col, cursor_rdrw_x_ - 1);
 
     //g_debug("on_redraw_put:");
-    update_redraw_region (start_col, cursor_rdrw_y_,
+    update_redraw_region(start_col, cursor_rdrw_y_,
             cursor_rdrw_x_, cursor_rdrw_y_);
 }
 
-void NvimGridView::reset_scroll_region ()
+void NvimGridView::reset_scroll_region()
 {
     scroll_region_.left = 0;
     scroll_region_.top = 0;
@@ -456,58 +456,58 @@ void NvimGridView::reset_scroll_region ()
 void NvimGridView::update_redraw_region
 (int left, int top, int right, int bottom)
 {
-    if (left < redraw_region_.left)
+    if(left < redraw_region_.left)
         redraw_region_.left = left;
-    if (right - 1 > redraw_region_.right)
+    if(right - 1 > redraw_region_.right)
         redraw_region_.right = right - 1;
-    if (top < redraw_region_.top)
+    if(top < redraw_region_.top)
         redraw_region_.top = top;
-    if (bottom > redraw_region_.bottom)
+    if(bottom > redraw_region_.bottom)
         redraw_region_.bottom = bottom;
     /*
-    g_debug ("update_redraw_region: merged L: %d T: %d R: %d B: %d to %s",
-            left, top, right, bottom, region_to_string ().c_str ());
+    g_debug("update_redraw_region: merged L: %d T: %d R: %d B: %d to %s",
+            left, top, right, bottom, region_to_string().c_str());
     */
 }
 
-void NvimGridView::on_redraw_clear ()
+void NvimGridView::on_redraw_clear()
 {
-    clear ();
+    clear();
     redraw_region_.left = 0;
     redraw_region_.top = 0;
     redraw_region_.right = columns_ - 1;
     redraw_region_.bottom = lines_ - 1;
     /*
-    g_debug ("on_redraw_clear, setting region to %s",
-            region_to_string ().c_str ());
+    g_debug("on_redraw_clear, setting region to %s",
+            region_to_string().c_str());
     */
 }
 
-void NvimGridView::on_redraw_eol_clear ()
+void NvimGridView::on_redraw_eol_clear()
 {
     //g_debug("on_redraw_eol_clear:");
-    update_redraw_region (cursor_rdrw_x_, cursor_rdrw_y_,
+    update_redraw_region(cursor_rdrw_x_, cursor_rdrw_y_,
             columns_ - 1, cursor_rdrw_y_);
-    clear (cursor_rdrw_x_, cursor_rdrw_y_, columns_ - 1, cursor_rdrw_y_);
+    clear(cursor_rdrw_x_, cursor_rdrw_y_, columns_ - 1, cursor_rdrw_y_);
 }
 
-void NvimGridView::on_redraw_highlight_set (const msgpack::object &map_o)
+void NvimGridView::on_redraw_highlight_set(const msgpack::object &map_o)
 {
-    if (map_o.type != msgpack::type::MAP)
+    if(map_o.type != msgpack::type::MAP)
     {
-        g_critical ("Got sent type %d as arg for highlight_set, expected MAP",
+        g_critical("Got sent type %d as arg for highlight_set, expected MAP",
                 map_o.type);
         return;
     }
     const auto &map_m = map_o.via.map;
 
-    if (!map_m.size)
+    if(!map_m.size)
     {
-        current_attrs_ = grid_.get_default_attributes ();
+        current_attrs_ = grid_.get_default_attributes();
         return;
     }
 
-    current_attrs_.reset ();
+    current_attrs_.reset();
 
     int foreground = -1, background = -1, special = -1;
     bool reverse = false;
@@ -520,50 +520,50 @@ void NvimGridView::on_redraw_highlight_set (const msgpack::object &map_o)
     {
         const auto &kv = map_m.ptr[n];
         std::string k;
-        kv.key.convert (k);
-        if (k == "foreground")
-            kv.val.convert (foreground);
-        else if (k == "background")
-            kv.val.convert (background);
-        else if (k == "special")
-            kv.val.convert (special);
-        else if (k == "reverse")
-            kv.val.convert (reverse);
-        else if (k == "italic")
-            kv.val.convert (italic);
-        else if (k == "bold")
-            kv.val.convert (bold);
-        else if (k == "underline")
-            kv.val.convert (underline);
-        else if (k == "undercurl")
-            kv.val.convert (undercurl);
+        kv.key.convert(k);
+        if(k == "foreground")
+            kv.val.convert(foreground);
+        else if(k == "background")
+            kv.val.convert(background);
+        else if(k == "special")
+            kv.val.convert(special);
+        else if(k == "reverse")
+            kv.val.convert(reverse);
+        else if(k == "italic")
+            kv.val.convert(italic);
+        else if(k == "bold")
+            kv.val.convert(bold);
+        else if(k == "underline")
+            kv.val.convert(underline);
+        else if(k == "undercurl")
+            kv.val.convert(undercurl);
     }
 
-    if (foreground == -1)
-        foreground = grid_.get_default_foreground_rgb ();
-    if (background == -1)
-        background = grid_.get_default_background_rgb ();
-    if (special == -1)
-        special = grid_.get_default_special_rgb ();
+    if(foreground == -1)
+        foreground = grid_.get_default_foreground_rgb();
+    if(background == -1)
+        background = grid_.get_default_background_rgb();
+    if(special == -1)
+        special = grid_.get_default_special_rgb();
 
-    if (reverse)
+    if(reverse)
     {
-        current_attrs_.set_background_rgb (foreground);
-        current_attrs_.set_foreground_rgb (background);
+        current_attrs_.set_background_rgb(foreground);
+        current_attrs_.set_foreground_rgb(background);
     }
     else
     {
-        current_attrs_.set_background_rgb (background);
-        current_attrs_.set_foreground_rgb (foreground);
+        current_attrs_.set_background_rgb(background);
+        current_attrs_.set_foreground_rgb(foreground);
     }
-    current_attrs_.set_special_rgb (special);
-    current_attrs_.set_bold (bold);
-    current_attrs_.set_italic (italic);
-    current_attrs_.set_underline (underline);
-    current_attrs_.set_undercurl (undercurl);
+    current_attrs_.set_special_rgb(special);
+    current_attrs_.set_bold(bold);
+    current_attrs_.set_italic(italic);
+    current_attrs_.set_underline(underline);
+    current_attrs_.set_undercurl(undercurl);
 }
 
-void NvimGridView::on_redraw_set_scroll_region (int top, int bot,
+void NvimGridView::on_redraw_set_scroll_region(int top, int bot,
         int left, int right)
 {
     scroll_region_.left = left;
@@ -572,168 +572,168 @@ void NvimGridView::on_redraw_set_scroll_region (int top, int bot,
     scroll_region_.bottom = bot;
 }
 
-void NvimGridView::on_redraw_scroll (int count)
+void NvimGridView::on_redraw_scroll(int count)
 {
-    scroll (scroll_region_.left, scroll_region_.top,
+    scroll(scroll_region_.left, scroll_region_.top,
             scroll_region_.right, scroll_region_.bottom, count);
-    //g_debug ("on_redraw_scroll:");
-    update_redraw_region (scroll_region_.left, scroll_region_.top,
+    //g_debug("on_redraw_scroll:");
+    update_redraw_region(scroll_region_.left, scroll_region_.top,
             scroll_region_.right, scroll_region_.bottom);
 }
 
-void NvimGridView::on_redraw_end ()
+void NvimGridView::on_redraw_end()
 {
     /*
-    g_debug ("on_redraw_end queueing redraw of: %s",
-            region_to_string (). c_str ());
+    g_debug("on_redraw_end queueing redraw of: %s",
+            region_to_string(). c_str());
     */
-    if (cursor_rdrw_x_ != cursor_col_ || cursor_rdrw_y_ != cursor_line_)
+    if(cursor_rdrw_x_ != cursor_col_ || cursor_rdrw_y_ != cursor_line_)
     {
-        update_redraw_region (cursor_col_, cursor_line_,
+        update_redraw_region(cursor_col_, cursor_line_,
                 cursor_col_ + 1, cursor_line_ + 1);
         cursor_col_ = cursor_rdrw_x_;
         cursor_line_ = cursor_rdrw_y_;
-        update_redraw_region (cursor_col_, cursor_line_,
+        update_redraw_region(cursor_col_, cursor_line_,
                 cursor_col_ + 1, cursor_line_ + 1);
-        show_cursor ();
+        show_cursor();
     }
-    if (global_redraw_pending_)
+    if(global_redraw_pending_)
     {
         global_redraw_pending_ = false;
-        redraw_view ();
-        queue_draw ();
+        redraw_view();
+        queue_draw();
     }
-    else if (redraw_region_.left <= redraw_region_.right
+    else if(redraw_region_.left <= redraw_region_.right
             && redraw_region_.top <= redraw_region_.bottom)
     {
-        queue_draw_area (redraw_region_.left * cell_width_px_,
+        queue_draw_area(redraw_region_.left * cell_width_px_,
                 redraw_region_.top * cell_height_px_,
                 (redraw_region_.right - redraw_region_.left + 1)
                     * cell_width_px_,
                 (redraw_region_.bottom - redraw_region_.top + 1)
                     * cell_height_px_);
         /*
-        auto alloc = get_allocation ();
-        g_debug ("qda %d,%d+%dx%d; alloc %dx%d",
+        auto alloc = get_allocation();
+        g_debug("qda %d,%d+%dx%d; alloc %dx%d",
                 redraw_region_.left * cell_width_px_,
                 redraw_region_.top * cell_height_px_,
                 (redraw_region_.right - redraw_region_.left + 1)
                     * cell_width_px_,
                 (redraw_region_.bottom - redraw_region_.top + 1)
                     * cell_height_px_,
-                alloc.get_width (), alloc.get_height ());
+                alloc.get_width(), alloc.get_height());
         */
     }
 }
 
-void NvimGridView::do_scroll (const std::string &direction, int state)
+void NvimGridView::do_scroll(const std::string &direction, int state)
 {
-    auto s = std::string (1, '<') + modifier_string (state)
+    auto s = std::string(1, '<') + modifier_string(state)
         + "ScrollWheel" + direction + '>';
-    nvim_.nvim_input (s);
+    nvim_.nvim_input(s);
 }
 
 // Used for both app and sys fonts, using key to work out which
-void NvimGridView::on_font_name_changed (const Glib::ustring &key)
+void NvimGridView::on_font_name_changed(const Glib::ustring &key)
 {
-    auto app_settings = Application::app_gsettings ();
-    if ((key == "font"
-            && app_settings->get_enum ("font-source") == FONT_SOURCE_PREFS)
+    auto app_settings = Application::app_gsettings();
+    if((key == "font"
+            && app_settings->get_enum("font-source") == FONT_SOURCE_PREFS)
         || (key == "monospace-font-name"
-            && app_settings->get_enum ("font-source") == FONT_SOURCE_SYS))
+            && app_settings->get_enum("font-source") == FONT_SOURCE_SYS))
     {
-        update_font ();
+        update_font();
     }
 }
 
-void NvimGridView::on_font_source_changed (const Glib::ustring &)
+void NvimGridView::on_font_source_changed(const Glib::ustring &)
 {
-    update_font ();
+    update_font();
 }
 
-void NvimGridView::update_font (bool init)
+void NvimGridView::update_font(bool init)
 {
-    auto app_settings = Application::app_gsettings ();
-    switch (app_settings->get_enum ("font-source"))
+    auto app_settings = Application::app_gsettings();
+    switch(app_settings->get_enum("font-source"))
     {
         case FONT_SOURCE_SYS:
-            set_font (Application::sys_gsettings ()->get_string
+            set_font(Application::sys_gsettings()->get_string
                     ("monospace-font-name"), !init);
             break;
         case FONT_SOURCE_PREFS:
-            set_font (app_settings->get_string ("font"), !init);
+            set_font(app_settings->get_string("font"), !init);
             break;
         default:    // FONT_SOURCE_GTK
-            set_font (DEFAULT_FONT, !init);
+            set_font(DEFAULT_FONT, !init);
             break;
     }
 }
 
-void NvimGridView::on_cursor_width_changed (const Glib::ustring &key)
+void NvimGridView::on_cursor_width_changed(const Glib::ustring &key)
 {
     beam_cursor_width_ =
-        Application::app_gsettings ()->get_uint ("cursor-width");
-    if (cursor_width_)
+        Application::app_gsettings()->get_uint("cursor-width");
+    if(cursor_width_)
         cursor_width_ = beam_cursor_width_;
-    if (key.size ())
-        show_cursor ();
+    if(key.size())
+        show_cursor();
 }
 
-void NvimGridView::on_cursor_bg_changed (const Glib::ustring &key)
+void NvimGridView::on_cursor_bg_changed(const Glib::ustring &key)
 {
-    auto c = Application::app_gsettings ()->get_string ("cursor-bg");
-    if (c.size ())
+    auto c = Application::app_gsettings()->get_string("cursor-bg");
+    if(c.size())
     {
-        cursor_attr_.set_background_rgb (CellAttributes::parse_colour (c));
+        cursor_attr_.set_background_rgb(CellAttributes::parse_colour(c));
         colour_cursor_ = true;
     }
     else
     {
-        cursor_attr_.set_background_rgb (grid_.get_default_foreground_rgb ());
+        cursor_attr_.set_background_rgb(grid_.get_default_foreground_rgb());
         colour_cursor_ = false;
     }
-    if (key.size ())
-        show_cursor ();
+    if(key.size())
+        show_cursor();
 }
 
-void NvimGridView::on_cursor_fg_changed (const Glib::ustring &key)
+void NvimGridView::on_cursor_fg_changed(const Glib::ustring &key)
 {
-    auto c = Application::app_gsettings ()->get_string ("cursor-fg");
-    if (c.size ())
+    auto c = Application::app_gsettings()->get_string("cursor-fg");
+    if(c.size())
     {
-        cursor_attr_.set_foreground_rgb (CellAttributes::parse_colour (c));
+        cursor_attr_.set_foreground_rgb(CellAttributes::parse_colour(c));
         colour_cursor_ = true;
     }
     else
     {
-        cursor_attr_.set_foreground_rgb (grid_.get_default_background_rgb ());
+        cursor_attr_.set_foreground_rgb(grid_.get_default_background_rgb());
         colour_cursor_ = false;
     }
-    if (key.size ())
-        show_cursor ();
+    if(key.size())
+        show_cursor();
 }
 
-void NvimGridView::on_sync_shada_changed (const Glib::ustring &)
+void NvimGridView::on_sync_shada_changed(const Glib::ustring &)
 {
-    sync_shada_ = Application::app_gsettings ()->get_boolean ("sync-shada");
+    sync_shada_ = Application::app_gsettings()->get_boolean("sync-shada");
 }
 
-bool NvimGridView::on_focus_in_event (GdkEventFocus *e)
+bool NvimGridView::on_focus_in_event(GdkEventFocus *e)
 {
-    nvim_.nvim_command ("if exists('#FocusGained')|doauto FocusGained|endif");
-    //nvim_.nvim_command ("silent doauto FocusGained");
-    if (sync_shada_)
-        nvim_.nvim_command ("rshada");
-    return Gtk::DrawingArea::on_focus_in_event (e);
+    nvim_.nvim_command("if exists('#FocusGained')|doauto FocusGained|endif");
+    //nvim_.nvim_command("silent doauto FocusGained");
+    if(sync_shada_)
+        nvim_.nvim_command("rshada");
+    return Gtk::DrawingArea::on_focus_in_event(e);
 }
 
-bool NvimGridView::on_focus_out_event (GdkEventFocus *e)
+bool NvimGridView::on_focus_out_event(GdkEventFocus *e)
 {
-    nvim_.nvim_command ("if exists('#FocusLost')|doauto FocusLost|endif");
-    //nvim_.nvim_command ("silent doauto FocusLost");
-    if (sync_shada_)
-        nvim_.nvim_command ("wshada");
-    return Gtk::DrawingArea::on_focus_out_event (e);
+    nvim_.nvim_command("if exists('#FocusLost')|doauto FocusLost|endif");
+    //nvim_.nvim_command("silent doauto FocusLost");
+    if(sync_shada_)
+        nvim_.nvim_command("wshada");
+    return Gtk::DrawingArea::on_focus_out_event(e);
 }
 
 }

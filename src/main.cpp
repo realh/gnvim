@@ -1,6 +1,6 @@
 /* main.cpp
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,6 @@ using namespace Gnvim;
 int main(int argc, char **argv)
 {
     auto app = Application::create();
-    int result = app->run (argc, argv);
+    int result = app->run(argc, argv);
     return result;
 }

@@ -1,6 +1,6 @@
 /* cell-attributes.h
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,84 +35,84 @@ private:
     constexpr static int UNDERCURL_BIT = 0x10000000;
     constexpr static int DIRTY_BIT = 0x20000000;
 public:
-    CellAttributes () : foreground_rgb_ {0}, background_rgb_ {0xffffff},
+    CellAttributes() : foreground_rgb_ {0}, background_rgb_ {0xffffff},
                    special_rgb_ {0xff0000 | DIRTY_BIT}
     {}
 
-    CellAttributes (const CellAttributes &);
+    CellAttributes(const CellAttributes &);
 
     CellAttributes &operator=(const CellAttributes &);
 
-    CellAttributes (CellAttributes &&);
+    CellAttributes(CellAttributes &&);
 
     CellAttributes &operator=(CellAttributes &&);
 
-    void reset ();
+    void reset();
 
-    void set_foreground_rgb (guint32 rgb)
+    void set_foreground_rgb(guint32 rgb)
     {
         foreground_rgb_ = rgb;
         special_rgb_ |= DIRTY_BIT;
     }
 
-    guint32 get_foreground_rgb () const
+    guint32 get_foreground_rgb() const
     {
         return foreground_rgb_;
     }
 
-    void set_background_rgb (guint32 rgb)
+    void set_background_rgb(guint32 rgb)
     {
         background_rgb_ = rgb;
         special_rgb_ |= DIRTY_BIT;
     }
 
-    guint32 get_background_rgb () const
+    guint32 get_background_rgb() const
     {
         return background_rgb_;
     }
 
-    void set_special_rgb (guint32 rgb)
+    void set_special_rgb(guint32 rgb)
     {
         special_rgb_ &= 0xff000000;
         special_rgb_ |= (rgb & 0xffffff) | DIRTY_BIT;
     }
 
-    guint32 get_special_rgb () const
+    guint32 get_special_rgb() const
     {
         return special_rgb_ & 0xffffff;
     }
 
-    void set_bold (bool bold = true);
+    void set_bold(bool bold = true);
 
-    bool get_bold () const
+    bool get_bold() const
     {
         return special_rgb_ & BOLD_BIT;
     }
 
-    void set_italic (bool italic = true);
+    void set_italic(bool italic = true);
 
-    bool get_italic () const
+    bool get_italic() const
     {
         return special_rgb_ & ITALIC_BIT;
     }
 
-    void set_reverse (bool reverse = true);
+    void set_reverse(bool reverse = true);
 
-    bool get_reverse () const
+    bool get_reverse() const
     {
         return special_rgb_ & REVERSE_BIT;
     }
 
-    void set_underline (bool underline = true);
+    void set_underline(bool underline = true);
 
-    bool get_underline () const
+    bool get_underline() const
     {
         return special_rgb_ & UNDERLINE_BIT;
     }
 
-    void set_undercurl (bool undercurl = true);
+    void set_undercurl(bool undercurl = true);
 
-    bool get_undercurl () const
+    bool get_undercurl() const
     {
         return special_rgb_ & UNDERCURL_BIT;
     }
@@ -122,26 +122,26 @@ public:
 
     bool operator== (const CellAttributes &other) const;
 
-    Pango::AttrList &get_pango_attrs () const;
+    Pango::AttrList &get_pango_attrs() const;
 
-    static Pango::AttrColor create_colour_attr (
-        Pango::AttrColor (*func)(guint16 r, guint16 g, guint16 b), guint32 rgb);
+    static Pango::AttrColor create_colour_attr(
+        Pango::AttrColor(*func)(guint16 r, guint16 g, guint16 b), guint32 rgb);
 
-    static void decompose_colour (guint32 rgb,
+    static void decompose_colour(guint32 rgb,
             guint16 &red, guint16 &green, guint16 &blue);
 
-    static void decompose_colour_float (guint32 rgb,
+    static void decompose_colour_float(guint32 rgb,
             float &red, float &green, float &blue);
 
-    // xcolour as understood by gdk_rgba_parse ()
-    static guint32 parse_colour (const Glib::ustring &xcolour);
+    // xcolour as understood by gdk_rgba_parse()
+    static guint32 parse_colour(const Glib::ustring &xcolour);
 private:
-    bool is_dirty () const
+    bool is_dirty() const
     {
         return special_rgb_ & DIRTY_BIT;
     }
 
-    bool has_underline_or_curl () const
+    bool has_underline_or_curl() const
     {
         return special_rgb_ & (UNDERLINE_BIT | UNDERCURL_BIT);
     }

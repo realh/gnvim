@@ -1,6 +1,6 @@
 /* msgpack-promise.h
  *
- * Copyright (C) 2017 Tony Houghton
+ * Copyright(C) 2017 Tony Houghton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,38 +34,38 @@ namespace Gnvim
 
 class MsgpackPromise {
 public:
-    static std::shared_ptr<MsgpackPromise> create ()
+    static std::shared_ptr<MsgpackPromise> create()
     {
         // Can't use make_shared here because constructor is protected
-        return std::shared_ptr<MsgpackPromise> (new MsgpackPromise ());
+        return std::shared_ptr<MsgpackPromise> (new MsgpackPromise());
     }
 
-    MsgpackPromise (const MsgpackPromise &) = delete;
+    MsgpackPromise(const MsgpackPromise &) = delete;
     MsgpackPromise &operator=(const MsgpackPromise &) = delete;
 
     virtual ~MsgpackPromise() = default;
 
-    sigc::signal<void, const msgpack::object &> &value_signal ()
+    sigc::signal<void, const msgpack::object &> &value_signal()
     {
         return value_sig_;
     }
 
-    sigc::signal<void, const msgpack::object &> &error_signal ()
+    sigc::signal<void, const msgpack::object &> &error_signal()
     {
         return error_sig_;
     }
 
-    void emit_value (const msgpack::object &value)
+    void emit_value(const msgpack::object &value)
     {
-        value_sig_.emit (value);
+        value_sig_.emit(value);
     }
 
-    void emit_error (const msgpack::object &error)
+    void emit_error(const msgpack::object &error)
     {
-        error_sig_.emit (error);
+        error_sig_.emit(error);
     }
 protected:
-    MsgpackPromise () = default;
+    MsgpackPromise() = default;
 private:
     sigc::signal<void, const msgpack::object &> value_sig_;
     sigc::signal<void, const msgpack::object &> error_sig_;
