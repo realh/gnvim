@@ -26,18 +26,6 @@
             <description>Description of font to use in editor
             windows</description>
         </key>
-        <key name="columns" type="u">
-            <default>80</default>
-            <range min="5" max="1000"/>
-            <summary>Number of columns</summary>
-            <description>Number of text columns for new windows</description>
-        </key>
-        <key name="lines" type="u">
-            <default>30</default>
-            <range min="5" max="1000"/>
-            <summary>Number of lines</summary>
-            <description>Number of text lines for new windows</description>
-        </key>
         <key name="maximise" type="b">
             <default>false</default>
             <summary>Maximise new windows</summary>
