@@ -5,6 +5,7 @@ gnvim_SOURCES = \
 	bufsandtabs.cpp		bufsandtabs.h		\
 	cell-attributes.cpp	cell-attributes.h	\
 	defns.h						\
+	ext-types.cpp		ext-types.h		\
 	main.cpp					\
 	msgpack-adapter.cpp	msgpack-adapter.h	\
 	msgpack-promise.h				\

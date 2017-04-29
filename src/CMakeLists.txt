@@ -2,6 +2,7 @@ set(GNVIM_SOURCES
     app.cpp
     bufsandtabs.cpp
     cell-attributes.cpp
+    ext-types.cpp
     main.cpp
     msgpack-adapter.cpp
     msgpack-rpc.cpp
@@ -18,6 +19,7 @@ set(GNVIM_HEADERS
     bufsandtabs.h
     cell-attributes.h
     defns.h
+    ext-types.h
     msgpack-adapter.h
     msgpack-rpc.h
     nvim-bridge.h

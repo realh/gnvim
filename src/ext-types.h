@@ -31,20 +31,15 @@ namespace Gnvim
 /// Base class for nvim's Buffer, Window and Tabpage handles which are packed
 /// in msgpack as EXT.
 class VimExtType {
-public:
-    VimExtType(const msgpack::object &o)
-    {
-        *this = o;
-    }
-
-    VimExtType &operator=(const msgpack::object &o);
-
+protected:
     VimExtType() = default;
     VimExtType(const VimExtType &vet) = default;
     VimExtType(VimExtType &&vet) = default;
     VimExtType &operator=(const VimExtType &vet) = default;
     VimExtType &operator=(VimExtType &&vet) = default;
-protected:
+
+    VimExtType &operator=(const msgpack::object &o);
+
     bool operator==(const VimExtType &vet) const
     {
         return bytes_ == vet.bytes_;
@@ -151,6 +146,7 @@ public:
 } // namespace gnvim
 
 namespace msgpack {
+MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 namespace adaptor {
 
 using namespace Gnvim;
@@ -192,6 +188,7 @@ template <> struct pack<VimBuffer> {
 };
 
 } // namespace adaptor
+} // namespace API_VERSION...
 } // namespace msgpack
 
 
