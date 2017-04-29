@@ -24,6 +24,7 @@
 #include <memory>
 #include <vector>
 
+#include "bufsandtabs.h"
 #include "nvim-bridge.h"
 #include "request-set.h"
 
@@ -43,7 +44,7 @@ protected:
     virtual void on_size_allocate(Gtk::Allocation &alloc) override;
 */
 private:
-    void ready_to_start();
+    void ready_to_start(RequestSet *);
 
     void on_nvim_error(Glib::ustring desc);
 
@@ -60,6 +61,7 @@ private:
     bool force_close_ {false};
 
     NvimBridge nvim_;
+    BufsAndTabs bufs_and_tabs_;
 
     // This is just a convenience pointer, life cycle is managed by GTK
     NvimGridView *view_;
@@ -68,7 +70,7 @@ private:
 
     bool maximise_;
     int columns_, lines_;
-    std::unique_ptr<RequestSetBase> rqset_;
+    std::unique_ptr<RequestSet> rqset_;
 };
 
 }

@@ -1,5 +1,6 @@
 set(GNVIM_SOURCES
     app.cpp
+    bufsandtabs.cpp
     cell-attributes.cpp
     main.cpp
     msgpack-adapter.cpp
@@ -14,6 +15,7 @@ set(GNVIM_SOURCES
 
 set(GNVIM_HEADERS
     app.h
+    bufsandtabs.h
     cell-attributes.h
     defns.h
     msgpack-adapter.h

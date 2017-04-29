@@ -41,7 +41,7 @@ static void modify_env(std::vector<std::string> &env,
         bool overwrite = true)
 {
     auto l = name.size();
-    auto it = std::find_if (env.begin(), env.end(),
+    auto it = std::find_if(env.begin(), env.end(),
             [l, name](const std::string &a)
     {
         return a.compare(0, l, name) == 0;
@@ -266,10 +266,10 @@ void NvimBridge::nvim_buf_get_name(int buf_handle,
     rpc_->request("nvim_buf_get_name", promise, buf_handle);
 }
 
-void NvimBridge::nvim_buf_get_changed_tick(int buf_handle,
+void NvimBridge::nvim_buf_get_changedtick(int buf_handle,
         std::shared_ptr<MsgpackPromise> promise)
 {
-    rpc_->request("nvim_buf_get_changed_tick", promise, buf_handle);
+    rpc_->request("nvim_buf_get_changedtick", promise, buf_handle);
 }
 
 void NvimBridge::nvim_ui_try_resize(int width, int height)

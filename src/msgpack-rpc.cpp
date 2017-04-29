@@ -18,6 +18,8 @@
 
 #include "defns.h"
 
+#include <cstring>
+
 #include "msgpack-rpc.h"
 
 namespace Gnvim
@@ -339,6 +341,19 @@ bool MsgpackRpc::dispatch_notify(const msgpack::object &msg)
     }
 
     return true;
+}
+
+gint64 MsgpackRpc::ext_to_int(const msgpack::object &o)
+{
+    if (o.type != msgpack::type::EXT)
+        throw MsgpackDecodeError("ext_to_int can only decode EXT objects");
+    const auto &ext = o.via.ext;
+    if (ext.size > sizeof(gint64) || ext.size < 1)
+        throw MsgpackDecodeError("EXT object is more than 64 bits in size");
+    gint64 val = 0;
+    // FIXME: This assumes nvim and client are both little-endian
+    std::memcpy(&val, ext.data(), ext.size);
+    return val;
 }
 
 guint32 MsgpackRpc::msgid_ = 0;

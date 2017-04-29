@@ -24,10 +24,12 @@
 #include "defns.h"
 
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <giomm.h>
@@ -122,6 +124,8 @@ public:
     {
         return io_error_signal_;
     }
+
+    static gint64 ext_to_int(const msgpack::object &o);
 protected:
     MsgpackRpc();
 private:
@@ -210,6 +214,20 @@ private:
     constexpr static gsize BUFLEN = 100;
 
     static guint32 msgid_;
+};
+
+class MsgpackDecodeError : public std::exception {
+public:
+    MsgpackDecodeError(const std::string &msg) : msg_(msg)
+    {}
+
+    virtual const char *what() const noexcept override
+    {
+        return msg_.c_str();
+    }
+private:
+    std::string msg_;
+
 };
 
 }

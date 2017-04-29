@@ -26,8 +26,8 @@ namespace Gnvim
 
 Window::Window(bool maximise, int width, int height,
         const std::string &init_file, RefPtr<Gio::ApplicationCommandLine> cl)
-: maximise_(maximise), columns_(width), lines_(height),
-rqset_(RequestSetBase::create(sigc::mem_fun(*this, &Window::ready_to_start)))
+: bufs_and_tabs_(nvim_), maximise_(maximise), columns_(width), lines_(height),
+rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::ready_to_start)))
 {
     nvim_.start(cl, init_file);
     if (width == -1)
@@ -58,33 +58,38 @@ Window::~Window()
     delete view_;
 }
 
-void Window::ready_to_start()
+void Window::ready_to_start(RequestSet *)
 {
     g_debug("ready_to_start, %d columns x %d lines", columns_, lines_);
-    view_ = new NvimGridView(nvim_, columns_, lines_);
-    rqset_.release();
-    nvim_.start_ui(columns_, lines_);
-    add(*view_);
-    view_->show_all();
-    if (maximise_)
+    bufs_and_tabs_.signal_got_all_info ().connect([this]()
     {
-        maximize();
-    }
-    else
-    {
-        Gtk::Requisition minimum, natural;
-        view_->get_preferred_size(minimum, natural);
-        set_default_size(natural.width, natural.height);
-    }
+        g_debug("Got bufs_and_tabs info");
+        view_ = new NvimGridView(nvim_, columns_, lines_);
+        rqset_.release();
+        nvim_.start_ui(columns_, lines_);
+        add(*view_);
+        view_->show_all();
+        if (maximise_)
+        {
+            maximize();
+        }
+        else
+        {
+            Gtk::Requisition minimum, natural;
+            view_->get_preferred_size(minimum, natural);
+            set_default_size(natural.width, natural.height);
+        }
 
-    nvim_.io_error_signal().connect(
-            sigc::mem_fun(*this, &Window::on_nvim_error));
+        nvim_.io_error_signal().connect(
+                sigc::mem_fun(*this, &Window::on_nvim_error));
 
-    set_geometry_hints();
+        set_geometry_hints();
 
-    present();
-    nvim_.redraw_set_title.connect
-        (sigc::mem_fun(this, &Window::on_redraw_set_title));
+        present();
+        nvim_.redraw_set_title.connect
+            (sigc::mem_fun(this, &Window::on_redraw_set_title));
+    });
+    bufs_and_tabs_.start();
 }
 
 void Window::force_close()

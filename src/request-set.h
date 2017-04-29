@@ -25,40 +25,45 @@
 namespace Gnvim
 {
 
-template<class T> class RequestSet;
+template<class T> class RequestSetConcrete;
 
-/// Abstract base class for RequestSet.
-class RequestSetBase {
+/// Abstract base class for RequestSetConcrete.
+class RequestSet {
 private:
     friend class ProxiedPromise;
     class ProxiedPromise : public MsgpackPromise {
     public:
         static std::shared_ptr<MsgpackPromise> create
-            (RequestSetBase &rset, std::shared_ptr<MsgpackPromise> promise)
+            (RequestSet &rset, std::shared_ptr<MsgpackPromise> promise)
         {
             return std::static_pointer_cast<MsgpackPromise>
                 (std::shared_ptr<ProxiedPromise>
                     (new ProxiedPromise(rset, promise)));
         }
     protected:
-        ProxiedPromise(RequestSetBase &rset,
+        ProxiedPromise(RequestSet &rset,
                 std::shared_ptr<MsgpackPromise> promise);
 
         void on_value(const msgpack::object &value);
 
         void on_error(const msgpack::object &value);
     private:
-        RequestSetBase &rset_;
+        RequestSet &rset_;
         std::shared_ptr<MsgpackPromise> promise_;
     };
 public:
-    /// Enables creation of an mplementation with automatic type deduction.
-    template<class T> static RequestSetBase *create(T finished)
+    /** Enables creation of an implementation with automatic type deduction.
+     * @tparam T a function/functor of type void (*)(RequestSet *rqset);.
+     * @param finished A tempting place to delete the rqset, but it might
+     *                 not be safe to do so; use something like
+     *                 Glib::signal_idle().connect_once().
+     */
+    template<class T> static RequestSet *create(T finished)
     {
-        return new RequestSet<T> (finished);
+        return new RequestSetConcrete<T> (finished);
     }
 
-    virtual ~RequestSetBase() = default;
+    virtual ~RequestSet() = default;
 
     /** Creates a proxy for a given promise.
      *  You should connect to the original promise to get the response to the
@@ -101,14 +106,14 @@ private:
  *  have been fulfilled.
  *  @tparam T A void(*)(void) callable type.
  */
-template<class T> class RequestSet : public RequestSetBase {
+template<class T> class RequestSetConcrete : public RequestSet {
 public:
-    RequestSet(T finished) : finished_(finished)
+    RequestSetConcrete(T finished) : finished_(finished)
     {}
 protected:
     virtual void emit_finished() override
     {
-        finished_();
+        finished_(this);
     }
 private:
     T finished_;

@@ -64,7 +64,7 @@ public:
     void nvim_buf_get_name(int buf_handle,
             std::shared_ptr<MsgpackPromise> promise);
 
-    void nvim_buf_get_changed_tick(int buf_handle,
+    void nvim_buf_get_changedtick(int buf_handle,
             std::shared_ptr<MsgpackPromise> promise);
 
     void nvim_ui_try_resize(int width, int height);

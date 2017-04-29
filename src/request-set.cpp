@@ -26,7 +26,7 @@
 namespace Gnvim
 {
 
-RequestSetBase::ProxiedPromise::ProxiedPromise(RequestSetBase &rset,
+RequestSet::ProxiedPromise::ProxiedPromise(RequestSet &rset,
                 std::shared_ptr<MsgpackPromise> promise)
     : rset_(rset), promise_(promise)
 {
@@ -36,13 +36,13 @@ RequestSetBase::ProxiedPromise::ProxiedPromise(RequestSetBase &rset,
         (sigc::mem_fun(*this, &ProxiedPromise::on_error));
 }
 
-void RequestSetBase::ProxiedPromise::on_value(const msgpack::object &value)
+void RequestSet::ProxiedPromise::on_value(const msgpack::object &value)
 {
     promise_->value_signal().emit(value);
     rset_.promise_fulfilled();
 }
 
-void RequestSetBase::ProxiedPromise::on_error(const msgpack::object &error)
+void RequestSet::ProxiedPromise::on_error(const msgpack::object &error)
 {
     std::ostringstream s;
     s << error;
