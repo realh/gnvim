@@ -26,9 +26,9 @@ namespace Gnvim
 {
 
 TextGrid::TextGrid(int columns, int lines, int cell_width, int cell_height)
-    : columns_ (columns), lines_ (lines),
-    cell_width_ (cell_width), cell_height_ (cell_height),
-    grid_ (columns_ * lines_)
+    : columns_(columns), lines_(lines),
+    cell_width_(cell_width), cell_height_(cell_height),
+    grid_(columns_ * lines_)
 {
 }
 
@@ -53,7 +53,7 @@ void TextGrid::clear(int left, int top, int right, int bottom)
     {
         for (int col = left; col <= right; ++col)
         {
-            grid_ [top + col].clear();
+            grid_[top + col].clear();
         }
     }
 }
@@ -68,7 +68,7 @@ void TextGrid::apply_attrs(const CellAttributes &attrs,
         ? *((attrs_.emplace(attrs)).first) : *it;
     for (int i = start; i <= end; ++i)
     {
-        auto &cell = grid_ [i];
+        auto &cell = grid_[i];
         cell.set_attrs(actual_attrs);
     }
 }
@@ -112,7 +112,7 @@ void TextGrid::scroll(int left, int top, int right, int bottom, int count)
     {
         for (auto x = left; x <= right; ++x)
         {
-            auto &cell = grid_ [y + x];
+            auto &cell = grid_[y + x];
             cell.clear();
         }
     }
@@ -126,7 +126,7 @@ void TextGrid::draw_line(const Cairo::RefPtr<Cairo::Context> &cairo,
     auto li = line * columns_;
     Glib::ustring s;
     auto last_attrs = override_attrs ? override_attrs
-        : grid_ [li + start_column].get_attrs();
+        : grid_[li + start_column].get_attrs();
     int last_x = start_column;
     int y = line * cell_height_;
 
@@ -134,7 +134,7 @@ void TextGrid::draw_line(const Cairo::RefPtr<Cairo::Context> &cairo,
 
     for (int x = start_column; x <= end_column + 1; ++x)
     {
-        const auto cell = (x <= end_column) ? &grid_ [li + x] : nullptr;
+        const auto cell = (x <= end_column) ? &grid_[li + x] : nullptr;
         auto current_attrs = override_attrs ? override_attrs
             : (cell ? cell->get_attrs() : nullptr);
         if(x > end_column || current_attrs != last_attrs)

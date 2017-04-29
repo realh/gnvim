@@ -287,16 +287,16 @@ void NvimBridge::on_notify(std::string method,
         {
             const auto &emitter = it->second;
             try {
-                // put is weird, encoded as ["put", [char], [char], ...]
+                // put is weird, encoded as["put", [char], [char], ...]
                 // (where each char is encoded as a utf-8 str)
-                // instead of ["put", [str]].
+                // instead of["put", [str]].
                 if(emitter->num_args() == 0 || method_name == "put")
                 {
                     emitter->emit(method_ar);
                 }
                 // highlight_set is also weird, may be sent as
                 // ["highlight_set", [{}], [{useful}]] in addition to
-                // expected ["highlight_set", [{useful}]]
+                // expected["highlight_set", [{useful}]]
                 else if(method_name == "highlight_set"
                         && method_ar.size > 2)
                 {

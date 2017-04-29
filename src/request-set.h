@@ -103,12 +103,12 @@ private:
  */
 template<class T> class RequestSet : public RequestSetBase {
 public:
-    RequestSet(T finished) : finished_ (finished)
+    RequestSet(T finished) : finished_(finished)
     {}
 protected:
     virtual void emit_finished() override
     {
-        finished_ ();
+        finished_();
     }
 private:
     T finished_;

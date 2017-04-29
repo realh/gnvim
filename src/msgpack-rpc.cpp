@@ -24,7 +24,7 @@ namespace Gnvim
 {
 
 MsgpackRpc::MsgpackRpc()
-        : async_read_slot_ (sigc::mem_fun(this, &MsgpackRpc::async_read))
+        : async_read_slot_(sigc::mem_fun(this, &MsgpackRpc::async_read))
 {
 }
 

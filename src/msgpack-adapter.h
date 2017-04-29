@@ -54,7 +54,7 @@ protected:
 template<class... T> class MsgpackAdapter: public MsgpackAdapterBase {
 public:
     MsgpackAdapter(sigc::signal<void, T...> &sig)
-            : MsgpackAdapterBase(), signal_ (sig)
+            : MsgpackAdapterBase(), signal_(sig)
     {}
 
     virtual int num_args() override;
@@ -67,7 +67,7 @@ private:
 template<> class MsgpackAdapter<void>: public MsgpackAdapterBase {
 public:
     MsgpackAdapter(sigc::signal<void> &sig)
-            : MsgpackAdapterBase(), signal_ (sig)
+            : MsgpackAdapterBase(), signal_(sig)
     {}
 
     virtual int num_args() override { return 0; }
@@ -84,7 +84,7 @@ template<> class MsgpackAdapter<const msgpack::object_array &> :
         public MsgpackAdapterBase {
 public:
     MsgpackAdapter(sigc::signal<void, const msgpack::object_array &> &sig)
-            : MsgpackAdapterBase(), signal_ (sig)
+            : MsgpackAdapterBase(), signal_(sig)
     {}
 
     virtual int num_args() override { return -1; }
@@ -100,7 +100,7 @@ private:
 template<class T1> class MsgpackAdapter<T1>: public MsgpackAdapterBase {
 public:
     MsgpackAdapter(sigc::signal<void, T1> &sig)
-            : MsgpackAdapterBase(), signal_ (sig)
+            : MsgpackAdapterBase(), signal_(sig)
     {}
 
     virtual int num_args() override { return 1; }
@@ -119,7 +119,7 @@ template<class T1, class T2> class MsgpackAdapter<T1, T2>:
         public MsgpackAdapterBase {
 public:
     MsgpackAdapter(sigc::signal<void, T1, T2> &sig)
-            : MsgpackAdapterBase(), signal_ (sig)
+            : MsgpackAdapterBase(), signal_(sig)
     {}
 
     virtual int num_args() override { return 2; }
@@ -140,7 +140,7 @@ template<class T1, class T2, class T3> class MsgpackAdapter<T1, T2, T3>:
         public MsgpackAdapterBase {
 public:
     MsgpackAdapter(sigc::signal<void, T1, T2, T3> &sig)
-            : MsgpackAdapterBase(), signal_ (sig)
+            : MsgpackAdapterBase(), signal_(sig)
     {}
 
     virtual int num_args() override { return 3; }
@@ -164,7 +164,7 @@ class MsgpackAdapter<T1, T2, T3, T4>: public MsgpackAdapterBase {
 public:
     MsgpackAdapter(
         sigc::signal<void, T1, T2, T3, T4> &sig)
-            : MsgpackAdapterBase(), signal_ (sig)
+            : MsgpackAdapterBase(), signal_(sig)
     {}
 
     virtual int num_args() override { return 4; }

@@ -31,8 +31,8 @@ Application::Application()
         Gtk::Application("uk.co.realh.gnvim",
             Gio::APPLICATION_HANDLES_COMMAND_LINE),
         options_("NVIM_ARGUMENTS"),
-        main_opt_group_ ("gnvim", _("gnvim options")),
-        prop_dark_theme_ (*this, "dark-theme", false, _("Use dark theme"),
+        main_opt_group_("gnvim", _("gnvim options")),
+        prop_dark_theme_(*this, "dark-theme", false, _("Use dark theme"),
             _("Whether to use the dark theme"), Glib::PARAM_READWRITE)
 {
     options_.set_summary(_("Run neovim with a GUI"));

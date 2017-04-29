@@ -42,14 +42,14 @@ private:
          * @param attrs this does not take ownership of attrs
          */
         TextCell(gunichar c = ' ', CellAttributes *attrs = nullptr)
-            : c_ (c), attrs_ (attrs)
+            : c_(c), attrs_(attrs)
         {}
 
         /**
          * @param attrs this does not take ownership of attrs
          */
         TextCell(const Glib::ustring &c, CellAttributes *attrs = nullptr)
-            : attrs_ (attrs)
+            : attrs_(attrs)
         {
             set_text(c);
         }

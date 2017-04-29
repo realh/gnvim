@@ -26,9 +26,9 @@ namespace Gnvim
 
 TextGridView::TextGridView(int columns, int lines,
         const std::string &font_name)
-    : grid_ (columns, lines),
-    columns_ (columns), lines_ (lines),
-    font_ (font_name.length() ? font_name : DEFAULT_FONT)
+    : grid_(columns, lines),
+    columns_(columns), lines_(lines),
+    font_(font_name.length() ? font_name : DEFAULT_FONT)
 {
     calculate_metrics();
 

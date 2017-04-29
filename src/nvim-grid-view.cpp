@@ -31,7 +31,7 @@ enum FontSource
 
 NvimGridView ::NvimGridView(NvimBridge &nvim, int columns, int lines,
         const std::string &font_name)
-: TextGridView(columns, lines, font_name), nvim_ (nvim)
+: TextGridView(columns, lines, font_name), nvim_(nvim)
 {
     add_events(Gdk::BUTTON1_MOTION_MASK | Gdk::BUTTON2_MOTION_MASK |
             Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK |

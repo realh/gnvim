@@ -26,8 +26,8 @@ namespace Gnvim
 
 Window::Window(bool maximise, int width, int height,
         const std::string &init_file, RefPtr<Gio::ApplicationCommandLine> cl)
-: maximise_ (maximise), columns_ (width), lines_ (height),
-rqset_ (RequestSetBase::create(sigc::mem_fun(*this, &Window::ready_to_start)))
+: maximise_(maximise), columns_(width), lines_(height),
+rqset_(RequestSetBase::create(sigc::mem_fun(*this, &Window::ready_to_start)))
 {
     nvim_.start(cl, init_file);
     if(width == -1)
