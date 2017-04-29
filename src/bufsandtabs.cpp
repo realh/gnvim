@@ -1,5 +1,4 @@
-
-/* bufsandtabs.h
+/* bufsandtabs.cpp
  *
  * Copyright(C) 2017 Tony Houghton
  *

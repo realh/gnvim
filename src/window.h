@@ -62,6 +62,7 @@ private:
 
     NvimBridge nvim_;
     BufsAndTabs bufs_and_tabs_;
+    sigc::connection bat_conn_;
 
     // This is just a convenience pointer, life cycle is managed by GTK
     NvimGridView *view_;

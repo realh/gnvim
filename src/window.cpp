@@ -60,7 +60,7 @@ Window::~Window()
 
 void Window::ready_to_start(RequestSet *)
 {
-    bufs_and_tabs_.signal_got_all_info ().connect([this]()
+    bat_conn_ = bufs_and_tabs_.signal_got_all_info().connect([this]()
     {
         view_ = new NvimGridView(nvim_, columns_, lines_);
         rqset_.release();
@@ -86,6 +86,7 @@ void Window::ready_to_start(RequestSet *)
         present();
         nvim_.redraw_set_title.connect
             (sigc::mem_fun(this, &Window::on_redraw_set_title));
+        bat_conn_.disconnect();
     });
     bufs_and_tabs_.start();
 }
