@@ -44,6 +44,7 @@ public:
             const std::string &init_file);
 
     /// Connects additional handler to promise to get important info.
+    /// Do not reuse the promise for any different request.
     void get_api_info(PromiseHandle promise);
 
     void start_ui(int width, int height);

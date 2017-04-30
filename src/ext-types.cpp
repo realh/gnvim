@@ -46,7 +46,7 @@ VimBuffer &VimBuffer::operator=(const msgpack::object &o)
     return *this;
 }
 
-gint8 VimBuffer::type_code = 0;
+int VimBuffer::type_code = 0;
 
 VimTabpage &VimTabpage::operator=(const msgpack::object &o)
 {
@@ -63,7 +63,7 @@ VimTabpage &VimTabpage::operator=(const msgpack::object &o)
     return *this;
 }
 
-gint8 VimTabpage::type_code = 0;
+int VimTabpage::type_code = 0;
 
 VimWindow &VimWindow::operator=(const msgpack::object &o)
 {
@@ -80,6 +80,6 @@ VimWindow &VimWindow::operator=(const msgpack::object &o)
     return *this;
 }
 
-gint8 VimWindow::type_code = 0;
+int VimWindow::type_code = 0;
 
 } // namespace gnvim

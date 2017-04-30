@@ -80,7 +80,7 @@ public:
     }
 
     /// Must be set from nvim_get_api_info before use.
-    static gint8 type_code;
+    static int type_code;
 };
 
 class VimTabpage : public VimExtType {
@@ -110,7 +110,7 @@ public:
     }
 
     /// Must be set from nvim_get_api_info before use.
-    static gint8 type_code;
+    static int type_code;
 };
 
 class VimWindow : public VimExtType {
@@ -140,7 +140,7 @@ public:
     }
 
     /// Must be set from nvim_get_api_info before use.
-    static gint8 type_code;
+    static int type_code;
 };
 
 } // namespace gnvim

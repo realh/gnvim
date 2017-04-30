@@ -30,23 +30,24 @@ Window::Window(bool maximise, int width, int height,
 rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::ready_to_start)))
 {
     nvim_.start(cl, init_file);
+    auto prom = MsgpackPromise::create();
+    nvim_.get_api_info(rqset_->get_proxied_promise(prom));
     if (width == -1)
     {
         columns_ = 80;
-        auto prom = MsgpackPromise::create();
+        prom = MsgpackPromise::create();
         prom->value_signal().connect
             (sigc::mem_fun(*this, &Window::on_columns_response));
-        auto proxy = rqset_->get_proxied_promise(prom);
-        nvim_.nvim_get_option("columns", proxy);
+        nvim_.nvim_get_option("columns", rqset_->get_proxied_promise(prom));
     }
     if (height == -1)
     {
         lines_ = 30;
-        auto prom = MsgpackPromise::create();
+        prom = MsgpackPromise::create();
         prom->value_signal().connect
             (sigc::mem_fun(*this, &Window::on_lines_response));
         auto proxy = rqset_->get_proxied_promise(prom);
-        nvim_.nvim_get_option("lines", proxy);
+        nvim_.nvim_get_option("lines", rqset_->get_proxied_promise(prom));
     }
     rqset_->ready();
 }

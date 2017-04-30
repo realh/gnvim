@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "nvim-bridge.h"
+#include "ext-types.h"
 
 namespace Gnvim
 {
@@ -227,6 +228,13 @@ void NvimBridge::stop()
     }
 }
 
+void NvimBridge::get_api_info(PromiseHandle promise)
+{
+    promise->value_signal().connect
+        (sigc::mem_fun(*this, &NvimBridge::on_api_info_response));
+    nvim_get_api_info(promise);
+}
+
 void NvimBridge::nvim_get_api_info(PromiseHandle promise)
 {
     rpc_->request("nvim_get_api_info", promise);
@@ -353,6 +361,84 @@ void NvimBridge::on_notify(std::string method,
     }
     redraw_end.emit();
     //g_debug("nvim-bridge completed redraw");
+}
+
+void NvimBridge::on_api_info_response(const msgpack::object &o)
+{
+    if (o.type != msgpack::type::ARRAY)
+    {
+        throw MsgpackDecodeError
+            ("Response from nvim_get_api_info is not an ARRAY");
+    }
+    const auto &ar = o.via.array;
+    if (ar.size != 2)
+    {
+        throw MsgpackDecodeError
+            ("ARRAY from nvim_get_api_info should have 2 members");
+    }
+    ar.ptr[0].convert(channel_id_);
+    if (ar.ptr[1].type != msgpack::type::MAP)
+    {
+        throw MsgpackDecodeError
+            ("2nd member of nvim_get_api_info response should be a MAP");
+    }
+    const auto &om = ar.ptr[1].via.map;
+    gsize i;
+    for (i = 0; i < om.size; ++i)
+    {
+        const auto &kv = om.ptr[i];
+        std::string keyname;
+        kv.key.convert(keyname);
+        if (keyname == "types")
+        {
+            g_debug("Found 'types'");
+            // If we've got this far it's vanishingly unlikely that we'll
+            // encounter errors here
+            const auto &tm = kv.val.via.map;
+            for (gsize j = 0; j < tm.size; ++j)
+            {
+                const auto &tkv = tm.ptr[j];
+                tkv.key.convert(keyname);
+                int *ptc = nullptr;
+                if (keyname == "Buffer")
+                {
+                    g_debug("Found 'Buffer'");
+                    ptc = &VimBuffer::type_code;
+                }
+                else if (keyname == "Tabpage")
+                {
+                    g_debug("Found 'Tabpage'");
+                    ptc = &VimTabpage::type_code;
+                }
+                else if (keyname == "Window")
+                {
+                    g_debug("Found 'Window'");
+                    ptc = &VimWindow::type_code;
+                }
+                if (ptc)
+                {
+                    const auto &type_info = tkv.val.via.map;
+                    for (gsize k = 0; k < type_info.size; ++k)
+                    {
+                        const auto &field = type_info.ptr[k];
+                        field.key.convert(keyname);
+                        if (keyname == "id")
+                        {
+                            field.val.convert(*ptc);
+                            g_debug("Type id %d", *ptc);
+                            break;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+    }
+    if (i == om.size)
+    {
+        throw MsgpackDecodeError
+            ("No 'types' field in nvim_get_api_info response");
+    }
 }
 
 std::vector<std::string> NvimBridge::envp_;
