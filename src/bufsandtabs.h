@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 
+#include "ext-types.h"
 #include "msgpack-promise.h"
 #include "request-set.h"
 
@@ -31,14 +32,13 @@ namespace Gnvim
 {
 
 struct BufferInfo {
-    gint64 handle;
-    int number;
+    VimBuffer handle;
     std::string name;
     bool modified;
 
     bool operator<(const BufferInfo &b)
     {
-        return number < b.number;
+        return handle < b.handle;
     }
 };
 

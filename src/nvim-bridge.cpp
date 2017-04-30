@@ -267,19 +267,13 @@ void NvimBridge::nvim_list_bufs(PromiseHandle promise)
     rpc_->request("nvim_list_bufs", promise);
 }
 
-void NvimBridge::nvim_buf_get_number(int buf_handle,
-        PromiseHandle promise)
-{
-    rpc_->request("nvim_buf_get_number", promise, buf_handle);
-}
-
-void NvimBridge::nvim_buf_get_name(int buf_handle,
+void NvimBridge::nvim_buf_get_name(VimBuffer buf_handle,
         PromiseHandle promise)
 {
     rpc_->request("nvim_buf_get_name", promise, buf_handle);
 }
 
-void NvimBridge::nvim_buf_get_changedtick(int buf_handle,
+void NvimBridge::nvim_buf_get_changedtick(VimBuffer buf_handle,
         PromiseHandle promise)
 {
     rpc_->request("nvim_buf_get_changedtick", promise, buf_handle);

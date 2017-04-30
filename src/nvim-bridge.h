@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 
+#include "ext-types.h"
 #include "msgpack-adapter.h"
 #include "msgpack-rpc.h"
 
@@ -64,15 +65,9 @@ public:
 
     void nvim_list_bufs(PromiseHandle promise);
 
-    // FIXME: Deprecated
-    void nvim_buf_get_number(int buf_handle,
-            PromiseHandle promise);
+    void nvim_buf_get_name(VimBuffer buf_handle, PromiseHandle promise);
 
-    void nvim_buf_get_name(int buf_handle,
-            PromiseHandle promise);
-
-    void nvim_buf_get_changedtick(int buf_handle,
-            PromiseHandle promise);
+    void nvim_buf_get_changedtick(VimBuffer buf_handle, PromiseHandle promise);
 
     void nvim_ui_try_resize(int width, int height);
 

@@ -53,10 +53,11 @@ private:
     };
 public:
     /** Enables creation of an implementation with automatic type deduction.
-     * @tparam T a function/functor of type void (*)(RequestSet *rqset);.
-     * @param finished A tempting place to delete the rqset, but it might
-     *                 not be safe to do so; use something like
-     *                 Glib::signal_idle().connect_once().
+     *  @tparam T a function/functor of type void (*)(RequestSet *rqset);.
+     *  @param finished A tempting place to delete the rqset, but it might
+     *                  not be safe to do so; defer to something like
+     *                  Glib::signal_idle().connect_once() if you need to
+     *                  delete this.
      */
     template<class T> static RequestSet *create(T finished)
     {
@@ -68,9 +69,12 @@ public:
     /** Creates a proxy for a given promise.
      *  You should connect to the original promise to get the response to the
      *  request, but pass the result of this function to MsgpackRpc::request().
+     *  This could have been implemented by just connecting additional handlers
+     *  to the original promise, but a proxy offers a better guarantee that
+     *  all client promise signals are handled before calling the 'finished'
+     *  handler.
      */
-    PromiseHandle get_proxied_promise
-        (PromiseHandle promise)
+    PromiseHandle get_proxied_promise(PromiseHandle promise)
     {
         ++outstanding_;
         return ProxiedPromise::create(*this, promise);

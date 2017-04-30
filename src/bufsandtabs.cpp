@@ -70,7 +70,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
 
     for (std::size_t n = 0; n < ar.size; ++n)
     {
-        buf_info->bufs[n].handle = MsgpackRpc::ext_to_int(ar.ptr[n]);
+        ar.ptr[n].convert(buf_info->bufs[n].handle);
         buf_info->bufs[n].modified = false;
     }
 
@@ -88,7 +88,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
             auto prom = MsgpackPromise::create();
             prom->value_signal ().connect ([this](const msgpack::object &o)
             {
-                auto handle = MsgpackRpc::ext_to_int(o);
+                VimBuffer handle(o);
                 current_buffer_ = std::find_if(buffers_.begin(), buffers_.end(),
                         [handle](const BufferInfo &b)
                         {
@@ -119,15 +119,6 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
     for (std::size_t n = 0; n < ar.size; ++n)
     {
         auto prom = MsgpackPromise::create();
-        prom->value_signal().connect([buf_info, n](const msgpack::object &o)
-        {
-            o.convert(buf_info->bufs[n].number);
-        });
-        prom->error_signal().connect(error_lambda);
-        nvim_.nvim_buf_get_number (buf_info->bufs[n].handle,
-                rqset_->get_proxied_promise(prom));
-
-        prom = MsgpackPromise::create();
         prom->value_signal().connect([buf_info, n](const msgpack::object &o)
         {
             o.convert(buf_info->bufs[n].name);

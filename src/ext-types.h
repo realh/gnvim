@@ -31,6 +31,8 @@ namespace Gnvim
 /// Base class for nvim's Buffer, Window and Tabpage handles which are packed
 /// in msgpack as EXT.
 class VimExtType {
+public:
+    bool operator<(const VimExtType &vet) const;
 protected:
     VimExtType() = default;
     VimExtType(const VimExtType &vet) = default;
@@ -45,9 +47,10 @@ protected:
         return bytes_ == vet.bytes_;
     }
 
-    template<class S> void pack_body(msgpack::packer<S> &packer)
+    template<class S> void pack_body(msgpack::packer<S> &packer) const
     {
-        packer.pack_ext_body(bytes_.data(), bytes_.size());
+        // gint8 = signed char != char apparently
+        packer.pack_ext_body((const char *) bytes_.data(), bytes_.size());
     }
 
     std::vector<gint8> bytes_;
@@ -73,7 +76,7 @@ public:
         return VimExtType::operator==(vb);
     }
 
-    template<class S> void pack(msgpack::packer<S> &packer)
+    template<class S> void pack(msgpack::packer<S> &packer) const
     {
         packer.pack_ext(bytes_.size(), type_code);
         pack_body(packer);
@@ -103,7 +106,7 @@ public:
         return VimExtType::operator==(vt);
     }
 
-    template<class S> void pack(msgpack::packer<S> &packer)
+    template<class S> void pack(msgpack::packer<S> &packer) const
     {
         packer.pack_ext(bytes_.size(), type_code);
         pack_body(packer);
@@ -133,7 +136,7 @@ public:
         return VimExtType::operator==(vw);
     }
 
-    template<class S> void pack(msgpack::packer<S> &packer)
+    template<class S> void pack(msgpack::packer<S> &packer) const
     {
         packer.pack_ext(bytes_.size(), type_code);
         pack_body(packer);
