@@ -276,7 +276,16 @@ void NvimBridge::nvim_buf_get_name(VimBuffer buf_handle,
 void NvimBridge::nvim_buf_get_changedtick(VimBuffer buf_handle,
         PromiseHandle promise)
 {
-    rpc_->request("nvim_buf_get_changedtick", promise, buf_handle);
+    if (version_.major == 0 && version_.minor == 1)
+    {
+        // Old way
+        rpc_->request("nvim_buf_get_option", promise, buf_handle, "modified");
+    }
+    else
+    {
+        // New way
+        rpc_->request("nvim_buf_get_changedtick", promise, buf_handle);
+    }
 }
 
 void NvimBridge::nvim_ui_try_resize(int width, int height)

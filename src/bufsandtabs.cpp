@@ -127,8 +127,6 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         nvim_.nvim_buf_get_name (buf_info->bufs[n].handle,
                 rqset_->get_proxied_promise(prom));
 
-        // nvim_buf_get_changedtick not supported yet in 0.1.7
-        /*
         prom = MsgpackPromise::create();
         prom->value_signal().connect([buf_info, n](const msgpack::object &o)
         {
@@ -138,8 +136,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         });
         prom->error_signal().connect(error_lambda);
         nvim_.nvim_buf_get_changedtick (buf_info->bufs[n].handle,
-                rqset->get_proxied_promise(prom));
-        */
+                rqset_->get_proxied_promise(prom));
     }
 
     rqset_->ready();
