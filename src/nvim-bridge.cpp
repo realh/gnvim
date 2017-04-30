@@ -376,6 +376,9 @@ void NvimBridge::on_api_info_response(const msgpack::object &o)
         throw MsgpackDecodeError
             ("2nd member of nvim_get_api_info response should be a MAP");
     }
+
+    bool got_types = false, got_version = false;
+
     const auto &om = ar.ptr[1].via.map;
     gsize i;
     for (i = 0; i < om.size; ++i)
@@ -414,7 +417,33 @@ void NvimBridge::on_api_info_response(const msgpack::object &o)
                     }
                 }
             }
-            break;
+            got_types = true;
+            if (got_version)
+                break;
+        }
+        else if (keyname == "version")
+        {
+            const auto &vm = kv.val.via.map;
+            for (gsize j = 0; j < vm.size; ++j)
+            {
+                const auto &vkv = vm.ptr[j];
+                vkv.key.convert(keyname);
+                if (keyname == "api_compatible")
+                    vkv.val.convert(version_.api_compatible);
+                else if (keyname == "api_level")
+                    vkv.val.convert(version_.api_level);
+                else if (keyname == "major")
+                    vkv.val.convert(version_.major);
+                else if (keyname == "minor")
+                    vkv.val.convert(version_.minor);
+                else if (keyname == "patch")
+                    vkv.val.convert(version_.patch);
+                else if (keyname == "api_prerelease")
+                    vkv.val.convert(version_.api_prerelease);
+            }
+            got_version = true;
+            if (got_types)
+                break;
         }
     }
     if (i == om.size)

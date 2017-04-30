@@ -130,6 +130,10 @@ private:
     bool ui_attached_ {false};
 
     guint channel_id_;
+    struct {
+        int api_compatible, api_level, major, minor, patch;
+        bool api_prerelease;
+    } version_;
 };
 
 }
