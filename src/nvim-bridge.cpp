@@ -227,7 +227,7 @@ void NvimBridge::stop()
     }
 }
 
-void NvimBridge::nvim_get_api_info(std::shared_ptr<MsgpackPromise> promise)
+void NvimBridge::nvim_get_api_info(PromiseHandle promise)
 {
     rpc_->request("nvim_get_api_info", promise);
 }
@@ -244,35 +244,35 @@ void NvimBridge::nvim_command(const std::string &command)
 }
 
 void NvimBridge::nvim_get_option(const std::string &name,
-        std::shared_ptr<MsgpackPromise> promise)
+        PromiseHandle promise)
 {
     rpc_->request("nvim_get_option", promise, name);
 }
 
-void NvimBridge::nvim_get_current_buf(std::shared_ptr<MsgpackPromise> promise)
+void NvimBridge::nvim_get_current_buf(PromiseHandle promise)
 {
     rpc_->request("nvim_get_current_buf", promise);
 }
 
-void NvimBridge::nvim_list_bufs(std::shared_ptr<MsgpackPromise> promise)
+void NvimBridge::nvim_list_bufs(PromiseHandle promise)
 {
     rpc_->request("nvim_list_bufs", promise);
 }
 
 void NvimBridge::nvim_buf_get_number(int buf_handle,
-        std::shared_ptr<MsgpackPromise> promise)
+        PromiseHandle promise)
 {
     rpc_->request("nvim_buf_get_number", promise, buf_handle);
 }
 
 void NvimBridge::nvim_buf_get_name(int buf_handle,
-        std::shared_ptr<MsgpackPromise> promise)
+        PromiseHandle promise)
 {
     rpc_->request("nvim_buf_get_name", promise, buf_handle);
 }
 
 void NvimBridge::nvim_buf_get_changedtick(int buf_handle,
-        std::shared_ptr<MsgpackPromise> promise)
+        PromiseHandle promise)
 {
     rpc_->request("nvim_buf_get_changedtick", promise, buf_handle);
 }

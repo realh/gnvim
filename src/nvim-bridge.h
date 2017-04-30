@@ -44,34 +44,34 @@ public:
             const std::string &init_file);
 
     /// Connects additional handler to promise to get important info.
-    void get_api_info(std::shared_ptr<MsgpackPromise> promise);
+    void get_api_info(PromiseHandle promise);
 
     void start_ui(int width, int height);
 
     void stop();
 
-    void nvim_get_api_info(std::shared_ptr<MsgpackPromise> promise);
+    void nvim_get_api_info(PromiseHandle promise);
 
     void nvim_input(const std::string &keys);
 
     void nvim_command(const std::string &command);
 
     void nvim_get_option(const std::string &name,
-            std::shared_ptr<MsgpackPromise> promise);
+            PromiseHandle promise);
 
-    void nvim_get_current_buf(std::shared_ptr<MsgpackPromise> promise);
+    void nvim_get_current_buf(PromiseHandle promise);
 
-    void nvim_list_bufs(std::shared_ptr<MsgpackPromise> promise);
+    void nvim_list_bufs(PromiseHandle promise);
 
     // FIXME: Deprecated
     void nvim_buf_get_number(int buf_handle,
-            std::shared_ptr<MsgpackPromise> promise);
+            PromiseHandle promise);
 
     void nvim_buf_get_name(int buf_handle,
-            std::shared_ptr<MsgpackPromise> promise);
+            PromiseHandle promise);
 
     void nvim_buf_get_changedtick(int buf_handle,
-            std::shared_ptr<MsgpackPromise> promise);
+            PromiseHandle promise);
 
     void nvim_ui_try_resize(int width, int height);
 

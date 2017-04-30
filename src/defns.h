@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include <memory>
+
 #include <gtkmm.h>
 
 #define _(s) (s)
@@ -38,6 +40,8 @@ class Application;
 class NvimBridge;
 class NvimGridView;
 class Window;
+
+using PromiseHandle = std::shared_ptr<class MsgpackPromise>;
 
 }
 

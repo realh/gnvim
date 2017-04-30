@@ -34,10 +34,10 @@ namespace Gnvim
 
 class MsgpackPromise {
 public:
-    static std::shared_ptr<MsgpackPromise> create()
+    static PromiseHandle create()
     {
         // Can't use make_shared here because constructor is protected
-        return std::shared_ptr<MsgpackPromise> (new MsgpackPromise());
+        return PromiseHandle (new MsgpackPromise());
     }
 
     MsgpackPromise(const MsgpackPromise &) = delete;

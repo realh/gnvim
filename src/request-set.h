@@ -33,8 +33,8 @@ private:
     friend class ProxiedPromise;
     class ProxiedPromise : public MsgpackPromise {
     public:
-        static std::shared_ptr<MsgpackPromise> create
-            (RequestSet &rset, std::shared_ptr<MsgpackPromise> promise)
+        static PromiseHandle create
+            (RequestSet &rset, PromiseHandle promise)
         {
             return std::static_pointer_cast<MsgpackPromise>
                 (std::shared_ptr<ProxiedPromise>
@@ -42,14 +42,14 @@ private:
         }
     protected:
         ProxiedPromise(RequestSet &rset,
-                std::shared_ptr<MsgpackPromise> promise);
+                PromiseHandle promise);
 
         void on_value(const msgpack::object &value);
 
         void on_error(const msgpack::object &value);
     private:
         RequestSet &rset_;
-        std::shared_ptr<MsgpackPromise> promise_;
+        PromiseHandle promise_;
     };
 public:
     /** Enables creation of an implementation with automatic type deduction.
@@ -69,8 +69,8 @@ public:
      *  You should connect to the original promise to get the response to the
      *  request, but pass the result of this function to MsgpackRpc::request().
      */
-    std::shared_ptr<MsgpackPromise> get_proxied_promise
-        (std::shared_ptr<MsgpackPromise> promise)
+    PromiseHandle get_proxied_promise
+        (PromiseHandle promise)
     {
         ++outstanding_;
         return ProxiedPromise::create(*this, promise);

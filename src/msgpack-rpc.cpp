@@ -60,7 +60,7 @@ void MsgpackRpc::stop()
 }
 
 void MsgpackRpc::do_request(const char *method, packer_fn arg_packer,
-        std::shared_ptr<MsgpackPromise> promise)
+        PromiseHandle promise)
 {
     std::ostringstream s;
     packer_t packer(s);
@@ -291,7 +291,7 @@ bool MsgpackRpc::dispatch_response(const msgpack::object &msg)
         g_critical("Response with unexpected msgid %d", msgid);
         return false;
     }
-    std::shared_ptr<MsgpackPromise> promise = it->second;
+    PromiseHandle promise = it->second;
 
     const auto &error = ar.ptr[2];
     const auto &response = ar.ptr[3];

@@ -66,7 +66,7 @@ public:
     void stop();
 
     void request(const char *method,
-            std::shared_ptr<MsgpackPromise> promise)
+            PromiseHandle promise)
     {
         do_request(method,
                 [](packer_t &packer) { packer.pack_array(0); },
@@ -74,7 +74,7 @@ public:
     }
 
     template<class... T> void request(const char *method,
-            std::shared_ptr<MsgpackPromise> promise,
+            PromiseHandle promise,
             const T &...args)
     {
         do_request(method,
@@ -130,7 +130,7 @@ protected:
     MsgpackRpc();
 private:
     void do_request(const char *method, packer_fn arg_packer,
-            std::shared_ptr<MsgpackPromise> promise);
+            PromiseHandle promise);
 
     void do_notify(const char *method, packer_fn arg_packer);
 
@@ -201,7 +201,7 @@ private:
     Gio::SlotAsyncReady async_read_slot_;
     msgpack::unpacker unpacker_;
 
-    std::map<guint32, std::shared_ptr<MsgpackPromise>> response_promises_;
+    std::map<guint32, PromiseHandle> response_promises_;
 
     sigc::signal<void, guint32, std::string, const msgpack::object &>
             request_signal_;
