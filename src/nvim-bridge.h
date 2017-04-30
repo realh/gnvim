@@ -43,9 +43,14 @@ public:
     void start(RefPtr<Gio::ApplicationCommandLine> cl,
             const std::string &init_file);
 
+    /// Connects additional handler to promise to get important info.
+    void get_api_info(std::shared_ptr<MsgpackPromise> promise);
+
     void start_ui(int width, int height);
 
     void stop();
+
+    void nvim_get_api_info(std::shared_ptr<MsgpackPromise> promise);
 
     void nvim_input(const std::string &keys);
 
@@ -58,6 +63,7 @@ public:
 
     void nvim_list_bufs(std::shared_ptr<MsgpackPromise> promise);
 
+    // FIXME: Deprecated
     void nvim_buf_get_number(int buf_handle,
             std::shared_ptr<MsgpackPromise> promise);
 
@@ -114,6 +120,8 @@ private:
 
     void on_notify(std::string method, const msgpack::object &args);
 
+    void on_api_info_response(const msgpack::object &o);
+
     using adapter_ptr_t = std::unique_ptr<MsgpackAdapterBase>;
     using map_t = std::map<std::string, adapter_ptr_t>;
     map_t request_adapters_;
@@ -124,6 +132,8 @@ private:
     Glib::Pid nvim_pid_;
     static std::vector<std::string> envp_;
     bool ui_attached_ {false};
+
+    guint channel_id_;
 };
 
 }

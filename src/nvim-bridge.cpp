@@ -227,6 +227,11 @@ void NvimBridge::stop()
     }
 }
 
+void NvimBridge::nvim_get_api_info(std::shared_ptr<MsgpackPromise> promise)
+{
+    rpc_->request("nvim_get_api_info", promise);
+}
+
 void NvimBridge::nvim_input(const std::string &keys)
 {
     //g_debug("nvim_input(%s)", keys.c_str());
