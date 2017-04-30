@@ -391,7 +391,6 @@ void NvimBridge::on_api_info_response(const msgpack::object &o)
         kv.key.convert(keyname);
         if (keyname == "types")
         {
-            g_debug("Found 'types'");
             // If we've got this far it's vanishingly unlikely that we'll
             // encounter errors here
             const auto &tm = kv.val.via.map;
@@ -401,20 +400,11 @@ void NvimBridge::on_api_info_response(const msgpack::object &o)
                 tkv.key.convert(keyname);
                 int *ptc = nullptr;
                 if (keyname == "Buffer")
-                {
-                    g_debug("Found 'Buffer'");
                     ptc = &VimBuffer::type_code;
-                }
                 else if (keyname == "Tabpage")
-                {
-                    g_debug("Found 'Tabpage'");
                     ptc = &VimTabpage::type_code;
-                }
                 else if (keyname == "Window")
-                {
-                    g_debug("Found 'Window'");
                     ptc = &VimWindow::type_code;
-                }
                 if (ptc)
                 {
                     const auto &type_info = tkv.val.via.map;
@@ -425,7 +415,6 @@ void NvimBridge::on_api_info_response(const msgpack::object &o)
                         if (keyname == "id")
                         {
                             field.val.convert(*ptc);
-                            g_debug("Type id %d", *ptc);
                             break;
                         }
                     }
