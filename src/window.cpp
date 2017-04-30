@@ -46,7 +46,6 @@ rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::ready_to_start)))
         prom = MsgpackPromise::create();
         prom->value_signal().connect
             (sigc::mem_fun(*this, &Window::on_lines_response));
-        auto proxy = rqset_->get_proxied_promise(prom);
         nvim_.nvim_get_option("lines", rqset_->get_proxied_promise(prom));
     }
     rqset_->ready();
