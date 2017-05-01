@@ -108,6 +108,20 @@ public:
     sigc::signal<void, int> redraw_popupmenu_select;
     sigc::signal<void> redraw_popupmenu_hide;
     */
+
+    guint get_channel_id() const
+    {
+        return channel_id_;
+    }
+
+    /// The group name for autocommands this instance sets up
+    const std::string &get_augroup() const
+    {
+        return augroup_;
+    }
+
+    /// Ensures that our augroup is defined in nvim
+    void ensure_augroup();
 private:
     void map_adapters();
 
@@ -134,6 +148,8 @@ private:
         int api_compatible, api_level, major, minor, patch;
         bool api_prerelease;
     } version_;
+    std::string augroup_;
+    bool augroup_defined_ {false};
 };
 
 }

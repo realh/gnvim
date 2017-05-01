@@ -219,6 +219,8 @@ void NvimBridge::stop()
     {
         if (ui_attached_)
         {
+            nvim_command(std::string("augroup " + get_augroup()
+                        + "|autocmd!|augroup END"));
             //g_debug("nvim-bridge detaching ui");
             rpc_->notify("nvim_ui_detach");
             rpc_->notify("nvim_command", "qa!");
@@ -380,6 +382,10 @@ void NvimBridge::on_api_info_response(const msgpack::object &o)
             ("ARRAY from nvim_get_api_info should have 2 members");
     }
     ar.ptr[0].convert(channel_id_);
+    std::ostringstream s;
+    s << "gnvim" << channel_id_;
+    augroup_ = s.str();
+
     if (ar.ptr[1].type != msgpack::type::MAP)
     {
         throw MsgpackDecodeError
@@ -459,6 +465,17 @@ void NvimBridge::on_api_info_response(const msgpack::object &o)
     {
         throw MsgpackDecodeError
             ("No 'types' field in nvim_get_api_info response");
+    }
+}
+
+void NvimBridge::ensure_augroup()
+{
+    if (!augroup_defined_)
+    {
+        std::ostringstream s;
+        s << "augroup " << get_augroup() << "|autocmd!|augroup END";
+        nvim_command(s.str());
+        augroup_defined_ = true;
     }
 }
 

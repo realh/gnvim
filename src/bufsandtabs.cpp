@@ -141,6 +141,12 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
                 rqset_->get_proxied_promise(prom));
     }
 
+    nvim_.ensure_augroup();
+    std::ostringstream s;
+    s << "autocmd " << nvim_.get_augroup() << " OptionSet modified "
+        << "call rpcnotify(" << nvim_.get_channel_id() << ", 'modified')";
+    nvim_.nvim_command(s.str());
+
     rqset_->ready();
 }
 
