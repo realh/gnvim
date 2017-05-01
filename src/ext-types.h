@@ -28,11 +28,21 @@
 namespace Gnvim
 {
 
-/// Base class for nvim's Buffer, Window and Tabpage handles which are packed
-/// in msgpack as EXT.
+/** Base class for nvim's Buffer, Window and Tabpage handles.
+ *  These are numbers of indeterminate size (but I'm told they're signed)
+ *  packed in msgpack as EXT.
+ */
 class VimExtType {
 public:
-    bool operator<(const VimExtType &vet) const;
+    bool operator<(const VimExtType &vet) const
+    {
+        return value_ < vet.value_;
+    }
+
+    operator gint64() const
+    {
+        return value_;
+    }
 protected:
     VimExtType() = default;
     VimExtType(const VimExtType &vet) = default;
@@ -44,16 +54,18 @@ protected:
 
     bool operator==(const VimExtType &vet) const
     {
-        return bytes_ == vet.bytes_;
+        return value_ == vet.value_;
     }
 
-    template<class S> void pack_body(msgpack::packer<S> &packer) const
+    template<class S> void pack_body(msgpack::packer<S> &packer,
+            msgpack::sbuffer &buf) const
     {
-        // gint8 = signed char != char apparently
-        packer.pack_ext_body((const char *) bytes_.data(), bytes_.size());
+        packer.pack_ext_body(buf.data(), buf.size());
     }
 
-    std::vector<gint8> bytes_;
+    msgpack::sbuffer pack_value () const;
+
+    gint64 value_;
 };
 
 class VimBuffer : public VimExtType {
@@ -78,8 +90,9 @@ public:
 
     template<class S> void pack(msgpack::packer<S> &packer) const
     {
-        packer.pack_ext(bytes_.size(), type_code);
-        pack_body(packer);
+        auto buf = pack_value();
+        packer.pack_ext(buf.size(), type_code);
+        pack_body(packer, buf);
     }
 
     /// Must be set from nvim_get_api_info before use.
@@ -108,8 +121,9 @@ public:
 
     template<class S> void pack(msgpack::packer<S> &packer) const
     {
-        packer.pack_ext(bytes_.size(), type_code);
-        pack_body(packer);
+        auto buf = pack_value();
+        packer.pack_ext(buf.size(), type_code);
+        pack_body(packer, buf);
     }
 
     /// Must be set from nvim_get_api_info before use.
@@ -138,8 +152,9 @@ public:
 
     template<class S> void pack(msgpack::packer<S> &packer) const
     {
-        packer.pack_ext(bytes_.size(), type_code);
-        pack_body(packer);
+        auto buf = pack_value();
+        packer.pack_ext(buf.size(), type_code);
+        pack_body(packer, buf);
     }
 
     /// Must be set from nvim_get_api_info before use.

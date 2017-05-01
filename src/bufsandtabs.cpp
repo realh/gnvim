@@ -131,8 +131,10 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         prom->value_signal().connect([buf_info, n](const msgpack::object &o)
         {
             o.convert(buf_info->bufs[n].modified);
+            /*
             g_debug("Buf %ld %s modified", n,
                     buf_info->bufs[n].modified ? "is" : "is not");
+            */
         });
         prom->error_signal().connect(error_lambda);
         nvim_.nvim_buf_get_changedtick (buf_info->bufs[n].handle,

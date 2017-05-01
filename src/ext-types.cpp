@@ -24,41 +24,21 @@
 namespace Gnvim
 {
 
-bool VimExtType::operator<(const VimExtType &vet) const
-{
-    if (bytes_.size() < vet.bytes_.size())
-        return true;
-    else if (bytes_.size() > vet.bytes_.size())
-        return false;
-    // Upstream developers seem to reckon the encoding is big-endian here,
-    // but it's as clear as mud
-    for (std::size_t i = 0; i < bytes_.size(); ++i)
-    {
-        // Only MSB is signed
-        if (i > 0)
-        {
-            if (guint8(bytes_[i]) < guint8(vet.bytes_[i]))
-                return true;
-            else if (guint8(bytes_[i]) > guint8(vet.bytes_[i]))
-                return false;
-        }
-        else // if (i == 0)
-        {
-            if (bytes_[i] < vet.bytes_[i])
-                return true;
-            else if (bytes_[i] > vet.bytes_[i])
-                return false;
-        }
-    }
-    // equal
-    return false;
-}
-
 VimExtType &VimExtType::operator=(const msgpack::object &o)
 {
+    // This is equivalent to how nvim decodes these types
     const auto &ext = o.via.ext;
-    bytes_ = std::vector<gint8>(ext.data(), ext.data() + ext.size);
+    auto unp = msgpack::unpack(ext.data(), ext.size);
+    const auto &vo = unp.get();
+    value_ = vo.via.i64;
     return *this;
+}
+
+msgpack::sbuffer VimExtType::pack_value() const
+{
+    msgpack::sbuffer buf;
+    msgpack::pack(buf, value_);
+    return buf;
 }
 
 VimBuffer &VimBuffer::operator=(const msgpack::object &o)
