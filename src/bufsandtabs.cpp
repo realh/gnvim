@@ -141,15 +141,14 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
                 rqset_->get_proxied_promise(prom));
     }
 
+    /*
     nvim_.ensure_augroup();
     std::ostringstream s;
-    //s << "autocmd " << nvim_.get_augroup() << " TextChanged,TextChangedI * "
-    //    << "if b:changedtick < 2|call rpcnotify("
-    //    << nvim_.get_channel_id() << ", 'modified')|endif";
     s << "autocmd " << nvim_.get_augroup() << " TextChanged,TextChangedI * "
-        << "call rpcnotify(" << nvim_.get_channel_id()
-        << ", 'modified', b:changedtick)";
+        << "if b:changedtick < 2|call rpcnotify("
+        << nvim_.get_channel_id() << ", 'modified')|endif";
     nvim_.nvim_command(s.str());
+    */
 
     rqset_->ready();
 }
