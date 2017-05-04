@@ -130,6 +130,15 @@ void Window::on_size_allocate(Gtk::Allocation &alloc)
 }
 */
 
+bool Window::on_delete_event(GdkEventAny *e)
+{
+    return Gtk::ApplicationWindow::on_delete_event(e);
+    g_debug("delete event");
+    // Asking nvim to quit is probably the best way to handle this
+    nvim_.nvim_command("qa");
+    return true;
+}
+
 #if 0
 void Window::set_geometry_hints()
 {

@@ -39,10 +39,10 @@ public:
     ~Window();
 
     void force_close();
-/*
 protected:
-    virtual void on_size_allocate(Gtk::Allocation &alloc) override;
-*/
+    //virtual void on_size_allocate(Gtk::Allocation &alloc) override;
+
+    virtual bool on_delete_event(GdkEventAny *) override;
 private:
     void ready_to_start(RequestSet *);
 
@@ -72,6 +72,7 @@ private:
     bool maximise_;
     int columns_, lines_;
     std::unique_ptr<RequestSet> rqset_;
+    sigc::connection delete_event_conn_;
 };
 
 }
