@@ -76,6 +76,9 @@ public:
         return rpc_->io_error_signal();
     }
 
+    /// Second int should actually be bool
+    sigc::signal<void, int, int> signal_modified;
+
     sigc::signal<void> redraw_start;
     sigc::signal<void, int, int> redraw_resize;
     sigc::signal<void> redraw_clear;
@@ -134,7 +137,7 @@ private:
 
     using adapter_ptr_t = std::unique_ptr<MsgpackAdapterBase>;
     using map_t = std::map<std::string, adapter_ptr_t>;
-    map_t request_adapters_;
+    //map_t request_adapters_;
     map_t notify_adapters_;
     map_t redraw_adapters_;
 

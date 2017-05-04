@@ -73,6 +73,8 @@ private:
     void on_bufs_listed(const msgpack::object &o);
     void on_bufs_list_error(const msgpack::object &o);
 
+    void on_modified_changed(int buf, bool modified);
+
     NvimBridge &nvim_;
 
     RequestSet *rqset_ {nullptr};

@@ -202,6 +202,9 @@ void NvimBridge::map_adapters()
     redraw_adapters_.emplace("popupmenu_hide",
         new MsgpackAdapter<void> (redraw_popupmenu_hide));
     */
+
+    notify_adapters_.emplace("modified",
+        new MsgpackAdapter<int, int> (signal_modified));
 }
 
 void NvimBridge::start_ui(int width, int height)
@@ -310,9 +313,17 @@ void NvimBridge::on_notify(std::string method,
 {
     if (method != "redraw")
     {
-        std::ostringstream s;
-        s << "nvim sent notification '" << method << "' (" << args << ")";
-        g_debug("%s", s.str().c_str());
+        const auto &it = notify_adapters_.find(method);
+        if (it != notify_adapters_.end())
+        {
+            it->second->emit(args.via.array);
+        }
+        else
+        {
+            std::ostringstream s;
+            s << "nvim sent notification '" << method << "' (" << args << ")";
+            g_debug("%s", s.str().c_str());
+        }
         return;
     }
     //g_debug("nvim-bridge starting redraw");

@@ -29,7 +29,10 @@ namespace Gnvim
 {
 
 BufsAndTabs::BufsAndTabs(NvimBridge &nvim) : nvim_ (nvim)
-{}
+{
+    nvim_.signal_modified.connect(sigc::mem_fun
+            (*this, &BufsAndTabs::on_modified_changed));
+}
 
 void BufsAndTabs::start()
 {
@@ -163,6 +166,18 @@ void BufsAndTabs::on_bufs_list_error(const msgpack::object &o)
     g_critical("Error listing buffers: %s", s.str().c_str());
     std::vector<BufferInfo> nobufs;
     sig_bufs_listed_.emit(nobufs);
+}
+
+void BufsAndTabs::on_modified_changed(int handle, bool modified)
+{
+    for (auto &buf: buffers_)
+    {
+        if (buf.handle == handle)
+        {
+            buf.modified = modified;
+            break;
+        }
+    }
 }
 
 }
