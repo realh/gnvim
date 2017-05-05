@@ -180,4 +180,14 @@ void BufsAndTabs::on_modified_changed(int handle, bool modified)
     }
 }
 
+bool BufsAndTabs::any_modified() const
+{
+    for (const auto &buf: buffers_)
+    {
+        if (buf.modified)
+            return true;
+    }
+    return false;
+}
+
 }

@@ -132,11 +132,34 @@ void Window::on_size_allocate(Gtk::Allocation &alloc)
 
 bool Window::on_delete_event(GdkEventAny *e)
 {
-    return Gtk::ApplicationWindow::on_delete_event(e);
-    g_debug("delete event");
-    // Asking nvim to quit is probably the best way to handle this
-    nvim_.nvim_command("qa");
-    return true;
+    if (force_close_ || !bufs_and_tabs_.any_modified())
+        return Gtk::ApplicationWindow::on_delete_event(e);
+
+    enum {
+        DISCARD = 1,
+        SAVE,
+        KEEP_OPEN
+    };
+    Gtk::MessageDialog dcs(*this, _("One or more buffers belonging to this "
+            "window contain(s) unsaved data"),
+            false, Gtk::MESSAGE_WARNING,
+            Gtk::BUTTONS_NONE, true);
+    dcs.add_button(_("Discard"), DISCARD);
+    dcs.add_button(_("Save"), SAVE);
+    dcs.add_button(_("Keep Open"), KEEP_OPEN);
+    dcs.show_all();
+    dcs.present();
+    switch (dcs.run())
+    {
+        case DISCARD:
+            nvim_.nvim_command("qa!");
+            return Gtk::ApplicationWindow::on_delete_event(e);
+        case SAVE:
+            nvim_.nvim_command("wqa");
+            return Gtk::ApplicationWindow::on_delete_event(e);
+        default:
+            return true;
+    }
 }
 
 #if 0

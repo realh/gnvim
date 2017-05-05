@@ -61,6 +61,9 @@ public:
 
     void list_buffers();
 
+    /// Returns true if any buffers are modified
+    bool any_modified() const;
+
     /// Raised when all the requests from list_buffers have been answered.
     /// If there was an error the parameter to the signal is the partially
     /// received list and the main copy is unchanged.
