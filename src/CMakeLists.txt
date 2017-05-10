@@ -12,6 +12,7 @@ set(GNVIM_SOURCES
     text-grid.cpp
     text-grid-view.cpp
     window.cpp
+    resources.c
 )
 
 set(GNVIM_HEADERS
@@ -29,6 +30,14 @@ set(GNVIM_HEADERS
     text-grid-view.h
     window.h
 )
+
+add_custom_command(OUTPUT resources.c
+    COMMAND glib-compile-resources gnvim.gresource.xml
+    --target=${CMAKE_CURRENT_BINARY_DIR}/resources.c
+        --generate-source
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gnvim.gresource.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/appmenu.ui
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 #set(GNVIM_SIGNALS ${CMAKE_CURRENT_SOURCE_DIR}/gnvim-signals.py)
 #set(NVIM_BRIDGE_CPP_IN ${CMAKE_CURRENT_SOURCE_DIR}/nvim-bridge.cpp.in)

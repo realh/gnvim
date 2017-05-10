@@ -15,7 +15,17 @@ gnvim_SOURCES = \
 	request-set.cpp		request-set.h		\
 	text-grid.cpp		text-grid.h		\
 	text-grid-view.cpp	text-grid-view.h	\
-	window.cpp		window.h
+	window.cpp		window.h		\
+	resources.c
+
+GNVIM_UI_FILES = gnvim.gresource.xml appmenu.ui
+
+resources.c: $(GNVIM_UI_FILES)
+	glib-compile-resources $(srcdir)/gnvim.gresource.xml \
+		--target=resources.c \
+		--generate-source --sourcedir=$(srcdir)
 
 gnvim_CXXFLAGS = $(gnvim_CFLAGS)
 gnvim_LDFLAGS = $(gnvim_LIBS)
+
+EXTRA_DIST = $(GNVIM_UI_FILES)
