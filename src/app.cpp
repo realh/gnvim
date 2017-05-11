@@ -21,6 +21,7 @@
 #include <cstdio>
 
 #include "app.h"
+#include "dcs-dialog.h"
 #include "window.h"
 
 namespace Gnvim
@@ -140,6 +141,21 @@ void Application::on_window_removed(Gtk::Window *win)
     }
 }
 
+template<class T> bool Application::foreach_window
+(std::vector<Gtk::Window *> &wins, T functor)
+{
+    bool result = false;
+    for (auto &win: wins)
+    {
+        if (functor(static_cast<Window *>(win)))
+        {
+            result = true;
+            break;
+        }
+    }
+    return result;
+}
+
 bool Application::on_opt_geometry(const Glib::ustring &,
         const Glib::ustring &geom, bool has_value)
 {
@@ -200,7 +216,38 @@ void Application::on_action_about()
 
 void Application::on_action_quit()
 {
-    g_debug("Quit clicked");
+    auto wins = get_windows();
+    if (foreach_window(wins,
+                [](Window *win)->bool { return win->has_modifications(); }))
+    {
+        DcsDialog dcs(*(wins[0]));
+        switch (dcs.show_and_run())
+        {
+            case DcsDialog::DISCARD:
+                foreach_window(wins,
+                    [](Window *win)->bool
+                    {
+                        win->nvim_discard_all();
+                        win->force_close();
+                        return false;
+                    });
+                quit();
+                break;
+            case DcsDialog::SAVE:
+                foreach_window(wins,
+                    [](Window *win)->bool
+                    {
+                        win->nvim_save_all();
+                        win->force_close();
+                        return false;
+                    });
+                quit();
+                break;
+            default:
+                break;
+        }
+    }
+
 }
 
 RefPtr<Gio::Settings> Application::app_gsettings_;

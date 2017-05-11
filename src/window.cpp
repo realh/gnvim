@@ -140,10 +140,10 @@ bool Window::on_delete_event(GdkEventAny *e)
     switch (dcs.show_and_run())
     {
         case DcsDialog::DISCARD:
-            nvim_.nvim_command("qa!");
+            nvim_discard_all();
             return Gtk::ApplicationWindow::on_delete_event(e);
         case DcsDialog::SAVE:
-            nvim_.nvim_command("wqa");
+            nvim_save_all();
             return Gtk::ApplicationWindow::on_delete_event(e);
         default:
             return true;

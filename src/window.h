@@ -44,6 +44,16 @@ public:
     {
         return bufs_and_tabs_.any_modified();
     }
+
+    void nvim_discard_all()
+    {
+        nvim_.nvim_command("qa!");
+    }
+
+    void nvim_save_all()
+    {
+        nvim_.nvim_command("wqa");
+    }
 protected:
     //virtual void on_size_allocate(Gtk::Allocation &alloc) override;
 

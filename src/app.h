@@ -53,6 +53,20 @@ protected:
 
     virtual void on_window_removed(Gtk::Window *win) override;
 private:
+    /// @tparam T Functor of type bool (*)(Gnvim::Window *); return true
+    ///           to break out of the loop.
+    /// @returns  Whether the functor ever returned true.
+    template<class T> bool foreach_window(T functor)
+    {
+        return foreach_window(get_windows(), functor);
+    }
+
+    /// @tparam T Functor of type bool (*)(Gnvim::Window *); return true
+    ///           to break out of the loop.
+    /// @returns  Whether the functor ever returned true.
+    template<class T> bool foreach_window(std::vector<Gtk::Window *> &wins,
+            T functor);
+
     bool on_opt_geometry(const Glib::ustring &, const Glib::ustring &, bool);
 
     void on_prop_dark_theme_changed();
