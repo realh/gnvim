@@ -12,7 +12,7 @@ set(GNVIM_SOURCES
     text-grid.cpp
     text-grid-view.cpp
     window.cpp
-    resources.c
+    resources.cpp
 )
 
 set(GNVIM_HEADERS
@@ -31,9 +31,9 @@ set(GNVIM_HEADERS
     window.h
 )
 
-add_custom_command(OUTPUT resources.c
+add_custom_command(OUTPUT resources.cpp
     COMMAND glib-compile-resources gnvim.gresource.xml
-    --target=${CMAKE_CURRENT_BINARY_DIR}/resources.c
+    --target=${CMAKE_CURRENT_BINARY_DIR}/resources.cpp
         --generate-source
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gnvim.gresource.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/appmenu.ui

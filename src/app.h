@@ -49,6 +49,8 @@ public:
         return prop_dark_theme_.get_proxy();
     }
 protected:
+    virtual void on_startup() override;
+
     virtual void on_window_removed(Gtk::Window *win) override;
 private:
     bool on_opt_geometry(const Glib::ustring &, const Glib::ustring &, bool);

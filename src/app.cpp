@@ -90,6 +90,15 @@ int Application::on_command_line(const RefPtr<Gio::ApplicationCommandLine> &cl)
     return 0;
 }
 
+void Application::on_startup()
+{
+    Gtk::Application::on_startup();
+    auto builder = Gtk::Builder::create_from_resource
+        ("/uk/co/realh/gnvim/appmenu.ui");
+    set_app_menu(RefPtr<Gio::MenuModel>::cast_static
+            (builder->get_object("appmenu")));
+}
+
 bool Application::open_window(const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
     try
