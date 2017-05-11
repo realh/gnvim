@@ -2,6 +2,7 @@ set(GNVIM_SOURCES
     app.cpp
     bufsandtabs.cpp
     cell-attributes.cpp
+    dcs-dialog.cpp
     ext-types.cpp
     main.cpp
     msgpack-adapter.cpp
@@ -9,16 +10,17 @@ set(GNVIM_SOURCES
     nvim-bridge.cpp
     nvim-grid-view.cpp
     request-set.cpp
+    resources.cpp
     text-grid.cpp
     text-grid-view.cpp
     window.cpp
-    resources.cpp
 )
 
 set(GNVIM_HEADERS
     app.h
     bufsandtabs.h
     cell-attributes.h
+    dcs-dialog.h
     defns.h
     ext-types.h
     msgpack-adapter.h

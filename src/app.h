@@ -57,6 +57,9 @@ private:
 
     void on_prop_dark_theme_changed();
 
+    void on_action_about();
+    void on_action_quit();
+
     Glib::OptionContext options_;
     Glib::OptionGroup main_opt_group_;
     bool opt_max_;

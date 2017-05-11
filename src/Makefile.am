@@ -4,6 +4,7 @@ gnvim_SOURCES = \
 	app.cpp			app.h			\
 	bufsandtabs.cpp		bufsandtabs.h		\
 	cell-attributes.cpp	cell-attributes.h	\
+	dcs-dialog.cpp 		dcs-dialog.h		\
 	defns.h						\
 	ext-types.cpp		ext-types.h		\
 	main.cpp					\
@@ -13,10 +14,10 @@ gnvim_SOURCES = \
 	nvim-bridge.cpp		nvim-bridge.h		\
 	nvim-grid-view.cpp	nvim-grid-view.h	\
 	request-set.cpp		request-set.h		\
+	resources.cpp					\
 	text-grid.cpp		text-grid.h		\
 	text-grid-view.cpp	text-grid-view.h	\
-	window.cpp		window.h		\
-	resources.cpp
+	window.cpp		window.h
 
 GNVIM_UI_FILES = gnvim.gresource.xml appmenu.ui
 

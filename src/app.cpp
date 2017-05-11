@@ -93,6 +93,10 @@ int Application::on_command_line(const RefPtr<Gio::ApplicationCommandLine> &cl)
 void Application::on_startup()
 {
     Gtk::Application::on_startup();
+
+    add_action("about", sigc::mem_fun(*this, &Application::on_action_about));
+    add_action("quit", sigc::mem_fun(*this, &Application::on_action_quit));
+
     auto builder = Gtk::Builder::create_from_resource
         ("/uk/co/realh/gnvim/appmenu.ui");
     set_app_menu(RefPtr<Gio::MenuModel>::cast_static
@@ -187,6 +191,16 @@ void Application::on_prop_dark_theme_changed()
     auto gsettings = Gtk::Settings::get_default();
     gsettings->property_gtk_application_prefer_dark_theme().set_value
             (prop_dark_theme_.get_value());
+}
+
+void Application::on_action_about()
+{
+    g_debug("About clicked");
+}
+
+void Application::on_action_quit()
+{
+    g_debug("Quit clicked");
 }
 
 RefPtr<Gio::Settings> Application::app_gsettings_;

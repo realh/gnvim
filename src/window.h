@@ -39,6 +39,11 @@ public:
     ~Window();
 
     void force_close();
+
+    bool has_modifications() const
+    {
+        return bufs_and_tabs_.any_modified();
+    }
 protected:
     //virtual void on_size_allocate(Gtk::Allocation &alloc) override;
 

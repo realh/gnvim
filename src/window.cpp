@@ -18,6 +18,7 @@
 
 #include "defns.h"
 
+#include "dcs-dialog.h"
 #include "nvim-grid-view.h"
 #include "window.h"
 
@@ -135,26 +136,13 @@ bool Window::on_delete_event(GdkEventAny *e)
     if (force_close_ || !bufs_and_tabs_.any_modified())
         return Gtk::ApplicationWindow::on_delete_event(e);
 
-    enum {
-        DISCARD = 1,
-        SAVE,
-        KEEP_OPEN
-    };
-    Gtk::MessageDialog dcs(*this, _("One or more buffers belonging to this "
-            "window contain(s) unsaved data"),
-            false, Gtk::MESSAGE_WARNING,
-            Gtk::BUTTONS_NONE, true);
-    dcs.add_button(_("Discard"), DISCARD);
-    dcs.add_button(_("Save"), SAVE);
-    dcs.add_button(_("Keep Open"), KEEP_OPEN);
-    dcs.show_all();
-    dcs.present();
-    switch (dcs.run())
+    DcsDialog dcs(*this);
+    switch (dcs.show_and_run())
     {
-        case DISCARD:
+        case DcsDialog::DISCARD:
             nvim_.nvim_command("qa!");
             return Gtk::ApplicationWindow::on_delete_event(e);
-        case SAVE:
+        case DcsDialog::SAVE:
             nvim_.nvim_command("wqa");
             return Gtk::ApplicationWindow::on_delete_event(e);
         default:
