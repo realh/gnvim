@@ -21,6 +21,8 @@ manage a viewport by moving text around instead of using standard scrollbars.
 
 * Configurable cursor colour
 
+* Detect unsaved files before closing
+
 ## High priority future features
 
 * Use options from the vim instance where possible
@@ -32,8 +34,6 @@ manage a viewport by moving text around instead of using standard scrollbars.
 * Options to connect to remote nvim instances
 
 * Share state between nvim instances
-
-* Detect unsaved files before closing
 
 ## Slightly lower priority future features
 
