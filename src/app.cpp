@@ -102,7 +102,7 @@ void Application::on_startup()
 {
     Gtk::Application::on_startup();
 
-    Gtk::Window::set_default_icon_name("neovim");
+    //Gtk::Window::set_default_icon_name("gnvim");
 
     add_action("about", sigc::mem_fun(*this, &Application::on_action_about));
     add_action("quit", sigc::mem_fun(*this, &Application::on_action_quit));
