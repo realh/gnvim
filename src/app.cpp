@@ -220,7 +220,14 @@ void Application::on_prop_dark_theme_changed()
 
 void Application::on_action_about()
 {
-    auto about = new Gtk::AboutDialog();
+    if (about_dlg_)
+    {
+        about_dlg_->present();
+        return;
+    }
+
+    Gtk::AboutDialog about;
+    about_dlg_ = &about;
 
     std::string version = PACKAGE_VERSION;
     std::string gversion = GNVIM_GIT_VERSION;
@@ -229,21 +236,50 @@ void Application::on_action_about()
     // address, so wrap both in strings even though one might be redundant.
     if (gversion.length() && version != gversion)
         version += std::string(" (") + gversion + ')';
-    about->set_version(version);
+    about.set_version(version);
 
-    about->set_copyright("\u00a9 2017 Tony Houghton");
-    about->set_comments(_("A simple but productive GUI for neovim"));
-    about->set_license_type(Gtk::LICENSE_GPL_3_0);
-    about->set_website("https://github.com/realh/gnvim");
-    about->set_logo_icon_name("gnvim");
+    about.set_copyright("\u00a9 2017 Tony Houghton");
+    about.set_comments(_("A simple but productive GUI for neovim"));
+    about.set_license_type(Gtk::LICENSE_GPL_3_0);
+    about.set_website("https://github.com/realh/gnvim");
+    about.set_logo_icon_name("gnvim");
 
-    // This causes a warning about the lack of a transient parent, but there
-    // is no appropriate parent for a dialog opened from the app menu
-    about->present();
+    // gtkmm's object lifecycle management seems to break down with dialogs
+    // showing without using run(). So we might as well make it modal and get
+    // rid of the messages complaining about it not having a transient parent
+    // But even when it's modal the app menu items can still be activated, so
+    // we have to take that into account too.
+    auto wins = get_windows();
+    if (wins.size())
+    {
+        // Find currently focused window, otherwise just use first in list
+        Gtk::Window *current = nullptr;
+        if (!foreach_window(wins, [&current](Window *w)->bool
+        {
+            if (w->has_toplevel_focus())
+            {
+                current = w;
+                return true;
+            }
+            return false;
+        }))
+        {
+            current = wins[0];
+        }
+        about.set_transient_for(*current);
+    }
+    about.set_modal();
+
+    about.present();
+    about.run();
+    about_dlg_ = nullptr;
 }
 
 void Application::on_action_quit()
 {
+    if (about_dlg_)
+        about_dlg_->close();
+
     auto wins = get_windows();
     if (foreach_window(wins,
                 [](Window *win)->bool { return win->has_modifications(); }))
@@ -252,18 +288,16 @@ void Application::on_action_quit()
         switch (dcs.show_and_run())
         {
             case DcsDialog::DISCARD:
-                foreach_window(wins,
-                    [](Window *win)->bool
-                    {
-                        win->nvim_discard_all();
-                        win->force_close();
-                        return false;
-                    });
+                foreach_window(wins, [](Window *win)->bool
+                {
+                    win->nvim_discard_all();
+                    win->force_close();
+                    return false;
+                });
                 quit();
                 break;
             case DcsDialog::SAVE:
-                foreach_window(wins,
-                    [](Window *win)->bool
+                foreach_window(wins, [](Window *win)->bool
                     {
                         win->nvim_save_all();
                         win->force_close();
@@ -275,7 +309,15 @@ void Application::on_action_quit()
                 break;
         }
     }
-
+    else
+    {
+        foreach_window(wins, [](Window *win)->bool
+        {
+            win->force_close();
+            return false;
+        });
+        quit();
+    }
 }
 
 RefPtr<Gio::Settings> Application::app_gsettings_;

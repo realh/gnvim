@@ -83,6 +83,8 @@ private:
     static RefPtr<Gio::Settings> app_gsettings_;
     static RefPtr<Gio::Settings> sys_gsettings_;
     Glib::Property<bool> prop_dark_theme_;
+
+    Gtk::AboutDialog *about_dlg_ {nullptr};
 };
 
 }
