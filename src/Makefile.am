@@ -22,7 +22,7 @@ gnvim_SOURCES = \
 
 BUILT_SOURCES = git-version.h resources.cpp
 
-git-version.h:
+git-version.h: $(top_srcdir)/.git
 	echo '#ifndef GNVIM_GIT_VERSION' > $@
 	echo '#define GNVIM_GIT_VERSION \
 		"'`$(GIT_BINARY) describe 2>/dev/null`'"' >> $@

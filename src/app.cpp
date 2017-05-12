@@ -102,7 +102,7 @@ void Application::on_startup()
 {
     Gtk::Application::on_startup();
 
-    //Gtk::Window::set_default_icon_name("gnvim");
+    Gtk::Window::set_default_icon_name("gnvim");
 
     add_action("about", sigc::mem_fun(*this, &Application::on_action_about));
     add_action("quit", sigc::mem_fun(*this, &Application::on_action_quit));
@@ -235,6 +235,7 @@ void Application::on_action_about()
     about->set_comments(_("A simple but productive GUI for neovim"));
     about->set_license_type(Gtk::LICENSE_GPL_3_0);
     about->set_website("https://github.com/realh/gnvim");
+    about->set_logo_icon_name("gnvim");
 
     about->present();
 }
