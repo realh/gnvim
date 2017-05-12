@@ -237,6 +237,8 @@ void Application::on_action_about()
     about->set_website("https://github.com/realh/gnvim");
     about->set_logo_icon_name("gnvim");
 
+    // This causes a warning about the lack of a transient parent, but there
+    // is no appropriate parent for a dialog opened from the app menu
     about->present();
 }
 
