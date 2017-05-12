@@ -14,6 +14,7 @@ GLIB_GSETTINGS
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11
 PKG_PROG_PKG_CONFIG
+AX_WITH_PROG([GIT_BINARY], [git], [true])
 
 # Checks for libraries.
 PKG_CHECK_MODULES([gnvim], [gtkmm-3.0 msgpack])

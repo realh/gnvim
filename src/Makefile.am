@@ -7,6 +7,7 @@ gnvim_SOURCES = \
 	dcs-dialog.cpp 		dcs-dialog.h		\
 	defns.h						\
 	ext-types.cpp		ext-types.h		\
+	git-version.h					\
 	main.cpp					\
 	msgpack-adapter.cpp	msgpack-adapter.h	\
 	msgpack-promise.h				\
@@ -18,6 +19,14 @@ gnvim_SOURCES = \
 	text-grid.cpp		text-grid.h		\
 	text-grid-view.cpp	text-grid-view.h	\
 	window.cpp		window.h
+
+BUILT_SOURCES = git-version.h resources.cpp
+
+git-version.h:
+	echo '#ifndef GNVIM_GIT_VERSION' > $@
+	echo '#define GNVIM_GIT_VERSION \
+		"'`$(GIT_BINARY) describe 2>/dev/null`'"' >> $@
+	echo '#endif' >> $@
 
 GNVIM_UI_FILES = gnvim.gresource.xml appmenu.ui
 

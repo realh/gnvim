@@ -42,6 +42,9 @@ fp.close()
 #flags.append("-I.")
 flags.extend(["-I.", "-I..", "-Wall", "-Wextra", "-xc++", "-std=c++11"])
 
+# The version values are irrelevant here as long as they're valid strings
+flags.extend(['-DGNVIM_GIT_VERSION="0.0.1"', '-DPACKAGE_VERSION="0.0.1"'])
+
 os.unlink(output)
 fp = open(output, 'w')
 fp.write( \

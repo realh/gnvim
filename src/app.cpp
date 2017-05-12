@@ -19,9 +19,16 @@
 #include "defns.h"
 
 #include <cstdio>
+#include <cstring>
 
 #include "app.h"
 #include "dcs-dialog.h"
+
+// CMake defines the variable on the command line, automake generates a file
+#ifdef HAVE_CONFIG_H
+#include "git-version.h"
+#endif
+
 #include "window.h"
 
 namespace Gnvim
@@ -94,6 +101,8 @@ int Application::on_command_line(const RefPtr<Gio::ApplicationCommandLine> &cl)
 void Application::on_startup()
 {
     Gtk::Application::on_startup();
+
+    Gtk::Window::set_default_icon_name("neovim");
 
     add_action("about", sigc::mem_fun(*this, &Application::on_action_about));
     add_action("quit", sigc::mem_fun(*this, &Application::on_action_quit));
@@ -211,7 +220,23 @@ void Application::on_prop_dark_theme_changed()
 
 void Application::on_action_about()
 {
-    g_debug("About clicked");
+    auto about = new Gtk::AboutDialog();
+
+    std::string version = PACKAGE_VERSION;
+    std::string gversion = GNVIM_GIT_VERSION;
+    // Comparing the 2 macros with strcmp causes a warning, but I'm not sure
+    // whether identical string literals are guaranteed to share the same
+    // address, so wrap both in strings even though one might be redundant.
+    if (gversion.length() && version != gversion)
+        version += std::string(" (") + gversion + ')';
+    about->set_version(version);
+
+    about->set_copyright("\u00a9 2017 Tony Houghton");
+    about->set_comments(_("A simple but productive GUI for neovim"));
+    about->set_license_type(Gtk::LICENSE_GPL_3_0);
+    about->set_website("https://github.com/realh/gnvim");
+
+    about->present();
 }
 
 void Application::on_action_quit()
