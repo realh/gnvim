@@ -24,7 +24,9 @@ namespace Gnvim
 {
 
 DcsDialog::DcsDialog(Gtk::Window &parent) : Gtk::MessageDialog(
-    parent, _("One or more buffers contain(s) unsaved data"),
+    parent, _("One or more buffers contain(s) unsaved data. "
+        "However, remote nvim instances not started by this instance of gnvim "
+        "will be left running, so Discard does not apply to them"),
     false, Gtk::MESSAGE_WARNING,
     Gtk::BUTTONS_NONE, true)
 {
