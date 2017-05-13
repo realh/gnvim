@@ -49,11 +49,14 @@ public:
     void start(RefPtr<Gio::ApplicationCommandLine> cl,
             const std::string &init_file);
 
-    /// Starts communication with nvim over an already open pair of streams.
-    /// The streams may be pipes from the embedding version of start() or both
-    /// refer to the same socket.
+    /** Starts communication with nvim over an already open pair of streams.
+     *  The streams may be pipes from the embedding version of start() or both
+     *  refer to the same socket.
+     *  @param unified  True if both streams refer to the same r/w stream
+     *                  eg a socket.
+     */
     void start(RefPtr<Gio::OutputStream> strm_to_nvim,
-        RefPtr<Gio::InputStream> strm_from_nvim);
+        RefPtr<Gio::InputStream> strm_from_nvim, bool unified);
 
     /// Opens a socket for communicating with a remote nvim.
     /// If socket_addr begins with '/' it's assumed to be a Unix socket,

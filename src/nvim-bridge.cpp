@@ -131,11 +131,12 @@ void NvimBridge::start(RefPtr<Gio::ApplicationCommandLine> cl,
     start(RefPtr<Gio::OutputStream>
             (Gio::UnixOutputStream::create(to_nvim_stdin, TRUE)),
         RefPtr<Gio::InputStream>
-            (Gio::UnixInputStream::create(from_nvim_stdout, TRUE)));
+            (Gio::UnixInputStream::create(from_nvim_stdout, TRUE)),
+        false);
 }
 
 void NvimBridge::start(RefPtr<Gio::OutputStream> strm_to_nvim,
-    RefPtr<Gio::InputStream> strm_from_nvim)
+    RefPtr<Gio::InputStream> strm_from_nvim, bool unified)
 {
     rpc_ = MsgpackRpc::create();
     rpc_->notify_signal().connect(
@@ -143,7 +144,7 @@ void NvimBridge::start(RefPtr<Gio::OutputStream> strm_to_nvim,
     rpc_->request_signal().connect(
             sigc::mem_fun(*this, &NvimBridge::on_request));
 
-    rpc_->start(strm_to_nvim, strm_from_nvim);
+    rpc_->start(strm_to_nvim, strm_from_nvim, unified);
 }
 
 void NvimBridge::start(const std::string &addr)
@@ -165,7 +166,7 @@ void NvimBridge::start_unix_socket(const std::string &addr)
 
 void NvimBridge::start_socket()
 {
-    start(socket_->get_output_stream(), socket_->get_input_stream());
+    start(socket_->get_output_stream(), socket_->get_input_stream(), true);
 }
 
 NvimBridge::~NvimBridge()

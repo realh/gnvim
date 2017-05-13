@@ -36,8 +36,9 @@ MsgpackRpc::~MsgpackRpc()
 }
 
 void MsgpackRpc::start(RefPtr<Gio::OutputStream> &strm_to_nvim,
-        RefPtr<Gio::InputStream> &strm_from_nvim)
+        RefPtr<Gio::InputStream> &strm_from_nvim, bool unified)
 {
+    unified_ = unified;
     strm_to_nvim_ = strm_to_nvim;
     strm_from_nvim_ = strm_from_nvim;
     start_async_read();
@@ -53,15 +54,18 @@ void MsgpackRpc::stop()
     }
     stop_ = true;
     rcv_cancellable_->cancel();
-    try {
-        strm_to_nvim_->close();
-    } catch(Glib::Exception &e) {
-        g_warning("Exception closing strm_to_nvim: %s", e.what().c_str());
-    }
-    try {
-        strm_from_nvim_->close();
-    } catch(Glib::Exception &e) {
-        g_warning("Exception closing strm_from_nvim: %s", e.what().c_str());
+    if (!unified_)
+    {
+        try {
+            strm_to_nvim_->close();
+        } catch(Glib::Exception &e) {
+            g_warning("Exception closing strm_to_nvim: %s", e.what().c_str());
+        }
+        try {
+            strm_from_nvim_->close();
+        } catch(Glib::Exception &e) {
+            g_warning("Exception closing strm_from_nvim: %s", e.what().c_str());
+        }
     }
 }
 

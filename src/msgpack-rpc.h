@@ -59,8 +59,10 @@ public:
         return RefPtr<MsgpackRpc> (new MsgpackRpc());
     }
 
+    /// Gets streams ready for sending and receiving msgpack-rpc.
+    /// @param unified  If true the streams are both from the same r/w stream.
     void start(RefPtr<Gio::OutputStream> &strm_to_nvim_,
-        RefPtr<Gio::InputStream> &strm_from_nvim_);
+        RefPtr<Gio::InputStream> &strm_from_nvim_, bool unified);
 
     virtual ~MsgpackRpc();
 
@@ -197,6 +199,7 @@ private:
 
     RefPtr<Gio::OutputStream> strm_to_nvim_;
     RefPtr<Gio::InputStream> strm_from_nvim_;
+    bool unified_ {false};
 
     bool stop_ {false};
     Gio::SlotAsyncReady async_read_slot_;
