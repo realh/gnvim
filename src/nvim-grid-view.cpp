@@ -29,8 +29,8 @@ enum FontSource
     FONT_SOURCE_PREFS,
 };
 
-NvimGridView ::NvimGridView(std::shared_ptr<NvimBridge> nvim, int columns, int lines,
-        const std::string &font_name)
+NvimGridView ::NvimGridView(std::shared_ptr<NvimBridge> nvim,
+        int columns, int lines, const std::string &font_name)
 : TextGridView(columns, lines, font_name), nvim_(nvim)
 {
     add_events(Gdk::BUTTON1_MOTION_MASK | Gdk::BUTTON2_MOTION_MASK |
@@ -404,8 +404,12 @@ void NvimGridView::on_redraw_update_sp(int colour)
 void NvimGridView::on_redraw_cursor_goto(int line, int col)
 {
     //g_debug("cursor_goto %d, %d", col, line);
+    // Need to make sure the cursor's old position gets redrawn
+    update_redraw_region(cursor_rdrw_x_, cursor_rdrw_y_,
+            cursor_rdrw_x_, cursor_rdrw_y_);
     cursor_rdrw_x_ = col;
     cursor_rdrw_y_ = line;
+    update_redraw_region(col, line, col, line);
 }
 
 void NvimGridView::on_redraw_put(const msgpack::object_array &text_ar)

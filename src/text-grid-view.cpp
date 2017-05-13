@@ -290,6 +290,7 @@ bool TextGridView::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
     cr->save();
     cr->rectangle(0, 0, w, h);
     cr->clip();
+    fill_background_px(cr, 0, 0, w, h);
     //double l, t, r, b;
     //cr->get_clip_extents(l, t, r, b);
     //g_debug("redraw clip extents L:%f T:%f R:%f B:%f", l, t, r, b);
