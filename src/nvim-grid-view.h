@@ -21,6 +21,8 @@
 
 #include "defns.h"
 
+#include <memory>
+
 #include <msgpack.hpp>
 
 #include "nvim-bridge.h"
@@ -32,7 +34,7 @@ namespace Gnvim
 // TextGridView specialised for neovim
 class NvimGridView : public TextGridView {
 public:
-    NvimGridView(NvimBridge &nvim, int columns, int lines,
+    NvimGridView(std::shared_ptr<NvimBridge> nvim, int columns, int lines,
             const std::string &font_name = "");
 protected:
     virtual void on_size_allocate(Gtk::Allocation &) override;
@@ -109,7 +111,7 @@ private:
      */
     int gui_resize_counter_ {0};
 
-    NvimBridge &nvim_;
+    std::shared_ptr<NvimBridge> nvim_;
 
     // redraw limits are inclusive
     struct {

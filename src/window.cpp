@@ -26,20 +26,20 @@ namespace Gnvim
 {
 
 Window::Window(bool maximise, int width, int height,
-        const std::string &init_file, RefPtr<Gio::ApplicationCommandLine> cl)
-: bufs_and_tabs_(nvim_), maximise_(maximise), columns_(width), lines_(height),
-rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::ready_to_start)))
+        std::shared_ptr<NvimBridge> nvim)
+: nvim_(nvim), bufs_and_tabs_(nvim),
+    maximise_(maximise), columns_(width), lines_(height),
+    rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::ready_to_start)))
 {
-    nvim_.start(cl, init_file);
     auto prom = MsgpackPromise::create();
-    nvim_.get_api_info(rqset_->get_proxied_promise(prom));
+    nvim_->get_api_info(rqset_->get_proxied_promise(prom));
     if (width == -1)
     {
         columns_ = 80;
         prom = MsgpackPromise::create();
         prom->value_signal().connect
             (sigc::mem_fun(*this, &Window::on_columns_response));
-        nvim_.nvim_get_option("columns", rqset_->get_proxied_promise(prom));
+        nvim_->nvim_get_option("columns", rqset_->get_proxied_promise(prom));
     }
     if (height == -1)
     {
@@ -47,7 +47,7 @@ rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::ready_to_start)))
         prom = MsgpackPromise::create();
         prom->value_signal().connect
             (sigc::mem_fun(*this, &Window::on_lines_response));
-        nvim_.nvim_get_option("lines", rqset_->get_proxied_promise(prom));
+        nvim_->nvim_get_option("lines", rqset_->get_proxied_promise(prom));
     }
     rqset_->ready();
 }
@@ -55,7 +55,7 @@ rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::ready_to_start)))
 Window::~Window()
 {
     //g_debug("Window deleted");
-    nvim_.stop();
+    nvim_->stop();
     delete view_;
 }
 
@@ -65,7 +65,7 @@ void Window::ready_to_start(RequestSet *)
     {
         view_ = new NvimGridView(nvim_, columns_, lines_);
         rqset_.reset();
-        nvim_.start_ui(columns_, lines_);
+        nvim_->start_ui(columns_, lines_);
         add(*view_);
         view_->show_all();
         if (maximise_)
@@ -79,13 +79,13 @@ void Window::ready_to_start(RequestSet *)
             set_default_size(natural.width, natural.height);
         }
 
-        nvim_.io_error_signal().connect(
+        nvim_->io_error_signal().connect(
                 sigc::mem_fun(*this, &Window::on_nvim_error));
 
         set_geometry_hints();
 
         present();
-        nvim_.redraw_set_title.connect
+        nvim_->redraw_set_title.connect
             (sigc::mem_fun(this, &Window::on_redraw_set_title));
         bat_conn_.disconnect();
     });

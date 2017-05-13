@@ -157,14 +157,21 @@ private:
 
     void on_api_info_response(const msgpack::object &o);
 
+    void start_unix_socket(const std::string &addr);
+
+    /// Creates streams from socket_, called by either of the above
+    /// start_*_socket methods.
+    void start_socket();
+
     using adapter_ptr_t = std::unique_ptr<MsgpackAdapterBase>;
     using map_t = std::map<std::string, adapter_ptr_t>;
     //map_t request_adapters_;
     map_t notify_adapters_;
     map_t redraw_adapters_;
 
-    RefPtr<MsgpackRpc> rpc_;
     Glib::Pid nvim_pid_ {0};
+    RefPtr<Gio::SocketConnection> socket_;
+    RefPtr<MsgpackRpc> rpc_;
     static std::vector<std::string> envp_;
     bool ui_attached_ {false};
 

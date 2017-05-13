@@ -146,6 +146,28 @@ void NvimBridge::start(RefPtr<Gio::OutputStream> strm_to_nvim,
     rpc_->start(strm_to_nvim, strm_from_nvim);
 }
 
+void NvimBridge::start(const std::string &addr)
+{
+    if (addr[0] == '/')
+    {
+        start_unix_socket(addr);
+    }
+}
+
+void NvimBridge::start_unix_socket(const std::string &addr)
+{
+    auto sock_addr = Gio::UnixSocketAddress::create(addr,
+            Gio::UNIX_SOCKET_ADDRESS_PATH);
+    auto client = Gio::SocketClient::create();
+    socket_ = client->connect(sock_addr);
+    start_socket();
+}
+
+void NvimBridge::start_socket()
+{
+    start(socket_->get_output_stream(), socket_->get_input_stream());
+}
+
 NvimBridge::~NvimBridge()
 {
     stop();

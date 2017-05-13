@@ -29,7 +29,7 @@ enum FontSource
     FONT_SOURCE_PREFS,
 };
 
-NvimGridView ::NvimGridView(NvimBridge &nvim, int columns, int lines,
+NvimGridView ::NvimGridView(std::shared_ptr<NvimBridge> nvim, int columns, int lines,
         const std::string &font_name)
 : TextGridView(columns, lines, font_name), nvim_(nvim)
 {
@@ -72,37 +72,37 @@ NvimGridView ::NvimGridView(NvimBridge &nvim, int columns, int lines,
 
     reset_scroll_region();
 
-    nvim_.redraw_start.connect
+    nvim_->redraw_start.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_start));
-    nvim_.redraw_mode_change.connect
+    nvim_->redraw_mode_change.connect
         (sigc::mem_fun(this, &NvimGridView::on_redraw_mode_change));
-    nvim_.redraw_bell.connect
+    nvim_->redraw_bell.connect
         (sigc::mem_fun(this, &NvimGridView::on_redraw_bell));
-    nvim_.redraw_visual_bell.connect
+    nvim_->redraw_visual_bell.connect
         (sigc::mem_fun(this, &NvimGridView::on_redraw_bell));
-    nvim_.redraw_resize.connect
+    nvim_->redraw_resize.connect
         (sigc::mem_fun(this, &NvimGridView::on_redraw_resize));
-    nvim_.redraw_update_bg.connect
+    nvim_->redraw_update_bg.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_update_bg));
-    nvim_.redraw_update_fg.connect
+    nvim_->redraw_update_fg.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_update_fg));
-    nvim_.redraw_update_sp.connect
+    nvim_->redraw_update_sp.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_update_sp));
-    nvim_.redraw_cursor_goto.connect
+    nvim_->redraw_cursor_goto.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_cursor_goto));
-    nvim_.redraw_put.connect
+    nvim_->redraw_put.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_put));
-    nvim_.redraw_clear.connect
+    nvim_->redraw_clear.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_clear));
-    nvim_.redraw_eol_clear.connect
+    nvim_->redraw_eol_clear.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_eol_clear));
-    nvim_.redraw_highlight_set.connect
+    nvim_->redraw_highlight_set.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_highlight_set));
-    nvim_.redraw_set_scroll_region.connect
+    nvim_->redraw_set_scroll_region.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_set_scroll_region));
-    nvim_.redraw_scroll.connect
+    nvim_->redraw_scroll.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_scroll));
-    nvim_.redraw_end.connect
+    nvim_->redraw_end.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_end));
 }
 
@@ -114,7 +114,7 @@ void NvimGridView::on_size_allocate(Gtk::Allocation &alloc)
     if (old_cols != columns_ || old_lines != lines_)
     {
         ++gui_resize_counter_;
-        nvim_.nvim_ui_try_resize(columns_, lines_);
+        nvim_->nvim_ui_try_resize(columns_, lines_);
     }
 }
 
@@ -199,7 +199,7 @@ bool NvimGridView::on_key_press_event(GdkEventKey *event)
 
     //g_debug("Keypress %s", s.c_str());
 
-    nvim_.nvim_input(s);
+    nvim_->nvim_input(s);
     return true;
 }
 
@@ -314,7 +314,7 @@ bool NvimGridView::on_mouse_event(GdkEventType etype, int button,
             but_str.c_str(), etype_str.c_str(),
             x, y);
     //g_debug("Mouse event %s", inp);
-    nvim_.nvim_input(inp);
+    nvim_->nvim_input(inp);
     g_free(inp);
 
     return true;
@@ -630,7 +630,7 @@ void NvimGridView::do_scroll(const std::string &direction, int state)
 {
     auto s = std::string(1, '<') + modifier_string(state)
         + "ScrollWheel" + direction + '>';
-    nvim_.nvim_input(s);
+    nvim_->nvim_input(s);
 }
 
 // Used for both app and sys fonts, using key to work out which
@@ -720,19 +720,19 @@ void NvimGridView::on_sync_shada_changed(const Glib::ustring &)
 
 bool NvimGridView::on_focus_in_event(GdkEventFocus *e)
 {
-    nvim_.nvim_command("if exists('#FocusGained')|doauto FocusGained|endif");
-    //nvim_.nvim_command("silent doauto FocusGained");
+    nvim_->nvim_command("if exists('#FocusGained')|doauto FocusGained|endif");
+    //nvim_->nvim_command("silent doauto FocusGained");
     if (sync_shada_)
-        nvim_.nvim_command("rshada");
+        nvim_->nvim_command("rshada");
     return Gtk::DrawingArea::on_focus_in_event(e);
 }
 
 bool NvimGridView::on_focus_out_event(GdkEventFocus *e)
 {
-    nvim_.nvim_command("if exists('#FocusLost')|doauto FocusLost|endif");
-    //nvim_.nvim_command("silent doauto FocusLost");
+    nvim_->nvim_command("if exists('#FocusLost')|doauto FocusLost|endif");
+    //nvim_->nvim_command("silent doauto FocusLost");
     if (sync_shada_)
-        nvim_.nvim_command("wshada");
+        nvim_->nvim_command("wshada");
     return Gtk::DrawingArea::on_focus_out_event(e);
 }
 

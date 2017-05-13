@@ -79,6 +79,7 @@ private:
     bool opt_max_;
     int opt_width_, opt_height_;
     bool opt_help_nvim_;
+    Glib::ustring opt_socket_;
 
     static RefPtr<Gio::Settings> app_gsettings_;
     static RefPtr<Gio::Settings> sys_gsettings_;

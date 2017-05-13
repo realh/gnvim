@@ -28,9 +28,9 @@
 namespace Gnvim
 {
 
-BufsAndTabs::BufsAndTabs(NvimBridge &nvim) : nvim_ (nvim)
+BufsAndTabs::BufsAndTabs(std::shared_ptr<NvimBridge> nvim) : nvim_ (nvim)
 {
-    nvim_.signal_modified.connect(sigc::mem_fun
+    nvim_->signal_modified.connect(sigc::mem_fun
             (*this, &BufsAndTabs::on_modified_changed));
 }
 
@@ -57,7 +57,7 @@ void BufsAndTabs::list_buffers()
     (sigc::mem_fun(*this, &BufsAndTabs::on_bufs_listed));
     prom->error_signal().connect
     (sigc::mem_fun(*this, &BufsAndTabs::on_bufs_list_error));
-    nvim_.nvim_list_bufs(prom);
+    nvim_->nvim_list_bufs(prom);
 }
 
 void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
@@ -107,7 +107,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
                 current_buffer_ = buffers_.begin ();
                 sig_bufs_listed_.emit(buffers_);
             });
-            nvim_.nvim_get_current_buf(prom);
+            nvim_->nvim_get_current_buf(prom);
         }
     });
 
@@ -127,7 +127,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
             o.convert(buf_info->bufs[n].name);
         });
         prom->error_signal().connect(error_lambda);
-        nvim_.nvim_buf_get_name (buf_info->bufs[n].handle,
+        nvim_->nvim_buf_get_name (buf_info->bufs[n].handle,
                 rqset_->get_proxied_promise(prom));
 
         prom = MsgpackPromise::create();
@@ -140,21 +140,21 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
             */
         });
         prom->error_signal().connect(error_lambda);
-        nvim_.nvim_buf_get_changedtick (buf_info->bufs[n].handle,
+        nvim_->nvim_buf_get_changedtick (buf_info->bufs[n].handle,
                 rqset_->get_proxied_promise(prom));
     }
 
-    nvim_.ensure_augroup();
+    nvim_->ensure_augroup();
     std::ostringstream s;
-    s << "autocmd " << nvim_.get_augroup()
+    s << "autocmd " << nvim_->get_augroup()
         << " TextChanged,TextChangedI,BufReadPost,FileReadPost,FileWritePost * "
         << "if !exists('b:old_mod') || b:old_mod != &modified"
         << "|let b:old_mod = &modified"
         << "|call rpcnotify("
-        << nvim_.get_channel_id()
+        << nvim_->get_channel_id()
         << ", 'modified', str2nr(expand('<abuf>')), &modified)"
         << "|endif";
-    nvim_.nvim_command(s.str());
+    nvim_->nvim_command(s.str());
 
     rqset_->ready();
 }

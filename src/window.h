@@ -33,8 +33,8 @@ namespace Gnvim
 
 class Window : public Gtk::ApplicationWindow {
 public:
-    Window(bool maximise, int width, int height, const std::string &init_file,
-            RefPtr<Gio::ApplicationCommandLine> cl);
+    Window(bool maximise, int width, int height,
+            std::shared_ptr<NvimBridge> nvim_);
 
     ~Window();
 
@@ -47,16 +47,16 @@ public:
 
     void nvim_discard_all(bool force = false)
     {
-        if (force || nvim_.own_instance())
-            nvim_.nvim_command("qa!");
+        if (force || nvim_->own_instance())
+            nvim_->nvim_command("qa!");
     }
 
     void nvim_save_all(bool force_close = false)
     {
-        if (force_close || nvim_.own_instance())
-            nvim_.nvim_command("wqa!");
+        if (force_close || nvim_->own_instance())
+            nvim_->nvim_command("wqa!");
         else
-            nvim_.nvim_command("wa!");
+            nvim_->nvim_command("wa!");
     }
 protected:
     //virtual void on_size_allocate(Gtk::Allocation &alloc) override;
@@ -79,7 +79,7 @@ private:
 
     bool force_close_ {false};
 
-    NvimBridge nvim_;
+    std::shared_ptr<NvimBridge> nvim_;
     BufsAndTabs bufs_and_tabs_;
     sigc::connection bat_conn_;
 

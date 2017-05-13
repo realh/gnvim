@@ -72,7 +72,7 @@ void MsgpackRpc::do_request(const char *method, packer_fn arg_packer,
     packer_t packer(s);
     packer.pack_array(4);
     packer.pack_int(REQUEST);
-    packer.pack_uint32 (++msgid_);
+    packer.pack_uint32(++msgid_);
     packer.pack(method);
     arg_packer(packer);
     response_promises_[msgid_] = promise;

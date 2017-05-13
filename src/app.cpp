@@ -46,11 +46,22 @@ Application::Application()
     options_.set_summary(_("Run neovim with a GUI"));
     options_.set_description(
             _("Other options are passed on to the embedded nvim instance;\n"
-                "--embed is added automatically"));
+                "--embed is added automatically unless --socket is used"));
     options_.set_help_enabled(true);
     options_.set_ignore_unknown_options(true);
 
     Glib::OptionEntry entry;
+    entry.set_long_name("socket");
+    entry.set_flags(Glib::OptionEntry::FLAG_IN_MAIN);
+    entry.set_description(_("Connect to nvim over a socket.\n"
+                "                                        "
+                "If ADDR begins with '/' it's a\n"
+                "                                        "
+                "Unix socket, otherwise TCP"));
+    entry.set_arg_description(_("ADDR"));
+    main_opt_group_.add_entry(entry, opt_socket_);
+
+    entry = Glib::OptionEntry();
     entry.set_long_name("geometry");
     entry.set_short_name('g');
     entry.set_flags(Glib::OptionEntry::FLAG_IN_MAIN);
@@ -117,9 +128,12 @@ bool Application::open_window(const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
     try
     {
-        Glib::ustring init_file = app_gsettings_->get_string("init-file");
-        auto win = new Window(opt_max_, opt_width_, opt_height_,
-                init_file, cl);
+        auto nvim = std::make_shared<NvimBridge>();
+        if (opt_socket_.size())
+            nvim->start(opt_socket_);
+        else
+            nvim->start(cl, app_gsettings_->get_string("init-file"));
+        auto win = new Window(opt_max_, opt_width_, opt_height_, nvim);
         add_window(*win);
         return true;
     }

@@ -21,6 +21,7 @@
 
 #include "defns.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -45,7 +46,7 @@ struct BufferInfo {
 /// Keeps track of the buffers and tabs managed by each nvim instance.
 class BufsAndTabs {
 public:
-    BufsAndTabs(NvimBridge &nvim);
+    BufsAndTabs(std::shared_ptr<NvimBridge> nvim);
 
     /// Sets up internal listeners and calls get_all_info().
     void start();
@@ -78,7 +79,7 @@ private:
 
     void on_modified_changed(int buf, bool modified);
 
-    NvimBridge &nvim_;
+    std::shared_ptr<NvimBridge> nvim_;
 
     RequestSet *rqset_ {nullptr};
 
