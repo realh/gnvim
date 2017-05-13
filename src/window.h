@@ -45,14 +45,18 @@ public:
         return bufs_and_tabs_.any_modified();
     }
 
-    void nvim_discard_all()
+    void nvim_discard_all(bool force = false)
     {
-        nvim_.nvim_command("qa!");
+        if (force || nvim_.own_instance())
+            nvim_.nvim_command("qa!");
     }
 
-    void nvim_save_all()
+    void nvim_save_all(bool force_close = false)
     {
-        nvim_.nvim_command("wqa");
+        if (force_close || nvim_.own_instance())
+            nvim_.nvim_command("wqa!");
+        else
+            nvim_.nvim_command("wa!");
     }
 protected:
     //virtual void on_size_allocate(Gtk::Allocation &alloc) override;

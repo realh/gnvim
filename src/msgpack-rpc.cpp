@@ -35,10 +35,11 @@ MsgpackRpc::~MsgpackRpc()
     stop();
 }
 
-void MsgpackRpc::start(int pipe_to_nvim, int pipe_from_nvim)
+void MsgpackRpc::start(RefPtr<Gio::OutputStream> &strm_to_nvim,
+        RefPtr<Gio::InputStream> &strm_from_nvim)
 {
-    strm_to_nvim_ = Gio::UnixOutputStream::create(pipe_to_nvim, TRUE);
-    strm_from_nvim_ = Gio::UnixInputStream::create(pipe_from_nvim, TRUE);
+    strm_to_nvim_ = strm_to_nvim;
+    strm_from_nvim_ = strm_from_nvim;
     start_async_read();
 }
 
@@ -56,6 +57,11 @@ void MsgpackRpc::stop()
         strm_to_nvim_->close();
     } catch(Glib::Exception &e) {
         g_warning("Exception closing strm_to_nvim: %s", e.what().c_str());
+    }
+    try {
+        strm_from_nvim_->close();
+    } catch(Glib::Exception &e) {
+        g_warning("Exception closing strm_from_nvim: %s", e.what().c_str());
     }
 }
 

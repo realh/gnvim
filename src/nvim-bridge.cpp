@@ -128,13 +128,22 @@ void NvimBridge::start(RefPtr<Gio::ApplicationCommandLine> cl,
             Glib::SlotSpawnChildSetup(), &nvim_pid_,
             &to_nvim_stdin, &from_nvim_stdout);
 
+    start(RefPtr<Gio::OutputStream>
+            (Gio::UnixOutputStream::create(to_nvim_stdin, TRUE)),
+        RefPtr<Gio::InputStream>
+            (Gio::UnixInputStream::create(from_nvim_stdout, TRUE)));
+}
+
+void NvimBridge::start(RefPtr<Gio::OutputStream> strm_to_nvim,
+    RefPtr<Gio::InputStream> strm_from_nvim)
+{
     rpc_ = MsgpackRpc::create();
     rpc_->notify_signal().connect(
             sigc::mem_fun(*this, &NvimBridge::on_notify));
     rpc_->request_signal().connect(
             sigc::mem_fun(*this, &NvimBridge::on_request));
 
-    rpc_->start(to_nvim_stdin, from_nvim_stdout);
+    rpc_->start(strm_to_nvim, strm_from_nvim);
 }
 
 NvimBridge::~NvimBridge()
@@ -226,7 +235,8 @@ void NvimBridge::stop()
                         + "|autocmd!|augroup END"));
             //g_debug("nvim-bridge detaching ui");
             rpc_->notify("nvim_ui_detach");
-            rpc_->notify("nvim_command", "qa!");
+            if (own_instance())
+                rpc_->notify("nvim_command", "qa!");
             ui_attached_ = false;
         }
         rpc_->stop();

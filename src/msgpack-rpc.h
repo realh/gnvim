@@ -59,7 +59,8 @@ public:
         return RefPtr<MsgpackRpc> (new MsgpackRpc());
     }
 
-    void start(int pipe_to_nvim, int pipe_from_nvim);
+    void start(RefPtr<Gio::OutputStream> &strm_to_nvim_,
+        RefPtr<Gio::InputStream> &strm_from_nvim_);
 
     virtual ~MsgpackRpc();
 

@@ -41,8 +41,24 @@ public:
 
     ~NvimBridge();
 
+    /** Starts an instance of nvim with --embed.
+     *  --embed and -u may be added to the command line if appropriate.
+     *  @param cl           Command line from Application.
+     *  @param init_file    Alternative to init.nvim (-u) or empty string.
+     */
     void start(RefPtr<Gio::ApplicationCommandLine> cl,
             const std::string &init_file);
+
+    /// Starts communication with nvim over an already open pair of streams.
+    /// The streams may be pipes from the embedding version of start() or both
+    /// refer to the same socket.
+    void start(RefPtr<Gio::OutputStream> strm_to_nvim,
+        RefPtr<Gio::InputStream> strm_from_nvim);
+
+    /// Opens a socket for communicating with a remote nvim.
+    /// If socket_addr begins with '/' it's assumed to be a Unix socket,
+    /// otherwise TCP.
+    void start(const std::string &socket_addr);
 
     /// Connects additional handler to promise to get important info.
     /// Do not reuse the promise for any different request.
@@ -51,6 +67,12 @@ public:
     void start_ui(int width, int height);
 
     void stop();
+
+    /// @returns true if the nvim instance is owned by us and it's still active.
+    bool own_instance()
+    {
+        return nvim_pid_ != 0;
+    }
 
     void nvim_get_api_info(PromiseHandle promise);
 
@@ -142,7 +164,7 @@ private:
     map_t redraw_adapters_;
 
     RefPtr<MsgpackRpc> rpc_;
-    Glib::Pid nvim_pid_;
+    Glib::Pid nvim_pid_ {0};
     static std::vector<std::string> envp_;
     bool ui_attached_ {false};
 
