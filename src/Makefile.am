@@ -14,6 +14,7 @@ gnvim_SOURCES = \
 	msgpack-rpc.cpp		msgpack-rpc.h		\
 	nvim-bridge.cpp		nvim-bridge.h		\
 	nvim-grid-view.cpp	nvim-grid-view.h	\
+	start-bundle.cpp	start-bundle.h		\
 	request-set.cpp		request-set.h		\
 	resources.cpp					\
 	text-grid.cpp		text-grid.h		\

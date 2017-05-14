@@ -98,6 +98,8 @@ int Application::on_command_line(const RefPtr<Gio::ApplicationCommandLine> &cl)
 {
     int argc;
     char **argv = cl->get_arguments(argc);
+    std::unique_ptr<char *, void(*)(char **)> scoped_argv(argv, g_strfreev);
+
     auto settings = app_gsettings();
     opt_max_ = settings->get_boolean("maximise");
     opt_width_ = -1;
@@ -121,8 +123,9 @@ int Application::on_command_line(const RefPtr<Gio::ApplicationCommandLine> &cl)
         }
         else
         {
-            nvim->start(argv, argc, cl->get_environ(), cl->get_cwd(),
+            StartBundle sb(argv, argc, cl->get_environ(), cl->get_cwd(),
                     app_gsettings_->get_string("init-file"), opt_command_);
+            nvim->start(sb);
         }
         auto win = new Window(opt_max_, opt_width_, opt_height_, nvim);
         add_window(*win);
