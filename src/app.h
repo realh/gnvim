@@ -37,8 +37,6 @@ public:
     virtual int on_command_line(const RefPtr<Gio::ApplicationCommandLine> &)
             override;
 
-    bool open_window(const RefPtr<Gio::ApplicationCommandLine> &);
-
     static RefPtr<Gio::Settings> app_gsettings();
 
     // "org.gnome.desktop.interface" for reading "monospace-font-name"
@@ -80,6 +78,7 @@ private:
     int opt_width_, opt_height_;
     bool opt_help_nvim_;
     Glib::ustring opt_socket_;
+    bool opt_command_;
 
     static RefPtr<Gio::Settings> app_gsettings_;
     static RefPtr<Gio::Settings> sys_gsettings_;

@@ -46,7 +46,8 @@ Application::Application()
     options_.set_summary(_("Run neovim with a GUI"));
     options_.set_description(
             _("Other options are passed on to the embedded nvim instance;\n"
-                "--embed is added automatically unless --socket is used"));
+                "--embed is added automatically unless --socket "
+                "or --command are used"));
     options_.set_help_enabled(true);
     options_.set_ignore_unknown_options(true);
 
@@ -77,6 +78,14 @@ Application::Application()
     entry.set_description(_("Show options handled by embedded nvim"));
     main_opt_group_.add_entry(entry, opt_help_nvim_);
 
+    entry = Glib::OptionEntry();
+    entry.set_long_name("command");
+    entry.set_flags(Glib::OptionEntry::FLAG_IN_MAIN);
+    entry.set_description(_("Subsequent arguments form the full\n"
+                "                                        "
+                "nvim command"));
+    main_opt_group_.add_entry(entry, opt_command_);
+
     options_.set_main_group(main_opt_group_);
     g_option_context_add_group(options_.gobj(), gtk_get_option_group(0));
 
@@ -94,6 +103,8 @@ int Application::on_command_line(const RefPtr<Gio::ApplicationCommandLine> &cl)
     opt_width_ = -1;
     opt_height_ = -1;
     opt_help_nvim_ = false;
+    opt_socket_.clear();
+    opt_command_ = false;
     if (!options_.parse(argc, argv))
         return 1;
     if (opt_help_nvim_)
@@ -101,9 +112,29 @@ int Application::on_command_line(const RefPtr<Gio::ApplicationCommandLine> &cl)
         Glib::spawn_command_line_sync("nvim --help");
         return 0;
     }
-    if (!open_window(cl))
+    try
     {
-        g_warning("Failed to open window, exiting this instance");
+        auto nvim = std::make_shared<NvimBridge>();
+        if (opt_socket_.size())
+        {
+            nvim->start(opt_socket_);
+        }
+        else
+        {
+            nvim->start(argv, argc, cl->get_environ(), cl->get_cwd(),
+                    app_gsettings_->get_string("init-file"), opt_command_);
+        }
+        auto win = new Window(opt_max_, opt_width_, opt_height_, nvim);
+        add_window(*win);
+    }
+    catch(Glib::Exception &e)
+    {
+        g_warning("Failed to start new nvim instance: %s", e.what().c_str());
+        return 1;
+    }
+    catch(std::exception &e)
+    {
+        g_warning("Failed to start new nvim instance: %s", e.what());
         return 1;
     }
     return 0;
@@ -122,30 +153,6 @@ void Application::on_startup()
         ("/uk/co/realh/gnvim/appmenu.ui");
     set_app_menu(RefPtr<Gio::MenuModel>::cast_static
             (builder->get_object("appmenu")));
-}
-
-bool Application::open_window(const RefPtr<Gio::ApplicationCommandLine> &cl)
-{
-    try
-    {
-        auto nvim = std::make_shared<NvimBridge>();
-        if (opt_socket_.size())
-            nvim->start(opt_socket_);
-        else
-            nvim->start(cl, app_gsettings_->get_string("init-file"));
-        auto win = new Window(opt_max_, opt_width_, opt_height_, nvim);
-        add_window(*win);
-        return true;
-    }
-    catch(Glib::Exception &e)
-    {
-        g_warning("Failed to start new nvim instance: %s", e.what().c_str());
-    }
-    catch(std::exception &e)
-    {
-        g_warning("Failed to start new nvim instance: %s", e.what());
-    }
-    return false;
 }
 
 void Application::on_window_removed(Gtk::Window *win)

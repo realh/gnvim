@@ -43,11 +43,14 @@ public:
 
     /** Starts an instance of nvim with --embed.
      *  --embed and -u may be added to the command line if appropriate.
-     *  @param cl           Command line from Application.
      *  @param init_file    Alternative to init.nvim (-u) or empty string.
+     *  @param full_command Indicates argv contains the full nvim command.
      */
-    void start(RefPtr<Gio::ApplicationCommandLine> cl,
-            const std::string &init_file);
+    void start(char **argv, int argc,
+            const std::vector<std::string> environ,
+            const std::string &cwd,
+            const std::string &init_file = "",
+            bool full_command = false);
 
     /** Starts communication with nvim over an already open pair of streams.
      *  The streams may be pipes from the embedding version of start() or both
@@ -169,7 +172,7 @@ private:
     Glib::Pid nvim_pid_ {0};
     RefPtr<Gio::SocketConnection> socket_;
     RefPtr<MsgpackRpc> rpc_;
-    static std::vector<std::string> envp_;
+    static std::vector<std::string> environ_;
     bool ui_attached_ {false};
 
     guint channel_id_;

@@ -58,30 +58,34 @@ static void modify_env(std::vector<std::string> &env,
 }
 */
 
-void NvimBridge::start(RefPtr<Gio::ApplicationCommandLine> cl,
-        const std::string &init_file)
+void NvimBridge::start(char **argv, int argc,
+        const std::vector<std::string> environ,
+        const std::string &cwd,
+        const std::string &init_file, bool full_command)
 {
-    std::vector<std::string> args {"nvim"};
-    int argc;
-    char **argv = cl->get_arguments(argc);
-    // Check whether -u or --embed are already present
-    bool u = false, embed = false;
-    for (int n = 1; n < argc; ++n)
+    std::vector<std::string> args;
+    if (!full_command)
     {
-        if (!strcmp(argv[n], "-u"))
-            u = true;
-        else if (!strcmp(argv[n], "--embed"))
-            embed = true;
-    }
+        args.push_back("nvim");
+        // Check whether -u or --embed are already present
+        bool u = false, embed = false;
+        for (int n = 1; n < argc; ++n)
+        {
+            if (!strcmp(argv[n], "-u"))
+                u = true;
+            else if (!strcmp(argv[n], "--embed"))
+                embed = true;
+        }
 
-    if (!embed)
-        args.push_back("--embed");
+        if (!embed)
+            args.push_back("--embed");
 
-    // Load custom init file if present and -u wasn't overridden
-    if (!u && init_file.size())
-    {
-        args.push_back("-u");
-        args.push_back(init_file);
+        // Load custom init file if present and -u wasn't overridden
+        if (!u && init_file.size())
+        {
+            args.push_back("-u");
+            args.push_back(init_file);
+        }
     }
     /*
     std::ostringstream s;
@@ -97,12 +101,11 @@ void NvimBridge::start(RefPtr<Gio::ApplicationCommandLine> cl,
         args.push_back(argv[n]);
     }
 
-    auto envp = cl->get_environ();
-    //modify_env(envp, "XDG_CONFIG_HOME", Glib::get_user_config_dir(), false);
-    //modify_env(envp, "XDG_DATA_HOME", Glib::get_user_data_dir(), false);
+    //modify_env(environ, "XDG_CONFIG_HOME", Glib::get_user_config_dir(), false);
+    //modify_env(environ, "XDG_DATA_HOME", Glib::get_user_data_dir(), false);
     /*
     std::ostringstream s;
-    for (const auto &a: envp)
+    for (const auto &a: environ)
     {
         s << a << std::endl;
     }
@@ -111,20 +114,20 @@ void NvimBridge::start(RefPtr<Gio::ApplicationCommandLine> cl,
 
     // Only the first call to Application::on_command_line has an enviroment,
     // on subsequent calls it's empty. glib(mm) bug?
-    if (envp.size() && !envp_.size())
+    if (environ.size() && !environ_.size())
     {
-        //g_debug("Replacing empty envp_ with %ld", envp.size());
-        envp_ = envp;
+        //g_debug("Replacing empty environ_ with %ld", environ.size());
+        environ_ = environ;
     }
     else
     {
-        //g_debug("Passed envp %ld, using envp_ %ld",
-        //        envp.size(), envp_.size());
+        //g_debug("Passed environ %ld, using environ_ %ld",
+        //        environ.size(), environ_.size());
     }
 
     int to_nvim_stdin, from_nvim_stdout;
-    Glib::spawn_async_with_pipes(cl->get_cwd(),
-            args, envp_, Glib::SPAWN_SEARCH_PATH,
+    Glib::spawn_async_with_pipes(cwd,
+            args, environ_, Glib::SPAWN_SEARCH_PATH,
             Glib::SlotSpawnChildSetup(), &nvim_pid_,
             &to_nvim_stdin, &from_nvim_stdout);
 
@@ -517,6 +520,6 @@ void NvimBridge::ensure_augroup()
     }
 }
 
-std::vector<std::string> NvimBridge::envp_;
+std::vector<std::string> NvimBridge::environ_;
 
 }
