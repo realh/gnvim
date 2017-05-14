@@ -23,6 +23,8 @@ manage a viewport by moving text around instead of using standard scrollbars.
 
 * Detect unsaved files before closing
 
+* Options to connect to remote nvim instances
+
 ## High priority future features
 
 * Use options from the vim instance where possible
@@ -30,8 +32,6 @@ manage a viewport by moving text around instead of using standard scrollbars.
 * Preferences dialog
 
 * Optional GUI tab handling
-
-* Options to connect to remote nvim instances
 
 * Share state between nvim instances
 
@@ -73,6 +73,21 @@ run `./configure`, `make` and `sudo make install` as usual.
 
 Until the preferences dialog is implemented use dconf-editor. gnvim's options
 have the path `/uk/co/realh/gnvim/`.
+
+## Usage hints
+
+### Remote editing
+
+Besides using the `--socket` option you can also edit over ssh by using the
+`--command` option, for example:
+
+    gnvim --command ssh remote.host nvim --embed -u ~/.config/nvim/gnvim.vim
+
+Note that without options gnvim usually adds `--embed` automatically, and also
+`-u ...` if a file has been specified in its gsettings, but `--command`
+disables that behaviour so you will generally need to include `--embed`
+yourself. And gnvim is, of course, unable to apply `--embed` or `-u` when using
+`--socket` to connect to an nvim instance started elswhere.
 
 ## Issues
 
