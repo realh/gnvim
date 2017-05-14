@@ -25,15 +25,17 @@ manage a viewport by moving text around instead of using standard scrollbars.
 
 * Options to connect to remote nvim instances
 
-## High priority future features
+* Shared state between nvim instances
+
+## Partly implemented features, need work
 
 * Use options from the vim instance where possible
+
+## High priority future features
 
 * Preferences dialog
 
 * Optional GUI tab handling
-
-* Share state between nvim instances
 
 ## Slightly lower priority future features
 
