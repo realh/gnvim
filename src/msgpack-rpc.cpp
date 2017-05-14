@@ -61,11 +61,17 @@ void MsgpackRpc::stop()
         } catch(Glib::Exception &e) {
             g_warning("Exception closing strm_to_nvim: %s", e.what().c_str());
         }
+        // Closing strm_from_nvim_ here causes a warning about pending
+        // operations even though the Cancellable has been cancelled, so
+        // just leave it open and hope everything gets cleaned up neatly
+        // in due course.
+        /*
         try {
             strm_from_nvim_->close();
         } catch(Glib::Exception &e) {
             g_warning("Exception closing strm_from_nvim: %s", e.what().c_str());
         }
+        */
     }
 }
 
