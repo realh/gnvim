@@ -62,7 +62,7 @@ void NvimBridge::start(const StartBundle &sb)
 {
     int to_nvim_stdin, from_nvim_stdout;
     Glib::spawn_async_with_pipes(sb.get_cwd(),
-            sb.get_command_line(), sb.get_command_line(),
+            sb.get_command_line(), sb.get_environ(),
             Glib::SPAWN_SEARCH_PATH,
             Glib::SlotSpawnChildSetup(), &nvim_pid_,
             &to_nvim_stdin, &from_nvim_stdout);

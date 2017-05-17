@@ -13,7 +13,7 @@ else()
     set(GNVIM_GIT_VERSION "")
 endif()
 add_definitions(-DGNVIM_GIT_VERSION=\"${GNVIM_GIT_VERSION}\"
-    -DPACKAGE_VERSION=\"0.0.4\")
+    -DPACKAGE_VERSION=\"0.0.5\")
 
 if(UNIX)
     add_definitions(-Wall -Wextra -Wunused)
