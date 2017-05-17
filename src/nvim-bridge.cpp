@@ -187,9 +187,7 @@ void NvimBridge::stop()
     {
         if (ui_attached_)
         {
-            nvim_command(std::string("augroup " + get_augroup()
-                        + "|autocmd!|augroup END"));
-            //g_debug("nvim-bridge detaching ui");
+            nvim_command(std::string("autocmd! " + get_augroup()));
             rpc_->notify("nvim_ui_detach");
             if (own_instance())
                 rpc_->notify("nvim_command", "qa!");
