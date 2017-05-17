@@ -121,8 +121,14 @@ void NvimGridView::on_size_allocate(Gtk::Allocation &alloc)
 Glib::ustring modifier_string(guint state)
 {
     std::string s;
+    if (state & GDK_SUPER_MASK)
+    {
+        s = "D-";
+    }
     if (state & GDK_MOD1_MASK)
+    {
         s = "A-";
+    }
     if (state & GDK_CONTROL_MASK)
         s += "C-";
     if (state & GDK_SHIFT_MASK)
@@ -188,6 +194,19 @@ bool NvimGridView::on_key_press_event(GdkEventKey *event)
             s = "Tab";
     }
 
+    /*
+    g_debug("state %x, super %x, meta %x, mod1 %x, mod2 %x",
+            event->state,
+            GDK_SUPER_MASK, GDK_META_MASK, GDK_MOD1_MASK, GDK_MOD2_MASK);
+    if (event->state & GDK_SUPER_MASK)
+    {
+        g_debug("Super");
+    }
+    if (event->state & GDK_META_MASK)
+    {
+        g_debug("Meta");
+    }
+    */
     if (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK))
     {
         special = true;
