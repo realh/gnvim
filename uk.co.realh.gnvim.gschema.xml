@@ -66,5 +66,11 @@
             the shada file (formerly known as viminfo) when they lose focus and
             load it when they gain focus</description>
         </key>
+        <key name="gui-tabs" type="b">
+            <default>true</default>
+            <summary>Use GUI tabs</summary>
+            <description>Show tabs in the GUI instead of as text in the nvim
+            instance</description>
+        </key>
     </schema>
 </schemalist>
