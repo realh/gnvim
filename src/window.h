@@ -86,9 +86,9 @@ private:
     sigc::connection bat_conn_;
 
     // This is just a convenience pointer, life cycle is managed by GTK
-    RefPtr<NvimGridView> view_;
-    RefPtr<Gtk::Box> box_;
-    RefPtr<Gtk::Notebook> notebook_;
+    NvimGridView *view_;
+    Gtk::Box *box_;
+    Gtk::Notebook *notebook_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;
 

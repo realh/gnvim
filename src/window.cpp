@@ -82,26 +82,23 @@ void Window::on_options_read(RequestSet *)
 void Window::ready_to_start()
 {
     // For some reason these container widgets don't have create methods
-    Gtk::Box *box = Glib::wrap
+    box_ = Glib::wrap
         (GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0)));
-    box_ = RefPtr<Gtk::Box>(box);
-    add(*box);
+    add(*box_);
 
-    Gtk::Notebook *notebook = Glib::wrap(GTK_NOTEBOOK(gtk_notebook_new()));
-    notebook_ = RefPtr<Gtk::Notebook>(notebook);
+    notebook_ = Glib::wrap(GTK_NOTEBOOK(gtk_notebook_new()));
     show_or_hide_tabs();
-    box->pack_start(*notebook);
+    box_->pack_start(*notebook_);
 
-    auto view = new NvimGridView(nvim_, columns_, lines_);
-    view_ = RefPtr<NvimGridView>(view);
+    view_ = new NvimGridView(nvim_, columns_, lines_);
 
     rqset_.reset();
     nvim_->start_ui(columns_, lines_);
-    box->pack_end(*view);
+    box_->pack_end(*view_);
 
     // Show everything from the Box downwards before getting requisition
     view_->show_all();
-    box->show();
+    box_->show();
 
     if (maximise_)
     {
@@ -110,7 +107,7 @@ void Window::ready_to_start()
     else
     {
         Gtk::Requisition minimum, natural;
-        box->get_preferred_size(minimum, natural);
+        box_->get_preferred_size(minimum, natural);
         set_default_size(natural.width, natural.height);
     }
 
