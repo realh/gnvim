@@ -63,15 +63,17 @@ protected:
 
     virtual bool on_delete_event(GdkEventAny *) override;
 private:
-    void ready_to_start(RequestSet *);
+    void show_or_hide_tabs();
+
+    void show_or_hide_tabs(bool show);
+
+    void on_options_read(RequestSet *);
+
+    void ready_to_start();
 
     void on_nvim_error(Glib::ustring desc);
 
     void on_redraw_set_title(const std::string &);
-
-    void on_columns_response(const msgpack::object &o);
-
-    void on_lines_response(const msgpack::object &o);
 
     // Geometry hints have a history of breakage and serve almost no useful
     // purpose in current desktops
@@ -84,12 +86,15 @@ private:
     sigc::connection bat_conn_;
 
     // This is just a convenience pointer, life cycle is managed by GTK
-    NvimGridView *view_;
+    RefPtr<NvimGridView> view_;
+    RefPtr<Gtk::Box> box_;
+    RefPtr<Gtk::Notebook> notebook_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;
 
     bool maximise_;
     int columns_, lines_;
+    int show_tab_line_;
     std::unique_ptr<RequestSet> rqset_;
     sigc::connection delete_event_conn_;
 };

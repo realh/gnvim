@@ -18,6 +18,7 @@
 
 #include "defns.h"
 
+#include "app.h"
 #include "dcs-dialog.h"
 #include "nvim-grid-view.h"
 #include "window.h"
@@ -29,7 +30,7 @@ Window::Window(bool maximise, int width, int height,
         std::shared_ptr<NvimBridge> nvim)
 : nvim_(nvim), bufs_and_tabs_(nvim),
     maximise_(maximise), columns_(width), lines_(height),
-    rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::ready_to_start)))
+    rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::on_options_read)))
 {
     auto prom = MsgpackPromise::create();
     nvim_->get_api_info(rqset_->get_proxied_promise(prom));
@@ -37,18 +38,31 @@ Window::Window(bool maximise, int width, int height,
     {
         columns_ = 80;
         prom = MsgpackPromise::create();
-        prom->value_signal().connect
-            (sigc::mem_fun(*this, &Window::on_columns_response));
+        prom->value_signal().connect([this](const msgpack::object &o)
+        {
+            o.convert_if_not_nil(columns_);
+        });
         nvim_->nvim_get_option("columns", rqset_->get_proxied_promise(prom));
     }
     if (height == -1)
     {
         lines_ = 30;
         prom = MsgpackPromise::create();
-        prom->value_signal().connect
-            (sigc::mem_fun(*this, &Window::on_lines_response));
+        prom->value_signal().connect([this](const msgpack::object &o)
+        {
+            o.convert_if_not_nil(lines_);
+        });
         nvim_->nvim_get_option("lines", rqset_->get_proxied_promise(prom));
     }
+
+    show_tab_line_ = 1;
+    prom = MsgpackPromise::create();
+    prom->value_signal().connect([this](const msgpack::object &o)
+    {
+        o.convert_if_not_nil(show_tab_line_);
+    });
+    nvim_->nvim_get_option("showtabline", rqset_->get_proxied_promise(prom));
+
     rqset_->ready();
 }
 
@@ -56,40 +70,72 @@ Window::~Window()
 {
     //g_debug("Window deleted");
     nvim_->stop();
-    delete view_;
 }
 
-void Window::ready_to_start(RequestSet *)
+void Window::on_options_read(RequestSet *)
 {
-    bat_conn_ = bufs_and_tabs_.signal_got_all_info().connect([this]()
-    {
-        view_ = new NvimGridView(nvim_, columns_, lines_);
-        rqset_.reset();
-        nvim_->start_ui(columns_, lines_);
-        add(*view_);
-        view_->show_all();
-        if (maximise_)
-        {
-            maximize();
-        }
-        else
-        {
-            Gtk::Requisition minimum, natural;
-            view_->get_preferred_size(minimum, natural);
-            set_default_size(natural.width, natural.height);
-        }
-
-        nvim_->io_error_signal().connect(
-                sigc::mem_fun(*this, &Window::on_nvim_error));
-
-        set_geometry_hints();
-
-        present();
-        nvim_->redraw_set_title.connect
-            (sigc::mem_fun(this, &Window::on_redraw_set_title));
-        bat_conn_.disconnect();
-    });
+    bat_conn_ = bufs_and_tabs_.signal_got_all_info().connect
+        (sigc::mem_fun(*this, &Window::ready_to_start));
     bufs_and_tabs_.start();
+}
+
+void Window::ready_to_start()
+{
+    // For some reason these container widgets don't have create methods
+    Gtk::Box *box = Glib::wrap
+        (GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0)));
+    box_ = RefPtr<Gtk::Box>(box);
+    add(*box);
+
+    Gtk::Notebook *notebook = Glib::wrap(GTK_NOTEBOOK(gtk_notebook_new()));
+    notebook_ = RefPtr<Gtk::Notebook>(notebook);
+    show_or_hide_tabs();
+    box->pack_start(*notebook);
+
+    auto view = new NvimGridView(nvim_, columns_, lines_);
+    view_ = RefPtr<NvimGridView>(view);
+
+    rqset_.reset();
+    nvim_->start_ui(columns_, lines_);
+    box->pack_end(*view);
+
+    // Show everything from the Box downwards before getting requisition
+    view_->show_all();
+    box->show();
+
+    if (maximise_)
+    {
+        maximize();
+    }
+    else
+    {
+        Gtk::Requisition minimum, natural;
+        box->get_preferred_size(minimum, natural);
+        set_default_size(natural.width, natural.height);
+    }
+
+    nvim_->io_error_signal().connect(
+            sigc::mem_fun(*this, &Window::on_nvim_error));
+
+    set_geometry_hints();
+
+    present();
+    nvim_->redraw_set_title.connect
+        (sigc::mem_fun(this, &Window::on_redraw_set_title));
+    bat_conn_.disconnect();
+}
+
+void Window::show_or_hide_tabs()
+{
+    show_or_hide_tabs(Application::app_gsettings()->get_boolean("gui-tabs"));
+}
+
+void Window::show_or_hide_tabs(bool show)
+{
+    if (show)
+        notebook_->show_all();
+    else
+        notebook_->hide();
 }
 
 void Window::force_close()
@@ -108,16 +154,6 @@ void Window::on_nvim_error(Glib::ustring desc)
 void Window::on_redraw_set_title(const std::string &title)
 {
     set_title(title);
-}
-
-void Window::on_columns_response(const msgpack::object &o)
-{
-    o.convert_if_not_nil(columns_);
-}
-
-void Window::on_lines_response(const msgpack::object &o)
-{
-    o.convert_if_not_nil(lines_);
 }
 
 /*

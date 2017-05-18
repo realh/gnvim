@@ -103,9 +103,13 @@ void TextGridView::on_parent_changed(Gtk::Widget *old_parent)
     // handlers, size-allocate being one of them.
     if (old_parent && toplevel_size_allocate_connection_)
         toplevel_size_allocate_connection_.disconnect();
-    toplevel_size_allocate_connection_
-        = get_toplevel()->signal_size_allocate().connect
-            (sigc::mem_fun(this, &TextGridView::on_toplevel_size_allocate));
+    auto new_win = get_toplevel();
+    if (new_win)
+    {
+        toplevel_size_allocate_connection_
+            = new_win->signal_size_allocate().connect
+                (sigc::mem_fun(this, &TextGridView::on_toplevel_size_allocate));
+    }
 }
 
 void TextGridView::on_size_allocate(Gtk::Allocation &allocation)
