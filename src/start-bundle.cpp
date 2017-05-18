@@ -49,6 +49,12 @@ void StartBundle::init(char const * const *argv, int argc, bool full_command)
             cmd_line_.push_back(init_file_);
         }
     }
+
+    for (int n = 1; n < argc; ++n)
+    {
+        cmd_line_.push_back(argv[n]);
+    }
+
     /*
     std::ostringstream s;
     for (const auto &a: cmd_line_)
@@ -57,11 +63,6 @@ void StartBundle::init(char const * const *argv, int argc, bool full_command)
     }
     g_debug("%s", s.str().c_str());
     */
-
-    for (int n = 1; n < argc; ++n)
-    {
-        cmd_line_.push_back(argv[n]);
-    }
 
     //modify_env(environ, "XDG_CONFIG_HOME", Glib::get_user_config_dir(), false);
     //modify_env(environ, "XDG_DATA_HOME", Glib::get_user_data_dir(), false);
@@ -80,8 +81,6 @@ void StartBundle::init(char const * const *argv, int argc, bool full_command)
         static_environ_ = environ_;
     else if (!environ_.size() && static_environ_.size())
         environ_ = static_environ_;
-    for (int n = 0; n < argc; ++n)
-        cmd_line_.push_back(argv[n]);
 }
 
 std::vector<std::string> StartBundle::static_environ_;
