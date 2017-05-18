@@ -82,15 +82,15 @@ void Window::on_options_read(RequestSet *)
 void Window::ready_to_start()
 {
     // For some reason these container widgets don't have create methods
-    box_ = Glib::wrap
-        (GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0)));
+    box_.reset(Glib::wrap
+        (GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0))));
     add(*box_);
 
-    notebook_ = Glib::wrap(GTK_NOTEBOOK(gtk_notebook_new()));
+    notebook_.reset(Glib::wrap(GTK_NOTEBOOK(gtk_notebook_new())));
     show_or_hide_tabs();
     box_->pack_start(*notebook_);
 
-    view_ = new NvimGridView(nvim_, columns_, lines_);
+    view_.reset(new NvimGridView(nvim_, columns_, lines_));
 
     rqset_.reset();
     nvim_->start_ui(columns_, lines_);

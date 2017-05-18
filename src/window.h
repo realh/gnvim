@@ -85,10 +85,15 @@ private:
     BufsAndTabs bufs_and_tabs_;
     sigc::connection bat_conn_;
 
-    // This is just a convenience pointer, life cycle is managed by GTK
-    NvimGridView *view_;
-    Gtk::Box *box_;
-    Gtk::Notebook *notebook_;
+    /* gtkmm seems rather dodgy at handling contained widgets. AFAICT a GObject
+     * gets destroyed with its parent or when removed from its parent, but
+     * leaves the glibmm wrapper pointing to some sort of null object. It seems
+     * safe to delete the glibmm pointer, but using RefPtr doesn't cause that
+     * to happen.
+     */
+    std::unique_ptr<NvimGridView> view_;
+    std::unique_ptr<Gtk::Box> box_;
+    std::unique_ptr<Gtk::Notebook> notebook_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;
 
