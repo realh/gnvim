@@ -70,8 +70,10 @@ public:
         return sig_got_all_;
     }
 
+    // Gets buffer info from nvim and emits on_bufs_listed.
     void list_buffers();
 
+    // Gets tab info from nvim and emits on_tabs_listed.
     void list_tabs();
 
     /// Returns true if any buffers are modified
@@ -90,6 +92,26 @@ public:
     signal_tabs_listed()
     {
         return sig_tabs_listed_;
+    }
+
+    const std::vector<BufferInfo> &get_buffers() const
+    {
+        return buffers_;
+    }
+
+    const std::vector<BufferInfo>::iterator &get_current_buffer()
+    {
+        return current_buffer_;
+    }
+
+    const std::vector<TabInfo> &get_tabs() const
+    {
+        return tabs_;
+    }
+
+    const std::vector<TabInfo>::iterator &get_current_tab()
+    {
+        return current_tab_;
     }
 private:
     void on_bufs_listed(const msgpack::object &o);

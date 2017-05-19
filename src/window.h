@@ -27,6 +27,7 @@
 #include "bufsandtabs.h"
 #include "nvim-bridge.h"
 #include "request-set.h"
+#include "tab-page.h"
 
 namespace Gnvim
 {
@@ -93,7 +94,7 @@ private:
      */
     std::unique_ptr<NvimGridView> view_;
     std::unique_ptr<Gtk::Box> box_;
-    std::unique_ptr<Gtk::Notebook> notebook_;
+    Gtk::Notebook *notebook_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;
 
@@ -102,6 +103,8 @@ private:
     int show_tab_line_;
     std::unique_ptr<RequestSet> rqset_;
     sigc::connection delete_event_conn_;
+
+    std::vector<TabPage> *tabs_;
 };
 
 }

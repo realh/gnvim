@@ -17,6 +17,7 @@ gnvim_SOURCES = \
 	start-bundle.cpp	start-bundle.h		\
 	request-set.cpp		request-set.h		\
 	resources.cpp					\
+	tab-page.cpp		tab-page.h		\
 	text-grid.cpp		text-grid.h		\
 	text-grid-view.cpp	text-grid-view.h	\
 	window.cpp		window.h

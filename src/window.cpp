@@ -21,6 +21,7 @@
 #include "app.h"
 #include "dcs-dialog.h"
 #include "nvim-grid-view.h"
+#include "tab-page.h"
 #include "window.h"
 
 namespace Gnvim
@@ -30,7 +31,8 @@ Window::Window(bool maximise, int width, int height,
         std::shared_ptr<NvimBridge> nvim)
 : nvim_(nvim), bufs_and_tabs_(nvim),
     maximise_(maximise), columns_(width), lines_(height),
-    rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::on_options_read)))
+    rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::on_options_read))),
+    tabs_(new std::vector<TabPage>())
 {
     auto prom = MsgpackPromise::create();
     nvim_->get_api_info(rqset_->get_proxied_promise(prom));
@@ -70,6 +72,9 @@ Window::~Window()
 {
     //g_debug("Window deleted");
     nvim_->stop();
+    // Need to make sure notebook is destroyed before our vector of tabs
+    delete notebook_;
+    delete tabs_;
 }
 
 void Window::on_options_read(RequestSet *)
@@ -86,9 +91,16 @@ void Window::ready_to_start()
         (GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0))));
     add(*box_);
 
-    notebook_.reset(Glib::wrap(GTK_NOTEBOOK(gtk_notebook_new())));
+    notebook_ = Glib::wrap(GTK_NOTEBOOK(gtk_notebook_new()));
     show_or_hide_tabs();
     box_->pack_start(*notebook_);
+
+    for (const auto &tab: bufs_and_tabs_.get_tabs())
+    {
+        tabs_->emplace_back(tab);
+        auto &page = tabs_->back();
+        notebook_->append_page(page, page.get_label_widget());
+    }
 
     view_.reset(new NvimGridView(nvim_, columns_, lines_));
 

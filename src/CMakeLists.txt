@@ -12,6 +12,7 @@ set(GNVIM_SOURCES
     request-set.cpp
     resources.cpp
     start-bundle.cpp
+    tab-page.cpp
     text-grid.cpp
     text-grid-view.cpp
     window.cpp
@@ -30,6 +31,7 @@ set(GNVIM_HEADERS
     nvim-grid-view.h
     request-set.h
     start-bundle.h
+    tab-page.h
     text-grid.h
     text-grid-view.h
     window.h

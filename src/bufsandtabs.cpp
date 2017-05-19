@@ -28,7 +28,7 @@
 namespace Gnvim
 {
 
-BufsAndTabs::BufsAndTabs(std::shared_ptr<NvimBridge> nvim) : nvim_ (nvim)
+BufsAndTabs::BufsAndTabs(std::shared_ptr<NvimBridge> nvim) : nvim_(nvim)
 {
     nvim_->signal_modified.connect(sigc::mem_fun
             (*this, &BufsAndTabs::on_modified_changed));
@@ -133,9 +133,9 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         else
         {
             buffers_ = std::move(buf_info->bufs);
-            std::sort (buffers_.begin (), buffers_.end ());
+            std::sort(buffers_.begin(), buffers_.end());
             auto prom = MsgpackPromise::create();
-            prom->value_signal().connect ([this](const msgpack::object &o)
+            prom->value_signal().connect([this](const msgpack::object &o)
             {
                 VimBuffer handle(o);
                 current_buffer_ = std::find_if(buffers_.begin(), buffers_.end(),
@@ -145,12 +145,12 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
                         });
                 sig_bufs_listed_.emit(buffers_);
             });
-            prom->error_signal().connect ([this](const msgpack::object &o)
+            prom->error_signal().connect([this](const msgpack::object &o)
             {
                 std::ostringstream s;
                 s << o;
                 g_critical("Error reading current buffer: %s", s.str().c_str());
-                current_buffer_ = buffers_.begin ();
+                current_buffer_ = buffers_.begin();
                 sig_bufs_listed_.emit(buffers_);
             });
             nvim_->nvim_get_current_buf(prom);
@@ -173,7 +173,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
             o.convert(buf_info->bufs[n].name);
         });
         prom->error_signal().connect(error_lambda);
-        nvim_->nvim_buf_get_name (buf_info->bufs[n].handle,
+        nvim_->nvim_buf_get_name(buf_info->bufs[n].handle,
                 buf_rqset_->get_proxied_promise(prom));
 
         prom = MsgpackPromise::create();
@@ -186,7 +186,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
             */
         });
         prom->error_signal().connect(error_lambda);
-        nvim_->nvim_buf_get_changedtick (buf_info->bufs[n].handle,
+        nvim_->nvim_buf_get_changedtick(buf_info->bufs[n].handle,
                 buf_rqset_->get_proxied_promise(prom));
     }
 
@@ -209,11 +209,10 @@ void BufsAndTabs::on_tabs_listed(const msgpack::object &o)
     for (std::size_t n = 0; n < ar.size; ++n)
     {
         ar.ptr[n].convert(tabs_[n].handle);
-        g_debug("Listed tab %ld", gint64(tabs_[n].handle));
     }
 
     auto prom = MsgpackPromise::create();
-    prom->value_signal().connect ([this](const msgpack::object &o)
+    prom->value_signal().connect([this](const msgpack::object &o)
     {
         VimTabpage handle(o);
         current_tab_ = std::find_if(tabs_.begin(), tabs_.end(),
@@ -221,15 +220,14 @@ void BufsAndTabs::on_tabs_listed(const msgpack::object &o)
             {
                 return t.handle == handle;
             });
-        g_debug("Current tab %ld", gint64(current_tab_->handle));
         sig_tabs_listed_.emit(tabs_);
     });
-    prom->error_signal().connect ([this](const msgpack::object &o)
+    prom->error_signal().connect([this](const msgpack::object &o)
     {
         std::ostringstream s;
         s << o;
         g_critical("Error reading current tab: %s", s.str().c_str());
-        current_tab_ = tabs_.begin ();
+        current_tab_ = tabs_.begin();
         sig_tabs_listed_.emit(tabs_);
     });
     nvim_->nvim_get_current_tab(prom);
