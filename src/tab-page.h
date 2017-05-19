@@ -34,7 +34,7 @@ namespace Gnvim
  *  a different widget, so this provides one that's invisible. It also provides
  *  convenient access to the label.
  */
-class TabPage : public Gtk::Widget {
+class TabPage : public Gtk::Grid {
 public:
     TabPage(const TabInfo &t);
 

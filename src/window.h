@@ -92,8 +92,8 @@ private:
      * safe to delete the glibmm pointer, but using RefPtr doesn't cause that
      * to happen.
      */
-    std::unique_ptr<NvimGridView> view_;
-    std::unique_ptr<Gtk::Box> box_;
+    NvimGridView *view_;
+    Gtk::Grid *grid_;
     Gtk::Notebook *notebook_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;

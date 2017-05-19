@@ -72,9 +72,11 @@ Window::~Window()
 {
     //g_debug("Window deleted");
     nvim_->stop();
-    // Need to make sure notebook is destroyed before our vector of tabs
+    // Need to make sure these are deleted in the right order
+    delete grid_;
     delete notebook_;
     delete tabs_;
+    delete view_;
 }
 
 void Window::on_options_read(RequestSet *)
@@ -87,30 +89,33 @@ void Window::on_options_read(RequestSet *)
 void Window::ready_to_start()
 {
     // For some reason these container widgets don't have create methods
-    box_.reset(Glib::wrap
-        (GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0))));
-    add(*box_);
+    grid_ = new Gtk::Grid();
+    add(*grid_);
 
-    notebook_ = Glib::wrap(GTK_NOTEBOOK(gtk_notebook_new()));
+    notebook_ = new Gtk::Notebook();
     show_or_hide_tabs();
-    box_->pack_start(*notebook_);
+    grid_->attach(*notebook_, 0, 0, 1, 1);
 
     for (const auto &tab: bufs_and_tabs_.get_tabs())
     {
         tabs_->emplace_back(tab);
         auto &page = tabs_->back();
-        notebook_->append_page(page, page.get_label_widget());
+        auto &label = page.get_label_widget();
+        page.show_all();
+        label.show_all();
+        notebook_->append_page(page, label);
+        g_debug("Adding notebook page");
     }
 
-    view_.reset(new NvimGridView(nvim_, columns_, lines_));
+    view_ = new NvimGridView(nvim_, columns_, lines_);
 
     rqset_.reset();
     nvim_->start_ui(columns_, lines_);
-    box_->pack_end(*view_);
+    grid_->attach(*view_, 0, 1, 1, 1);
 
     // Show everything from the Box downwards before getting requisition
     view_->show_all();
-    box_->show();
+    grid_->show();
 
     if (maximise_)
     {
@@ -119,7 +124,7 @@ void Window::ready_to_start()
     else
     {
         Gtk::Requisition minimum, natural;
-        box_->get_preferred_size(minimum, natural);
+        grid_->get_preferred_size(minimum, natural);
         set_default_size(natural.width, natural.height);
     }
 
