@@ -41,13 +41,49 @@ void BufsAndTabs::start()
 
 void BufsAndTabs::get_all_info()
 {
-    conn_got_all_ = sig_bufs_listed_.connect
+    got_buf_info_ = false;
+    conn_got_all_bufs_ = sig_bufs_listed_.connect
     ([this](const std::vector<BufferInfo> &)
     {
-        conn_got_all_.disconnect();
-        sig_got_all_.emit();
+        conn_got_all_bufs_.disconnect();
+        got_buf_info_ = true;
+        if (got_tab_info_)
+            got_all_info();
     });
     list_buffers();
+
+    got_tab_info_ = false;
+    conn_got_all_tabs_ = sig_tabs_listed_.connect
+    ([this](const std::vector<TabInfo> &)
+    {
+        conn_got_all_tabs_.disconnect();
+        got_tab_info_ = true;
+        if (got_buf_info_)
+            got_all_info();
+    });
+    list_tabs();
+}
+
+void BufsAndTabs::got_all_info()
+{
+    if (!mod_au_)
+    {
+        nvim_->ensure_augroup();
+        std::ostringstream s;
+        s << "autocmd " << nvim_->get_augroup()
+            << " TextChanged,TextChangedI,BufReadPost,"
+                "FileReadPost,FileWritePost * "
+            << "if !exists('b:old_mod') || b:old_mod != &modified"
+            << "|let b:old_mod = &modified"
+            << "|call rpcnotify("
+            << nvim_->get_channel_id()
+            << ", 'modified', str2nr(expand('<abuf>')), &modified)"
+            << "|endif";
+        nvim_->nvim_command(s.str());
+        mod_au_ = true;
+    }
+
+    sig_got_all_.emit();
 }
 
 void BufsAndTabs::list_buffers()
@@ -58,6 +94,16 @@ void BufsAndTabs::list_buffers()
     prom->error_signal().connect
     (sigc::mem_fun(*this, &BufsAndTabs::on_bufs_list_error));
     nvim_->nvim_list_bufs(prom);
+}
+
+void BufsAndTabs::list_tabs()
+{
+    auto prom = MsgpackPromise::create();
+    prom->value_signal().connect
+    (sigc::mem_fun(*this, &BufsAndTabs::on_tabs_listed));
+    prom->error_signal().connect
+    (sigc::mem_fun(*this, &BufsAndTabs::on_tabs_list_error));
+    nvim_->nvim_list_tabs(prom);
 }
 
 void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
@@ -77,8 +123,8 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         buf_info->bufs[n].modified = false;
     }
 
-    delete rqset_;
-    rqset_ = RequestSet::create([this, buf_info](RequestSet *)
+    delete buf_rqset_;
+    buf_rqset_ = RequestSet::create([this, buf_info](RequestSet *)
     {
         if (buf_info->error)
         {
@@ -89,7 +135,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
             buffers_ = std::move(buf_info->bufs);
             std::sort (buffers_.begin (), buffers_.end ());
             auto prom = MsgpackPromise::create();
-            prom->value_signal ().connect ([this](const msgpack::object &o)
+            prom->value_signal().connect ([this](const msgpack::object &o)
             {
                 VimBuffer handle(o);
                 current_buffer_ = std::find_if(buffers_.begin(), buffers_.end(),
@@ -99,7 +145,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
                         });
                 sig_bufs_listed_.emit(buffers_);
             });
-            prom->error_signal ().connect ([this](const msgpack::object &o)
+            prom->error_signal().connect ([this](const msgpack::object &o)
             {
                 std::ostringstream s;
                 s << o;
@@ -128,7 +174,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         });
         prom->error_signal().connect(error_lambda);
         nvim_->nvim_buf_get_name (buf_info->bufs[n].handle,
-                rqset_->get_proxied_promise(prom));
+                buf_rqset_->get_proxied_promise(prom));
 
         prom = MsgpackPromise::create();
         prom->value_signal().connect([buf_info, n](const msgpack::object &o)
@@ -141,22 +187,10 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         });
         prom->error_signal().connect(error_lambda);
         nvim_->nvim_buf_get_changedtick (buf_info->bufs[n].handle,
-                rqset_->get_proxied_promise(prom));
+                buf_rqset_->get_proxied_promise(prom));
     }
 
-    nvim_->ensure_augroup();
-    std::ostringstream s;
-    s << "autocmd " << nvim_->get_augroup()
-        << " TextChanged,TextChangedI,BufReadPost,FileReadPost,FileWritePost * "
-        << "if !exists('b:old_mod') || b:old_mod != &modified"
-        << "|let b:old_mod = &modified"
-        << "|call rpcnotify("
-        << nvim_->get_channel_id()
-        << ", 'modified', str2nr(expand('<abuf>')), &modified)"
-        << "|endif";
-    nvim_->nvim_command(s.str());
-
-    rqset_->ready();
+    buf_rqset_->ready();
 }
 
 void BufsAndTabs::on_bufs_list_error(const msgpack::object &o)
@@ -166,6 +200,48 @@ void BufsAndTabs::on_bufs_list_error(const msgpack::object &o)
     g_critical("Error listing buffers: %s", s.str().c_str());
     std::vector<BufferInfo> nobufs;
     sig_bufs_listed_.emit(nobufs);
+}
+
+void BufsAndTabs::on_tabs_listed(const msgpack::object &o)
+{
+    const msgpack::object_array &ar = o.via.array;
+    tabs_ = std::vector<TabInfo>(ar.size);
+    for (std::size_t n = 0; n < ar.size; ++n)
+    {
+        ar.ptr[n].convert(tabs_[n].handle);
+        g_debug("Listed tab %ld", gint64(tabs_[n].handle));
+    }
+
+    auto prom = MsgpackPromise::create();
+    prom->value_signal().connect ([this](const msgpack::object &o)
+    {
+        VimTabpage handle(o);
+        current_tab_ = std::find_if(tabs_.begin(), tabs_.end(),
+            [handle](const TabInfo &t)
+            {
+                return t.handle == handle;
+            });
+        g_debug("Current tab %ld", gint64(current_tab_->handle));
+        sig_tabs_listed_.emit(tabs_);
+    });
+    prom->error_signal().connect ([this](const msgpack::object &o)
+    {
+        std::ostringstream s;
+        s << o;
+        g_critical("Error reading current tab: %s", s.str().c_str());
+        current_tab_ = tabs_.begin ();
+        sig_tabs_listed_.emit(tabs_);
+    });
+    nvim_->nvim_get_current_tab(prom);
+}
+
+void BufsAndTabs::on_tabs_list_error(const msgpack::object &o)
+{
+    std::ostringstream s;
+    s << o;
+    g_critical("Error listing tabs: %s", s.str().c_str());
+    std::vector<TabInfo> notabs;
+    sig_tabs_listed_.emit(notabs);
 }
 
 void BufsAndTabs::on_modified_changed(int handle, bool modified)

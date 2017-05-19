@@ -43,6 +43,16 @@ struct BufferInfo {
     }
 };
 
+struct TabInfo {
+    VimTabpage handle;
+
+    bool operator<(const TabInfo &t)
+    {
+        return handle < t.handle;
+    }
+};
+    
+
 /// Keeps track of the buffers and tabs managed by each nvim instance.
 class BufsAndTabs {
 public:
@@ -62,6 +72,8 @@ public:
 
     void list_buffers();
 
+    void list_tabs();
+
     /// Returns true if any buffers are modified
     bool any_modified() const;
 
@@ -73,22 +85,41 @@ public:
     {
         return sig_bufs_listed_;
     }
+
+    sigc::signal<void, const std::vector<TabInfo> &> &
+    signal_tabs_listed()
+    {
+        return sig_tabs_listed_;
+    }
 private:
     void on_bufs_listed(const msgpack::object &o);
     void on_bufs_list_error(const msgpack::object &o);
+
+    void on_tabs_listed(const msgpack::object &o);
+    void on_tabs_list_error(const msgpack::object &o);
+
+    void got_all_info();
 
     void on_modified_changed(int buf, bool modified);
 
     std::shared_ptr<NvimBridge> nvim_;
 
-    RequestSet *rqset_ {nullptr};
+    RequestSet *buf_rqset_ {nullptr};
+    RequestSet *tab_rqset_ {nullptr};
 
     std::vector<BufferInfo> buffers_;
     std::vector<BufferInfo>::iterator current_buffer_;
 
+    std::vector<TabInfo> tabs_;
+    std::vector<TabInfo>::iterator current_tab_;
+
     sigc::signal<void> sig_got_all_;
-    sigc::connection conn_got_all_;
+    sigc::connection conn_got_all_tabs_, conn_got_all_bufs_;
     sigc::signal<void, const std::vector<BufferInfo> &> sig_bufs_listed_;
+    sigc::signal<void, const std::vector<TabInfo> &> sig_tabs_listed_;
+
+    bool mod_au_ {false};
+    bool got_buf_info_, got_tab_info_;
 };
 
 }

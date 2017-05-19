@@ -236,6 +236,16 @@ void NvimBridge::nvim_list_bufs(PromiseHandle promise)
     rpc_->request("nvim_list_bufs", promise);
 }
 
+void NvimBridge::nvim_list_tabs(PromiseHandle promise)
+{
+    rpc_->request("nvim_list_tabpages", promise);
+}
+
+void NvimBridge::nvim_get_current_tab(PromiseHandle promise)
+{
+    rpc_->request("nvim_get_current_tabpage", promise);
+}
+
 void NvimBridge::nvim_buf_get_name(VimBuffer buf_handle,
         PromiseHandle promise)
 {

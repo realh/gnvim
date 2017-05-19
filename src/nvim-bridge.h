@@ -86,6 +86,10 @@ public:
 
     void nvim_list_bufs(PromiseHandle promise);
 
+    void nvim_list_tabs(PromiseHandle promise);
+
+    void nvim_get_current_tab(PromiseHandle promise);
+
     void nvim_buf_get_name(VimBuffer buf_handle, PromiseHandle promise);
 
     void nvim_buf_get_changedtick(VimBuffer buf_handle, PromiseHandle promise);
