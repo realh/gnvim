@@ -117,6 +117,10 @@ void Window::ready_to_start()
     view_->show_all();
     grid_->show();
 
+    view_->set_can_focus(true);
+    view_->grab_focus();
+    view_->set_focus_on_click(true);
+
     if (maximise_)
     {
         maximize();
