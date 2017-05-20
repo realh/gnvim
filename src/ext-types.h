@@ -44,6 +44,7 @@ public:
         return value_;
     }
 protected:
+    VimExtType(int handle) : value_(handle) {}
     VimExtType() = default;
     VimExtType(const VimExtType &vet) = default;
     VimExtType(VimExtType &&vet) = default;
@@ -74,6 +75,8 @@ public:
     {
         *this = o;
     }
+
+    VimBuffer(int handle) : VimExtType(handle) {}
 
     VimBuffer &operator=(const msgpack::object &o);
 
@@ -106,6 +109,8 @@ public:
         *this = o;
     }
 
+    VimTabpage(int handle) : VimExtType(handle) {}
+
     VimTabpage &operator=(const msgpack::object &o);
 
     VimTabpage() = default;
@@ -136,6 +141,8 @@ public:
     {
         *this = o;
     }
+
+    VimWindow(int handle) : VimExtType(handle) {}
 
     VimWindow &operator=(const msgpack::object &o);
 

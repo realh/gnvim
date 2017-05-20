@@ -37,6 +37,12 @@ struct BufferInfo {
     std::string name;
     bool modified;
 
+    BufferInfo() : handle(0), modified(false) {}
+
+    BufferInfo(const VimBuffer &h, const std::string &n = "", bool mod = false)
+        : handle(h), name(n), modified(mod)
+    {}
+
     bool operator<(const BufferInfo &b)
     {
         return handle < b.handle;
@@ -45,6 +51,10 @@ struct BufferInfo {
 
 struct TabInfo {
     VimTabpage handle;
+
+    TabInfo() : handle(0) {}
+
+    TabInfo(const VimTabpage &t) : handle(t) {}
 
     bool operator<(const TabInfo &t)
     {
@@ -113,6 +123,13 @@ public:
     {
         return current_tab_;
     }
+
+    /// Call when notified of bufadd
+    /// @returns iterator to the new buffer in the vector
+    std::vector<BufferInfo>::iterator add_buffer(int handle);
+
+    /// Call when notified of bufdel
+    void del_buffer(int handle);
 private:
     void on_bufs_listed(const msgpack::object &o);
     void on_bufs_list_error(const msgpack::object &o);
@@ -124,10 +141,10 @@ private:
 
     void on_modified_changed(int buf, bool modified);
 
-    std::shared_ptr<NvimBridge> nvim_;
+    void get_buf_info(BufferInfo &binfo, RequestSet &rqset,
+            sigc::slot<void, const msgpack::object &> on_err);
 
-    RequestSet *buf_rqset_ {nullptr};
-    RequestSet *tab_rqset_ {nullptr};
+    std::shared_ptr<NvimBridge> nvim_;
 
     std::vector<BufferInfo> buffers_;
     std::vector<BufferInfo>::iterator current_buffer_;
@@ -140,7 +157,7 @@ private:
     sigc::signal<void, const std::vector<BufferInfo> &> sig_bufs_listed_;
     sigc::signal<void, const std::vector<TabInfo> &> sig_tabs_listed_;
 
-    bool mod_au_ {false};
+    bool au_on_ {false};
     bool got_buf_info_, got_tab_info_;
 };
 

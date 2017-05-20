@@ -92,7 +92,7 @@ public:
 
     void nvim_buf_get_name(VimBuffer buf_handle, PromiseHandle promise);
 
-    void nvim_buf_get_changedtick(VimBuffer buf_handle, PromiseHandle promise);
+    void nvim_buf_get_modified(VimBuffer buf_handle, PromiseHandle promise);
 
     void nvim_ui_try_resize(int width, int height);
 
@@ -103,6 +103,9 @@ public:
 
     /// Second int should actually be bool
     sigc::signal<void, int, int> signal_modified;
+    /// Here the ints are buffer handles
+    sigc::signal<void, int> signal_bufadd;
+    sigc::signal<void, int> signal_bufdel;
 
     sigc::signal<void> redraw_start;
     sigc::signal<void, int, int> redraw_resize;

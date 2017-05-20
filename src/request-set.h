@@ -20,16 +20,24 @@
 #define GNVIM_REQUEST_SET_H
 
 #include "defns.h"
+
+#include <functional>
+#include <memory>
+
 #include "msgpack-promise.h"
 
 namespace Gnvim
 {
 
-template<class T> class RequestSetConcrete;
-
-/// Abstract base class for RequestSetConcrete.
-class RequestSet {
+/** Groups a set of MgsgpackPromises so that a function is called when all
+ *  the promises have been fulfilled.
+ *  It holds a shared_ptr to itself which it clears when the promises are all
+ *  fulfilled.
+ */
+class RequestSet : public std::enable_shared_from_this<RequestSet> {
 private:
+    using Functor = std::function<void(RequestSet *)>;
+
     friend class ProxiedPromise;
     class ProxiedPromise : public MsgpackPromise {
     public:
@@ -52,19 +60,12 @@ private:
         PromiseHandle promise_;
     };
 public:
-    /** Enables creation of an implementation with automatic type deduction.
-     *  @tparam T a function/functor of type void (*)(RequestSet *rqset);.
-     *  @param finished A tempting place to delete the rqset, but it might
-     *                  not be safe to do so; defer to something like
-     *                  Glib::signal_idle().connect_once() if you need to
-     *                  delete this.
-     */
-    template<class T> static RequestSet *create(T finished)
+    /// @param finished Called when all promises have been fulfilled.
+    static std::shared_ptr<RequestSet>
+    create(Functor finished)
     {
-        return new RequestSetConcrete<T> (finished);
+        return (new RequestSet(finished))->shared_from_this();
     }
-
-    virtual ~RequestSet() = default;
 
     /** Creates a proxy for a given promise.
      *  You should connect to the original promise to get the response to the
@@ -86,7 +87,7 @@ public:
     void ready()
     {
         ready_ = true;
-        if (!outstanding_) emit_finished();
+        if (!outstanding_) finished();
     }
 
     void reset()
@@ -94,34 +95,27 @@ public:
         ready_ = false;
         outstanding_ = 0;
     }
-protected:
-    virtual void emit_finished() = 0;
 private:
-    void promise_fulfilled()
+    RequestSet(Functor finished) : self_ref_(this), finished_(finished)
+    {}
+
+    void finished()
     {
-        if (!--outstanding_ && ready_) emit_finished();
+        finished_(this);
+        self_ref_.reset();
     }
 
+    void promise_fulfilled()
+    {
+        if (!--outstanding_ && ready_) finished();
+    }
+
+    std::shared_ptr<RequestSet> self_ref_;
+    Functor finished_;
     int outstanding_ {0};
     bool ready_ {false};
 };
 
-/** Groups a set of requests, calling a master callback when all promises
- *  have been fulfilled.
- *  @tparam T A void(*)(void) callable type.
- */
-template<class T> class RequestSetConcrete : public RequestSet {
-public:
-    RequestSetConcrete(T finished) : finished_(finished)
-    {}
-protected:
-    virtual void emit_finished() override
-    {
-        finished_(this);
-    }
-private:
-    T finished_;
-};
 
 }
 

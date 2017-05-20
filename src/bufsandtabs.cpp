@@ -19,6 +19,7 @@
 #include "defns.h"
 
 #include <algorithm>
+#include <iterator>
 #include <sstream>
 
 #include "bufsandtabs.h"
@@ -66,7 +67,7 @@ void BufsAndTabs::get_all_info()
 
 void BufsAndTabs::got_all_info()
 {
-    if (!mod_au_)
+    if (!au_on_)
     {
         nvim_->ensure_augroup();
         std::ostringstream s;
@@ -80,7 +81,22 @@ void BufsAndTabs::got_all_info()
             << ", 'modified', str2nr(expand('<abuf>')), &modified)"
             << "|endif";
         nvim_->nvim_command(s.str());
-        mod_au_ = true;
+
+        s.str("autocmd ");
+        s << nvim_->get_augroup()
+            << " BufAdd * call rpcnotify("
+            << nvim_->get_channel_id()
+            << ", 'bufadd', str2nr(expand('<abuf>')))";
+        nvim_->nvim_command(s.str());
+
+        s.str("autocmd ");
+        s << nvim_->get_augroup()
+            << " BufDelete * call rpcnotify("
+            << nvim_->get_channel_id()
+            << ", 'bufdel', str2nr(expand('<abuf>')))";
+        nvim_->nvim_command(s.str());
+
+        au_on_ = true;
     }
 
     sig_got_all_.emit();
@@ -106,6 +122,38 @@ void BufsAndTabs::list_tabs()
     nvim_->nvim_list_tabs(prom);
 }
 
+std::vector<BufferInfo>::iterator BufsAndTabs::add_buffer(int handle)
+{
+    VimBuffer bh(handle);
+
+    const auto &match = std::find_if(buffers_.begin(), buffers_.end(),
+            [bh](const BufferInfo &b) { return b.handle == bh; });
+    if (match == buffers_.end())
+    {
+        buffers_.emplace_back(bh);
+        auto last = std::prev(buffers_.end());
+        auto rqset = RequestSet::create([last, handle](RequestSet *)
+        {
+            g_debug("Got info about new buffer %d: %s", handle,
+                    last->name.c_str());
+
+        });
+        get_buf_info(*last, *rqset, [handle](const msgpack::object &o)
+        {
+            std::ostringstream s;
+            s << o;
+            g_critical("Error reading info about new buffer %d: %s",
+                    handle, s.str().c_str());
+        });
+        return last;
+    }
+    else
+    {
+        g_warning("add_buffer: handle %d is already in the list", handle);
+        return match;
+    }
+}
+
 void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
 {
     const msgpack::object_array &ar = o.via.array;
@@ -123,8 +171,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
         buf_info->bufs[n].modified = false;
     }
 
-    delete buf_rqset_;
-    buf_rqset_ = RequestSet::create([this, buf_info](RequestSet *)
+    auto rqset = RequestSet::create([this, buf_info](RequestSet *)
     {
         if (buf_info->error)
         {
@@ -167,30 +214,32 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
 
     for (std::size_t n = 0; n < ar.size; ++n)
     {
-        auto prom = MsgpackPromise::create();
-        prom->value_signal().connect([buf_info, n](const msgpack::object &o)
-        {
-            o.convert(buf_info->bufs[n].name);
-        });
-        prom->error_signal().connect(error_lambda);
-        nvim_->nvim_buf_get_name(buf_info->bufs[n].handle,
-                buf_rqset_->get_proxied_promise(prom));
-
-        prom = MsgpackPromise::create();
-        prom->value_signal().connect([buf_info, n](const msgpack::object &o)
-        {
-            o.convert(buf_info->bufs[n].modified);
-            /*
-            g_debug("Buf %ld %s modified", n,
-                    buf_info->bufs[n].modified ? "is" : "is not");
-            */
-        });
-        prom->error_signal().connect(error_lambda);
-        nvim_->nvim_buf_get_changedtick(buf_info->bufs[n].handle,
-                buf_rqset_->get_proxied_promise(prom));
+        get_buf_info(buf_info->bufs[n], *rqset, error_lambda);
     }
 
-    buf_rqset_->ready();
+    rqset->ready();
+}
+
+void BufsAndTabs::get_buf_info(BufferInfo &binfo, RequestSet &rqset,
+        sigc::slot<void, const msgpack::object &> on_err)
+{
+    auto prom = MsgpackPromise::create();
+    prom->value_signal().connect([binfo](const msgpack::object &o) mutable
+    {
+        o.convert(binfo.name);
+    });
+    prom->error_signal().connect(on_err);
+    nvim_->nvim_buf_get_name(binfo.handle,
+            rqset.get_proxied_promise(prom));
+
+    prom = MsgpackPromise::create();
+    prom->value_signal().connect([binfo](const msgpack::object &o) mutable
+    {
+        o.convert(binfo.modified);
+    });
+    prom->error_signal().connect(on_err);
+    nvim_->nvim_buf_get_modified(binfo.handle,
+            rqset.get_proxied_promise(prom));
 }
 
 void BufsAndTabs::on_bufs_list_error(const msgpack::object &o)
@@ -246,7 +295,7 @@ void BufsAndTabs::on_modified_changed(int handle, bool modified)
 {
     for (auto &buf: buffers_)
     {
-        if (buf.handle == handle)
+        if (buf.handle == VimBuffer(handle))
         {
             buf.modified = modified;
             break;

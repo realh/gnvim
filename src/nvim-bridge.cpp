@@ -170,6 +170,10 @@ void NvimBridge::map_adapters()
 
     notify_adapters_.emplace("modified",
         new MsgpackAdapter<int, int> (signal_modified));
+    notify_adapters_.emplace("bufadd",
+        new MsgpackAdapter<int> (signal_bufadd));
+    notify_adapters_.emplace("bufdel",
+        new MsgpackAdapter<int> (signal_bufdel));
 }
 
 void NvimBridge::start_ui(int width, int height)
@@ -252,19 +256,10 @@ void NvimBridge::nvim_buf_get_name(VimBuffer buf_handle,
     rpc_->request("nvim_buf_get_name", promise, buf_handle);
 }
 
-void NvimBridge::nvim_buf_get_changedtick(VimBuffer buf_handle,
+void NvimBridge::nvim_buf_get_modified(VimBuffer buf_handle,
         PromiseHandle promise)
 {
-    if (version_.major == 0 && version_.minor == 1)
-    {
-        // Old way
-        rpc_->request("nvim_buf_get_option", promise, buf_handle, "modified");
-    }
-    else
-    {
-        // New way
-        rpc_->request("nvim_buf_get_changedtick", promise, buf_handle);
-    }
+    rpc_->request("nvim_buf_get_option", promise, buf_handle, "modified");
 }
 
 void NvimBridge::nvim_ui_try_resize(int width, int height)

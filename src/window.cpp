@@ -31,11 +31,12 @@ Window::Window(bool maximise, int width, int height,
         std::shared_ptr<NvimBridge> nvim)
 : nvim_(nvim), bufs_and_tabs_(nvim),
     maximise_(maximise), columns_(width), lines_(height),
-    rqset_(RequestSet::create(sigc::mem_fun(*this, &Window::on_options_read))),
     tabs_(new std::vector<TabPage>())
 {
+    auto rqset = RequestSet::create([this](RequestSet *rq)
+    { on_options_read(rq); });
     auto prom = MsgpackPromise::create();
-    nvim_->get_api_info(rqset_->get_proxied_promise(prom));
+    nvim_->get_api_info(rqset->get_proxied_promise(prom));
     if (width == -1)
     {
         columns_ = 80;
@@ -44,7 +45,7 @@ Window::Window(bool maximise, int width, int height,
         {
             o.convert_if_not_nil(columns_);
         });
-        nvim_->nvim_get_option("columns", rqset_->get_proxied_promise(prom));
+        nvim_->nvim_get_option("columns", rqset->get_proxied_promise(prom));
     }
     if (height == -1)
     {
@@ -54,7 +55,7 @@ Window::Window(bool maximise, int width, int height,
         {
             o.convert_if_not_nil(lines_);
         });
-        nvim_->nvim_get_option("lines", rqset_->get_proxied_promise(prom));
+        nvim_->nvim_get_option("lines", rqset->get_proxied_promise(prom));
     }
 
     show_tab_line_ = 1;
@@ -63,9 +64,9 @@ Window::Window(bool maximise, int width, int height,
     {
         o.convert_if_not_nil(show_tab_line_);
     });
-    nvim_->nvim_get_option("showtabline", rqset_->get_proxied_promise(prom));
+    nvim_->nvim_get_option("showtabline", rqset->get_proxied_promise(prom));
 
-    rqset_->ready();
+    rqset->ready();
 }
 
 Window::~Window()
@@ -109,7 +110,6 @@ void Window::ready_to_start()
 
     view_ = new NvimGridView(nvim_, columns_, lines_);
 
-    rqset_.reset();
     nvim_->start_ui(columns_, lines_);
     grid_->attach(*view_, 0, 1, 1, 1);
 

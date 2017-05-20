@@ -101,7 +101,6 @@ private:
     bool maximise_;
     int columns_, lines_;
     int show_tab_line_;
-    std::unique_ptr<RequestSet> rqset_;
     sigc::connection delete_event_conn_;
 
     std::vector<TabPage> *tabs_;
