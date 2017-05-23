@@ -267,6 +267,20 @@ void NvimBridge::nvim_ui_try_resize(int width, int height)
     rpc_->notify("nvim_ui_try_resize", width, height);
 }
 
+void NvimBridge::nvim_tabpage_list_wins(VimTabpage tab, PromiseHandle promise)
+{
+    rpc_->request("nvim_tabpage_list_wins", promise, tab);
+}
+
+void NvimBridge::nvim_tabpage_get_win(VimTabpage tab, PromiseHandle promise)
+{
+    rpc_->request("nvim_tabpage_get_win", promise, tab);
+}
+
+void NvimBridge::nvim_win_get_buf(VimWindow win, PromiseHandle promise)
+{
+    rpc_->request("nvim_win_get_buf", promise, win);
+}
 
 void NvimBridge::on_request(guint32 msgid, std::string method,
         const msgpack::object &args)

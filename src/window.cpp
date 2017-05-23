@@ -100,12 +100,16 @@ void Window::ready_to_start()
     for (const auto &tab: bufs_and_tabs_.get_tabs())
     {
         tabs_->emplace_back(tab);
-        auto &page = tabs_->back();
-        auto &label = page.get_label_widget();
-        page.show_all();
+        // page needs to be a pointer so we can copy it into the lambda
+        auto page = &tabs_->back();
+        auto &label = page->get_label_widget();
+        page->show_all();
         label.show_all();
-        notebook_->append_page(page, label);
-        g_debug("Adding notebook page");
+        notebook_->append_page(*page, label);
+        bufs_and_tabs_.get_tab_title(tab.handle, [page](std::string &&s)
+        {
+            page->set_label_text(s);
+        });
     }
 
     view_ = new NvimGridView(nvim_, columns_, lines_);

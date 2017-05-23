@@ -313,4 +313,120 @@ bool BufsAndTabs::any_modified() const
     return false;
 }
 
+void BufsAndTabs::get_tab_title(const VimTabpage &tab,
+            std::function<void(std::string &&)> final_prom)
+{
+    // Arrgh, all these nested promises/lambdas,
+    // I wish I'd used blocking requests with threaded I/O
+    struct TabTitleInfo {
+        int count = 0;
+        bool modified = false;
+        std::string win_name = "???";
+    };
+    auto tti = std::make_shared<TabTitleInfo>();
+    auto rqset = RequestSet::create(
+    [tti, final_prom](RequestSet *)
+    {
+        std::ostringstream s;
+        if (tti->count > 1)
+            s << tti->count;
+        if (tti->modified)
+            s << '+';
+        if (tti->count > 1 || tti->modified)
+            s << ' ';
+        s << Glib::path_get_basename(tti->win_name);
+        final_prom(s.str());
+    });
+
+    auto err = [](const msgpack::object &o)
+    {
+        std::ostringstream s;
+        s << o;
+        g_critical("Error getting tab title: %s", s.str().c_str());
+    };
+
+    // Captures the result of each nvim_buf_get_modified
+    auto mod_capture = [tti](const msgpack::object &o)
+    {
+        bool mod;
+        o.convert(mod);
+        if (mod)
+            tti->modified = true;
+    };
+
+    // For each buffer listed, queries whether it's modified
+    auto buf_capture = [this, rqset, mod_capture, err](const msgpack::object &o)
+    {
+        VimBuffer buf;
+        o.convert(buf);
+        auto prom = MsgpackPromise::create();
+        prom->value_signal().connect(mod_capture);
+        prom->error_signal().connect(err);
+        nvim_->nvim_buf_get_modified(buf, rqset->get_proxied_promise(prom));
+    };
+
+    // Gets a list of the tab's windows, gets the buffer for each one, and then
+    // whether it's modified
+    try {
+        auto prom = MsgpackPromise::create();
+        prom->value_signal().connect(
+        [this, rqset, tti, buf_capture, err](const msgpack::object &o)
+        {
+            auto &ar = o.via.array;
+            tti->count = ar.size;
+            // Get buf info for each win
+            for (guint32 n = 0; n < ar.size; ++n)
+            {
+                VimWindow win;
+                ar.ptr[n].convert(win);
+                auto prom = MsgpackPromise::create();
+                prom->value_signal().connect(buf_capture);
+                prom->error_signal().connect(err);
+                nvim_->nvim_win_get_buf(win, rqset->get_proxied_promise(prom));
+            }
+        });
+        prom->error_signal().connect(err);
+        nvim_->nvim_tabpage_list_wins(tab, rqset->get_proxied_promise(prom));
+
+        // Get tab's current win, its buf and buf's name
+        prom = MsgpackPromise::create();
+        prom->value_signal().connect(
+        [this, rqset, tti, err]
+        (const msgpack::object &o) mutable
+        {
+            VimWindow win;
+            o.convert(win);
+            auto prom = MsgpackPromise::create();
+            prom->value_signal().connect(
+            [this, rqset, tti, err](const msgpack::object &o)
+            {
+                VimBuffer buf;
+                o.convert(buf);
+                auto prom = MsgpackPromise::create();
+                prom->value_signal().connect(
+                [tti](const msgpack::object &o)
+                {
+                    o.convert_if_not_nil(tti->win_name);
+                    if (!tti->win_name.size())
+                        tti->win_name = _("[No name]");
+                });
+                prom->error_signal().connect(err);
+                nvim_->nvim_buf_get_name(buf, rqset->get_proxied_promise(prom));
+            });
+            prom->error_signal().connect(err);
+            nvim_->nvim_win_get_buf(win, rqset->get_proxied_promise(prom));
+        });
+        nvim_->nvim_tabpage_get_win(tab, rqset->get_proxied_promise(prom));
+        rqset->ready();
+    }
+    catch (const std::exception &x)
+    {
+        g_critical("std::exception getting tab title: %s", x.what());
+    }
+    catch (const Glib::Exception &x)
+    {
+        g_critical("Glib::Exception getting tab title: %s", x.what().c_str());
+    }
+}
+
 }

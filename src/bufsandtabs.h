@@ -21,6 +21,7 @@
 
 #include "defns.h"
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -86,7 +87,7 @@ public:
     // Gets tab info from nvim and emits on_tabs_listed.
     void list_tabs();
 
-    /// Returns true if any buffers are modified
+    /// @returns true if any buffers are modified.
     bool any_modified() const;
 
     /// Raised when all the requests from list_buffers have been answered.
@@ -124,12 +125,17 @@ public:
         return current_tab_;
     }
 
-    /// Call when notified of bufadd
+    /// Call when notified of bufadd.
     /// @returns iterator to the new buffer in the vector
     std::vector<BufferInfo>::iterator add_buffer(int handle);
 
     /// Call when notified of bufdel
     void del_buffer(int handle);
+
+    /// Works out the text that should appear in a tab label by checking the
+    /// vim-windows it contains.
+    void get_tab_title(const VimTabpage &tab,
+            std::function<void(std::string &&)> prom);
 private:
     void on_bufs_listed(const msgpack::object &o);
     void on_bufs_list_error(const msgpack::object &o);

@@ -185,12 +185,30 @@ template<> struct convert<VimBuffer> {
     }
 };
 
+template <> struct pack<VimBuffer> {
+    template <class S> msgpack::packer<S>& operator()
+    (msgpack::packer<S> &packer, VimBuffer const &vb) const
+    {
+        vb.pack(packer);
+        return packer;
+    }
+};
+
 template<> struct convert<VimTabpage> {
     msgpack::object const& operator()
     (msgpack::object const &o, VimTabpage &vt) const
     {
         vt = o;
         return o;
+    }
+};
+
+template<> struct pack<VimTabpage> {
+    template <class S> msgpack::packer<S>& operator()
+    (msgpack::packer<S> &packer, VimTabpage const &vt) const
+    {
+        vt.pack(packer);
+        return packer;
     }
 };
 
@@ -203,11 +221,11 @@ template<> struct convert<VimWindow> {
     }
 };
 
-template <> struct pack<VimBuffer> {
+template<> struct pack<VimWindow> {
     template <class S> msgpack::packer<S>& operator()
-    (msgpack::packer<S> &packer, VimBuffer const &vb) const
+    (msgpack::packer<S> &packer, VimWindow const &vw) const
     {
-        vb.pack(packer);
+        vw.pack(packer);
         return packer;
     }
 };

@@ -96,6 +96,12 @@ public:
 
     void nvim_ui_try_resize(int width, int height);
 
+    void nvim_tabpage_list_wins(VimTabpage tab, PromiseHandle promise);
+
+    void nvim_tabpage_get_win(VimTabpage tab, PromiseHandle promise);
+
+    void nvim_win_get_buf(VimWindow win, PromiseHandle promise);
+
     sigc::signal<void, Glib::ustring> &io_error_signal()
     {
         return rpc_->io_error_signal();
