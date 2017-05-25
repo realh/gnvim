@@ -63,8 +63,6 @@ Window::Window(bool maximise, int width, int height,
     prom->value_signal().connect([this](const msgpack::object &o)
     {
         o.convert_if_not_nil(show_tab_line_);
-        if (Application::app_gsettings()->get_boolean("gui-tabs"))
-            nvim_->nvim_set_option("showtabline", 0);
     });
     nvim_->nvim_get_option("showtabline", rqset->get_proxied_promise(prom));
 
@@ -151,7 +149,9 @@ void Window::ready_to_start()
 
 void Window::show_or_hide_tabs()
 {
-    show_or_hide_tabs(Application::app_gsettings()->get_boolean("gui-tabs"));
+    bool show = Application::app_gsettings()->get_boolean("gui-tabs");
+    show_or_hide_tabs(show);
+    nvim_->nvim_set_option("showtabline", show ? 0 : show_tab_line_);
 }
 
 void Window::show_or_hide_tabs(bool show)
