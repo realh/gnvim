@@ -97,6 +97,8 @@ void Window::ready_to_start()
     show_or_hide_tabs();
     grid_->attach(*notebook_, 0, 0, 1, 1);
 
+    int pnum = 0;
+    int current = 0;
     for (const auto &tab: bufs_and_tabs_.get_tabs())
     {
         tabs_->emplace_back(new TabPage(tab));
@@ -110,7 +112,13 @@ void Window::ready_to_start()
         {
             page->set_label_text(s);
         });
+        if (tab.handle == bufs_and_tabs_.get_current_tab()->handle)
+        {
+            current = pnum;
+        }
+        ++pnum;
     }
+    notebook_->set_current_page(current);
 
     view_ = new NvimGridView(nvim_, columns_, lines_);
 
