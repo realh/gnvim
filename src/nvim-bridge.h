@@ -82,6 +82,12 @@ public:
     void nvim_get_option(const std::string &name,
             PromiseHandle promise);
 
+    template<typename T> void nvim_set_option
+        (const std::string &name, const T &val)
+    {
+        rpc_->notify("nvim_set_option", name, val);
+    }
+
     void nvim_get_current_buf(PromiseHandle promise);
 
     void nvim_list_bufs(PromiseHandle promise);
