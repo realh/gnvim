@@ -25,11 +25,11 @@
 namespace Gnvim
 {
 
-TabPage::TabPage(const TabInfo &t)
-    : text_label_("")
+TabPage::TabPage(const VimTabpage &t)
+    : text_label_(""), handle_(t)
 {
     std::ostringstream s;
-    s << "Tab " << gint64(t.handle);
+    s << "Tab " << gint64(t);
     text_label_.set_text(s.str());
 }
 

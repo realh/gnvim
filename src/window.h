@@ -64,6 +64,15 @@ protected:
 
     virtual bool on_delete_event(GdkEventAny *) override;
 private:
+    using TabVector = std::vector<std::unique_ptr<TabPage>>;
+
+    TabPage *create_tab_page(const TabInfo &info)
+    {
+        return create_tab_page(info, tabs_->end());
+    }
+
+    TabPage *create_tab_page(const TabInfo &info, TabVector::iterator it);
+
     void show_or_hide_tabs();
 
     void show_or_hide_tabs(bool show);
@@ -103,7 +112,7 @@ private:
     int show_tab_line_;
     sigc::connection delete_event_conn_;
 
-    std::vector<std::unique_ptr<TabPage>> *tabs_;
+    TabVector *tabs_;
 };
 
 }

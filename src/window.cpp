@@ -18,6 +18,8 @@
 
 #include "defns.h"
 
+#include <iterator>
+
 #include "app.h"
 #include "dcs-dialog.h"
 #include "nvim-grid-view.h"
@@ -101,17 +103,7 @@ void Window::ready_to_start()
     int current = 0;
     for (const auto &tab: bufs_and_tabs_.get_tabs())
     {
-        tabs_->emplace_back(new TabPage(tab));
-        // page needs to be a pointer so we can copy it into the lambda
-        TabPage *page = tabs_->back().get();
-        auto &label = page->get_label_widget();
-        page->show_all();
-        label.show_all();
-        notebook_->append_page(*page, label);
-        bufs_and_tabs_.get_tab_title(tab.handle, [page](const std::string &s)
-        {
-            page->set_label_text(s);
-        });
+        create_tab_page(tab);
         if (tab.handle == bufs_and_tabs_.get_current_tab()->handle)
         {
             current = pnum;
@@ -153,6 +145,33 @@ void Window::ready_to_start()
     nvim_->redraw_set_title.connect
         (sigc::mem_fun(this, &Window::on_redraw_set_title));
     bat_conn_.disconnect();
+}
+
+TabPage *Window::create_tab_page(const TabInfo &info, TabVector::iterator it)
+{
+    // page needs to be a pointer so we can copy it into the lambda
+    auto page = new TabPage(info);
+    auto &label = page->get_label_widget();
+
+    page->show_all();
+    label.show_all();
+
+    if (it == tabs_->end())
+    {
+        tabs_->emplace_back(page);
+        notebook_->append_page(*page, label);
+    }
+    else
+    {
+        tabs_->emplace(it, page);
+        notebook_->insert_page(*page, label, std::distance(tabs_->begin(), it));
+    }
+
+    bufs_and_tabs_.get_tab_title(info.handle, [page](const std::string &s)
+    {
+        page->set_label_text(s);
+    });
+    return page;
 }
 
 void Window::show_or_hide_tabs()

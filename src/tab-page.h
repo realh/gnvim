@@ -36,7 +36,10 @@ namespace Gnvim
  */
 class TabPage : public Gtk::Grid {
 public:
-    TabPage(const TabInfo &t);
+    TabPage(const TabInfo &t) : TabPage(t.handle)
+    {}
+
+    TabPage(const VimTabpage &t);
 
     Gtk::Widget &get_label_widget()
     {
@@ -52,8 +55,14 @@ public:
     {
         return text_label_.get_text();
     }
+
+    const VimTabpage &get_vim_handle() const
+    {
+        return handle_;
+    }
 private:
     Gtk::Label text_label_;
+    VimTabpage handle_;
 };
 
 }
