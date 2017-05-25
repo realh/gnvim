@@ -103,7 +103,7 @@ private:
     int show_tab_line_;
     sigc::connection delete_event_conn_;
 
-    std::vector<TabPage> *tabs_;
+    std::vector<std::unique_ptr<TabPage>> *tabs_;
 };
 
 }

@@ -135,7 +135,7 @@ public:
     /// Works out the text that should appear in a tab label by checking the
     /// vim-windows it contains.
     void get_tab_title(const VimTabpage &tab,
-            std::function<void(std::string &&)> prom);
+            std::function<void(const std::string &)> prom);
 private:
     void on_bufs_listed(const msgpack::object &o);
     void on_bufs_list_error(const msgpack::object &o);

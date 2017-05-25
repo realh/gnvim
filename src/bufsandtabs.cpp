@@ -314,7 +314,7 @@ bool BufsAndTabs::any_modified() const
 }
 
 void BufsAndTabs::get_tab_title(const VimTabpage &tab,
-            std::function<void(std::string &&)> final_prom)
+            std::function<void(const std::string &)> final_prom)
 {
     // Arrgh, all these nested promises/lambdas,
     // I wish I'd used blocking requests with threaded I/O

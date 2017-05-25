@@ -48,9 +48,9 @@ public:
         text_label_.set_text(s);
     }
 
-    void set_label_text(std::string &&s)
+    std::string get_label_text()
     {
-        text_label_.set_text(s);
+        return text_label_.get_text();
     }
 private:
     Gtk::Label text_label_;
