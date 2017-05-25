@@ -174,6 +174,25 @@ void NvimBridge::map_adapters()
         new MsgpackAdapter<int> (signal_bufadd));
     notify_adapters_.emplace("bufdel",
         new MsgpackAdapter<int> (signal_bufdel));
+    notify_adapters_.emplace("tabenter",
+        new MsgpackAdapter<void> (sig_tabenter));
+    sig_tabenter.connect([this]()
+    {
+        auto prom = MsgpackPromise::create();
+        prom->value_signal().connect([this](const msgpack::object &o)
+        {
+            VimTabpage tab;
+            o.convert_if_not_nil(tab);
+            signal_bufenter.emit(tab);
+        });
+        prom->error_signal().connect([this](const msgpack::object &o)
+        {
+            std::ostringstream s;
+            s << o;
+            g_critical("Error reading current tab on BufEnter event: %s",
+                    s.str().c_str());
+        });
+    });
 }
 
 void NvimBridge::start_ui(int width, int height)
@@ -275,6 +294,11 @@ void NvimBridge::nvim_tabpage_list_wins(VimTabpage tab, PromiseHandle promise)
 void NvimBridge::nvim_tabpage_get_win(VimTabpage tab, PromiseHandle promise)
 {
     rpc_->request("nvim_tabpage_get_win", promise, tab);
+}
+
+void NvimBridge::nvim_set_current_tabpage(VimTabpage tab)
+{
+    rpc_->notify("nvim_set_current_tabpage", tab);
 }
 
 void NvimBridge::nvim_win_get_buf(VimWindow win, PromiseHandle promise)

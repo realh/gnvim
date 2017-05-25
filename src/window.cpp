@@ -111,6 +111,35 @@ void Window::ready_to_start()
         ++pnum;
     }
     notebook_->set_current_page(current);
+    notebook_->signal_switch_page().connect([this](Gtk::Widget *w, int)
+    {
+        const auto &handle = static_cast<TabPage *>(w)->get_vim_handle();
+        if (handle != bufs_and_tabs_.get_current_tab()->handle)
+        {
+            nvim_->nvim_set_current_tabpage(handle);
+        }
+        view_->grab_focus();
+    });
+    nvim_->signal_bufenter.connect([this](const VimTabpage &handle)
+    {
+        if ((*tabs_)[notebook_->get_current_page()]->get_vim_handle() == handle)
+            return;
+        auto children = notebook_->get_children();
+        std::size_t n;
+        for (n = 0; n < children.size(); ++n)
+        {
+            auto page = static_cast<TabPage *>(children[n]);
+            if (page->get_vim_handle() == handle)
+            {
+                notebook_->set_current_page(n);
+                break;
+            }
+        }
+        if (n == children.size())
+        {
+            g_critical("Can't find nvim's current tab in notebook");
+        }
+    });
 
     view_ = new NvimGridView(nvim_, columns_, lines_);
 

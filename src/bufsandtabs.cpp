@@ -96,6 +96,27 @@ void BufsAndTabs::got_all_info()
             << ", 'bufdel', str2nr(expand('<abuf>')))";
         nvim_->nvim_command(s.str());
 
+        // Not sure how to get tab handle directly from aucmd
+        s.str("autocmd ");
+        s << nvim_->get_augroup()
+            << " TabEnter * call rpcnotify("
+            << nvim_->get_channel_id()
+            << ", 'tabenter')";
+        nvim_->nvim_command(s.str());
+        nvim_->signal_bufenter.connect([this](const VimTabpage &handle)
+        {
+            auto it = std::find_if(tabs_.begin(), tabs_.end(),
+            [&handle](const TabInfo &i) { return i.handle == handle; });
+            if (it == tabs_.end())
+            {
+                g_critical("nvim's current tab is not known to gnvim");
+            }
+            else
+            {
+                current_tab_ = it;
+            }
+        });
+
         au_on_ = true;
     }
 

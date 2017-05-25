@@ -106,6 +106,8 @@ public:
 
     void nvim_tabpage_get_win(VimTabpage tab, PromiseHandle promise);
 
+    void nvim_set_current_tabpage(VimTabpage tab);
+
     void nvim_win_get_buf(VimWindow win, PromiseHandle promise);
 
     sigc::signal<void, Glib::ustring> &io_error_signal()
@@ -118,6 +120,7 @@ public:
     /// Here the ints are buffer handles
     sigc::signal<void, int> signal_bufadd;
     sigc::signal<void, int> signal_bufdel;
+    sigc::signal<void, const VimTabpage &> signal_bufenter;
 
     sigc::signal<void> redraw_start;
     sigc::signal<void, int, int> redraw_resize;
@@ -193,6 +196,8 @@ private:
     } version_;
     std::string augroup_;
     bool augroup_defined_ {false};
+
+    sigc::signal<void> sig_tabenter;
 };
 
 }

@@ -31,6 +31,7 @@ TabPage::TabPage(const VimTabpage &t)
     std::ostringstream s;
     s << "Tab " << gint64(t);
     text_label_.set_text(s.str());
+    set_can_focus(false);
 }
 
 }
