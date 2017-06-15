@@ -29,12 +29,12 @@
 namespace Gnvim
 {
 
-/// Displays the TextGrid
-class TextGridView : public Gtk::DrawingArea {
+/// Renders the TextGrid to a Cairo surface
+class TextGridView {
 public:
     TextGridView(int columns, int lines, const std::string &font_name = "");
 
-    ~TextGridView();
+    virtual ~TextGridView() = default;
 
     int get_allocated_columns() const
     {
@@ -52,17 +52,16 @@ public:
         lines = lines_;
     }
 
-    // desc is a pango font description string or "" for default
-    void set_font(const Glib::ustring &desc = "", bool q_resize = true);
+    /// @param pc       For calculating font size.
+    /// @param desc     A pango font description string or "" for default.
+    /// @param resize   Whether to resize the surface.
+    void set_font(RefPtr<Pango::Context> pc,
+            const Glib::ustring &desc = "", bool resize = true);
 
     TextGrid &get_grid()
     {
         return grid_;
     }
-
-    // Try to resize the parent window to fit the desired number of columns
-    // and lines
-    void resize_window();
 
     // in = window coords eg from mouse event, out = vim text coords
     void convert_coords_to_cells(int &x, int &y)
@@ -91,26 +90,20 @@ public:
     // Parameters are same as for TextGrid::Scroll, which this method calls
     // in addition to updating the view.
     void scroll(int left, int top, int right, int bottom, int count);
+
+    // @param w A widget this will be rendered in, provides render context info.
+    void create_cairo_surface(Gtk::Widget *w);
+
+    // Called from widget's namesake.
+    virtual void on_size_allocate(Gtk::Allocation &alloc);
+
+    // Called by widget's vfunc.
+    void get_preferred_width(int &minimum, int &natural) const;
+
+    // Called by widget's vfunc.
+    void get_preferred_height(int &minimum, int &natural) const;
 protected:
-    virtual void on_realize() override;
-
-    virtual bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr) override;
-
-    virtual void on_parent_changed(Gtk::Widget *old_parent) override;
-
-    virtual void on_size_allocate(Gtk::Allocation &) override;
-
-    virtual bool on_focus_in_event(GdkEventFocus *) override;
-
-    virtual bool on_focus_out_event(GdkEventFocus *) override;
-
-    virtual void get_preferred_width_vfunc(int &minimum, int &natural)
-            const override;
-
-    virtual void get_preferred_height_vfunc(int &minimum, int &natural)
-            const override;
-
-    void create_cairo_surface();
+    void resize_surface();
 
     // Fills the given region(inclusive text cells) with the given rgb colour.
     void fill_background(Cairo::RefPtr<Cairo::Context> cr, int left, int top,
@@ -154,20 +147,13 @@ protected:
 
     void on_toplevel_size_allocate(Gtk::Allocation &);
 
-    void calculate_metrics();
-
-    void show_cursor();
-
-    bool on_cursor_blink();
-
-    void on_cursor_gsetting_changed(const Glib::ustring &key);
+    void calculate_metrics(RefPtr<Pango::Context> pc);
 
     TextGrid grid_;
 
     int cell_width_px_, cell_height_px_;
     int columns_, lines_;
 
-    sigc::connection toplevel_size_allocate_connection_;
     int toplevel_width_ {0}, toplevel_height_ {0};
 
     Pango::FontDescription font_;
@@ -186,14 +172,6 @@ protected:
 
     int cursor_col_ {0}, cursor_line_ {0};
 
-    sigc::connection cursor_cx_;
-    sigc::connection cursor_blink_cx_, cursor_blink_time_cx_,
-        cursor_blink_timeout_cx_;
-    bool cursor_visible_ {false};
-    bool cursor_blinks_;
-    unsigned cursor_interval_;
-    guint64 cursor_timeout_;
-    gint64 cursor_idle_at_;
     CellAttributes cursor_attr_;
     bool colour_cursor_;        // Whether cursor has its own colour or it
                                 // depends on fg/bg
