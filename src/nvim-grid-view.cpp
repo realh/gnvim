@@ -30,16 +30,12 @@ enum FontSource
 };
 
 NvimGridView ::NvimGridView(std::shared_ptr<NvimBridge> nvim,
-        int columns, int lines, const std::string &font_name)
+        int columns, int lines,
+        Gtk::Widget *widget,
+        const std::string &font_name)
 : TextGridView(columns, lines, font_name), nvim_(nvim)
 {
-    add_events(Gdk::BUTTON1_MOTION_MASK | Gdk::BUTTON2_MOTION_MASK |
-            Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK |
-            Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK |
-            Gdk::FOCUS_CHANGE_MASK |
-            Gdk::SCROLL_MASK | Gdk::SMOOTH_SCROLL_MASK);
-    set_can_focus();
-    grab_focus();
+    set_current_widget(widget);
 
     auto app_settings = Application::app_gsettings();
     app_settings->signal_changed("font").connect
@@ -62,10 +58,6 @@ NvimGridView ::NvimGridView(std::shared_ptr<NvimBridge> nvim,
     auto sys_settings = Application::sys_gsettings();
     sys_settings->signal_changed("monospace-font-name").connect
             (sigc::mem_fun(this, &NvimGridView::on_font_name_changed));
-
-    auto sc = get_style_context();
-    if (!sc->has_class("gnvim"))
-        sc->add_class("gnvim");
 
     update_font(true);
     on_redraw_mode_change("normal");
@@ -361,13 +353,25 @@ void NvimGridView::on_redraw_start()
     */
 }
 
+// TODO
+/*
+void NvimGridView::set_current_widget(Gtk::Widget *w)
+{
+    current_widget_ = static_cast<NvimGridWidget *>(w);
+}
+*/
+
 void NvimGridView::on_redraw_mode_change(const std::string &mode)
 {
     if (mode == "insert")
         cursor_width_ = beam_cursor_width_;
     else
         cursor_width_ = 0;
-    show_cursor();
+    // TODO
+    /*
+    if (current_widget_)
+        current_widget_->show_cursor();
+    */
 }
 
 void NvimGridView::on_redraw_resize(int columns, int lines)
@@ -388,14 +392,21 @@ void NvimGridView::on_redraw_resize(int columns, int lines)
         reset_scroll_region();
         if (gui_resize_counter_)
             --gui_resize_counter_;
-        else
-            resize_window();
+        // TODO
+        /*
+        else if (current_widget_)
+            current_widget_->resize_window();
+        */
     }
 }
 
 void NvimGridView::on_redraw_bell()
 {
-    get_window()->beep();
+    // TODO
+    /*
+    if (current_widget_)
+        current_widget_->get_window()->beep();
+    */
 }
 
 void NvimGridView::on_redraw_update_fg(int colour)
@@ -618,35 +629,45 @@ void NvimGridView::on_redraw_end()
         cursor_line_ = cursor_rdrw_y_;
         update_redraw_region(cursor_col_, cursor_line_,
                 cursor_col_ + 1, cursor_line_ + 1);
-        show_cursor();
+        // TODO
+        /*
+        if (current_widget_)
+            current_widget_->show_cursor();
+        */
     }
     if (global_redraw_pending_)
     {
         global_redraw_pending_ = false;
         redraw_view();
-        queue_draw();
-    }
-    else if (redraw_region_.left <= redraw_region_.right
-            && redraw_region_.top <= redraw_region_.bottom)
-    {
-        queue_draw_area(redraw_region_.left * cell_width_px_,
-                redraw_region_.top * cell_height_px_,
-                (redraw_region_.right - redraw_region_.left + 1)
-                    * cell_width_px_,
-                (redraw_region_.bottom - redraw_region_.top + 1)
-                    * cell_height_px_);
+        // TODO
         /*
-        auto alloc = get_allocation();
-        g_debug("qda %d,%d+%dx%d; alloc %dx%d",
-                redraw_region_.left * cell_width_px_,
-                redraw_region_.top * cell_height_px_,
-                (redraw_region_.right - redraw_region_.left + 1)
-                    * cell_width_px_,
-                (redraw_region_.bottom - redraw_region_.top + 1)
-                    * cell_height_px_,
-                alloc.get_width(), alloc.get_height());
+        if (current_widget_)
+            current_widget_->queue_draw();
         */
     }
+    // TODO
+    //else if (redraw_region_.left <= redraw_region_.right
+    //        && redraw_region_.top <= redraw_region_.bottom
+    //        && current_widget_)
+    //{
+    //    current_widget_->queue_draw_area(redraw_region_.left * cell_width_px_,
+    //            redraw_region_.top * cell_height_px_,
+    //            (redraw_region_.right - redraw_region_.left + 1)
+    //                * cell_width_px_,
+    //            (redraw_region_.bottom - redraw_region_.top + 1)
+    //                * cell_height_px_);
+    //    /*
+    //    auto alloc = current_widget_->get_allocation();
+    //    g_debug("qda %d,%d+%dx%d; alloc %dx%d",
+    //            redraw_region_.left * cell_width_px_,
+    //            redraw_region_.top * cell_height_px_,
+    //            (redraw_region_.right - redraw_region_.left + 1)
+    //                * cell_width_px_,
+    //            (redraw_region_.bottom - redraw_region_.top + 1)
+    //                * cell_height_px_,
+    //            alloc.get_width(), alloc.get_height());
+    //    */
+    //}
 }
 
 void NvimGridView::do_scroll(const std::string &direction, int state)
@@ -674,23 +695,32 @@ void NvimGridView::on_font_source_changed(const Glib::ustring &)
     update_font();
 }
 
+// TODO
+/*
 void NvimGridView::update_font(bool init)
 {
+    if (!current_widget_)
+    {
+        g_critical("Tried to set font with no widget to provide Pango context");
+        return;
+    }
     auto app_settings = Application::app_gsettings();
+    auto pc = current_widget->get_pango_context();
     switch(app_settings->get_enum("font-source"))
     {
         case FONT_SOURCE_SYS:
-            set_font(Application::sys_gsettings()->get_string
+            set_font(pc, Application::sys_gsettings()->get_string
                     ("monospace-font-name"), !init);
             break;
         case FONT_SOURCE_PREFS:
-            set_font(app_settings->get_string("font"), !init);
+            set_font(pc, app_settings->get_string("font"), !init);
             break;
         default:    // FONT_SOURCE_GTK
-            set_font(DEFAULT_FONT, !init);
+            set_font(pc, DEFAULT_FONT, !init);
             break;
     }
 }
+*/
 
 void NvimGridView::on_cursor_width_changed(const Glib::ustring &key)
 {
@@ -698,8 +728,12 @@ void NvimGridView::on_cursor_width_changed(const Glib::ustring &key)
         Application::app_gsettings()->get_uint("cursor-width");
     if (cursor_width_)
         cursor_width_ = beam_cursor_width_;
-    if (key.size())
-        show_cursor();
+    // TODO
+    (void) key;
+    /*
+    if (key.size() && current_widget_)
+        current_widget_->show_cursor();
+    */
 }
 
 void NvimGridView::on_cursor_bg_changed(const Glib::ustring &key)
@@ -715,8 +749,12 @@ void NvimGridView::on_cursor_bg_changed(const Glib::ustring &key)
         cursor_attr_.set_background_rgb(grid_.get_default_foreground_rgb());
         colour_cursor_ = false;
     }
-    if (key.size())
-        show_cursor();
+    // TODO
+    (void) key;
+    /*
+    if (key.size() && current_widget_)
+        current_widget_->show_cursor();
+    */
 }
 
 void NvimGridView::on_cursor_fg_changed(const Glib::ustring &key)
@@ -732,8 +770,12 @@ void NvimGridView::on_cursor_fg_changed(const Glib::ustring &key)
         cursor_attr_.set_foreground_rgb(grid_.get_default_background_rgb());
         colour_cursor_ = false;
     }
-    if (key.size())
-        show_cursor();
+    // TODO
+    (void) key;
+    /*
+    if (key.size() && current_widget_)
+        current_widget_->show_cursor();
+    */
 }
 
 void NvimGridView::on_sync_shada_changed(const Glib::ustring &)
@@ -741,22 +783,20 @@ void NvimGridView::on_sync_shada_changed(const Glib::ustring &)
     sync_shada_ = Application::app_gsettings()->get_boolean("sync-shada");
 }
 
-bool NvimGridView::on_focus_in_event(GdkEventFocus *e)
+void NvimGridView::on_focus_in_event()
 {
     nvim_->nvim_command("if exists('#FocusGained')|doauto FocusGained|endif");
     //nvim_->nvim_command("silent doauto FocusGained");
     if (sync_shada_)
         nvim_->nvim_command("rshada");
-    return Gtk::DrawingArea::on_focus_in_event(e);
 }
 
-bool NvimGridView::on_focus_out_event(GdkEventFocus *e)
+void NvimGridView::on_focus_out_event()
 {
     nvim_->nvim_command("if exists('#FocusLost')|doauto FocusLost|endif");
     //nvim_->nvim_command("silent doauto FocusLost");
     if (sync_shada_)
         nvim_->nvim_command("wshada");
-    return Gtk::DrawingArea::on_focus_out_event(e);
 }
 
 }

@@ -31,27 +31,32 @@
 namespace Gnvim
 {
 
+class NvimGridWidget;
+
 // TextGridView specialised for neovim
 class NvimGridView : public TextGridView {
 public:
     NvimGridView(std::shared_ptr<NvimBridge> nvim, int columns, int lines,
+            Gtk::Widget *widget,
             const std::string &font_name = "");
-protected:
+
     virtual void on_size_allocate(Gtk::Allocation &) override;
 
-    virtual bool on_key_press_event(GdkEventKey *) override;
+    bool on_key_press_event(GdkEventKey *);
 
-    virtual bool on_button_press_event(GdkEventButton *) override;
+    bool on_button_press_event(GdkEventButton *);
 
-    virtual bool on_button_release_event(GdkEventButton *) override;
+    bool on_button_release_event(GdkEventButton *);
 
-    virtual bool on_motion_notify_event(GdkEventMotion *) override;
+    bool on_motion_notify_event(GdkEventMotion *);
 
-    virtual bool on_scroll_event(GdkEventScroll *) override;
+    bool on_scroll_event(GdkEventScroll *);
 
-    virtual bool on_focus_in_event(GdkEventFocus *) override;
+    void on_focus_in_event();
 
-    virtual bool on_focus_out_event(GdkEventFocus *) override;
+    void on_focus_out_event();
+
+    void set_current_widget(Gtk::Widget *w);
 private:
     void update_redraw_region(int left, int top, int right, int bottom);
 
@@ -100,6 +105,8 @@ private:
 
     // If init is true a resize is not requested
     void update_font(bool init = false);
+
+    NvimGridWidget *current_widget_ {nullptr};
 
     /* If we've asked nvim to resize in response to size-allocate from GUI we
      * shouldn't then try to resize the GUI in response to nvim's redraw_resize
