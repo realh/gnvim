@@ -20,6 +20,7 @@
 
 #include "app.h"
 #include "text-grid-view.h"
+#include "text-grid-widget.h"
 
 namespace Gnvim
 {
@@ -30,8 +31,79 @@ TextGridView::TextGridView(int columns, int lines,
     columns_(columns), lines_(lines),
     font_(font_name.length() ? font_name : DEFAULT_FONT)
 {
+    auto settings = Application::sys_gsettings();
+    cursor_blinks_ = settings->get_boolean("cursor-blink");
+    cursor_blink_cx_ = settings->signal_changed("cursor-blink").connect
+        (sigc::mem_fun(*this, &TextGridView::on_cursor_gsetting_changed));
+    cursor_interval_ = settings->get_int("cursor-blink-time") / 2;
+    cursor_blink_time_cx_ = settings->signal_changed
+        ("cursor-blink-time").connect
+            (sigc::mem_fun(*this, &TextGridView::on_cursor_gsetting_changed));
+    cursor_timeout_ = settings->get_int("cursor-blink-timeout") * 1000000;
+    cursor_blink_timeout_cx_ = settings->signal_changed
+        ("cursor-blink-timeout").connect
+            (sigc::mem_fun(*this, &TextGridView::on_cursor_gsetting_changed));
     cursor_attr_.set_background_rgb(grid_.get_default_foreground_rgb());
     cursor_attr_.set_foreground_rgb(grid_.get_default_background_rgb());
+    show_cursor();
+}
+
+TextGridView::~TextGridView()
+{
+    cursor_blink_cx_.disconnect();
+    cursor_blink_time_cx_.disconnect();
+    cursor_blink_timeout_cx_.disconnect();
+    if (cursor_cx_.connected())
+        cursor_cx_.disconnect();
+}
+
+void TextGridView::set_current_widget(Gtk::Widget *w)
+{
+    current_widget_ = static_cast<TextGridWidget *>(w);
+}
+
+void TextGridView::show_cursor()
+{
+    cursor_idle_at_ = g_get_monotonic_time() + cursor_timeout_;
+    cursor_visible_ = false;
+    on_cursor_blink();
+    if (cursor_cx_.connected())
+        cursor_cx_.disconnect();
+    if (cursor_blinks_ && current_widget_ && current_widget_->has_focus())
+    {
+        cursor_cx_ = Glib::signal_timeout().connect
+            (sigc::mem_fun(*this, &TextGridView::on_cursor_blink),
+             cursor_interval_);
+    }
+}
+
+bool TextGridView::on_cursor_blink()
+{
+    bool no_blink = (g_get_monotonic_time() - cursor_idle_at_ > 0)
+        || !cursor_blinks_ || !current_widget_ || !current_widget_->has_focus();
+    cursor_visible_ = no_blink ? true : !cursor_visible_;
+    if (current_widget_)
+    {
+        current_widget_->queue_draw_area(cursor_col_ * cell_width_px_,
+                cursor_line_ * cell_height_px_,
+                cell_width_px_, cell_height_px_);
+    }
+    return !no_blink;
+}
+
+void TextGridView::on_cursor_gsetting_changed(const Glib::ustring &key)
+{
+    auto settings = Application::sys_gsettings();
+    if (key == "cursor-blink")
+        cursor_blinks_ = settings->get_int("cursor-blink");
+    else if (key == "cursor-blink-time")
+        cursor_interval_ = settings->get_int("cursor-blink-time") / 2;
+    else if (key == "cursor-blink-timeout")
+    {
+        cursor_timeout_ = settings->get_int("cursor-blink-timeout") * 1000000;
+        return;
+    }
+    show_cursor();
 }
 
 void TextGridView::set_font(RefPtr<Pango::Context> pc,
@@ -207,6 +279,47 @@ void TextGridView::get_preferred_height(int &minimum, int &natural) const
     natural = lines * cell_height_px_;
     //g_debug("Preferred height %d lines * %dpx = %d",
     //        lines, cell_height_px_, natural);
+}
+
+void TextGridView::draw_cursor(Cairo::RefPtr<Cairo::Context> cr)
+{
+    if (cursor_visible_)
+    {
+        guint32 curs_colour = cursor_attr_.get_background_rgb();
+
+        if (current_widget_->has_focus())
+        {
+            if (cursor_width_)
+            {
+                fill_background_px(cr,
+                        cursor_col_ * cell_width_px_,
+                        cursor_line_ * cell_height_px_,
+                        cursor_width_, cell_height_px_,
+                        curs_colour);
+            }
+            else
+            {
+                fill_background(cr,
+                        cursor_col_, cursor_line_, cursor_col_, cursor_line_,
+                        curs_colour);
+                grid_.draw_line(cr, cursor_line_, cursor_col_, cursor_col_,
+                        &cursor_attr_);
+            }
+        }
+        else
+        {
+            float r, g, b;
+            CellAttributes::decompose_colour_float(curs_colour, r, g, b);
+            cr->begin_new_path();
+            cr->set_source_rgb(r, g, b);
+            cr->rectangle(cursor_col_ * cell_width_px_,
+                    cursor_line_ * cell_height_px_,
+                    cell_width_px_, cell_height_px_);
+            cr->set_line_width(1);
+            cr->stroke();
+        }
+    }
+
 }
 
 }

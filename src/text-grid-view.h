@@ -29,12 +29,16 @@
 namespace Gnvim
 {
 
+class TextGridWidget;
+
 /// Renders the TextGrid to a Cairo surface
 class TextGridView {
 public:
     TextGridView(int columns, int lines, const std::string &font_name = "");
 
-    virtual ~TextGridView() = default;
+    virtual ~TextGridView();
+
+    void set_current_widget(Gtk::Widget *w);
 
     int get_allocated_columns() const
     {
@@ -102,8 +106,13 @@ public:
 
     // Called by widget's vfunc.
     void get_preferred_height(int &minimum, int &natural) const;
-protected:
-    void resize_surface();
+
+    void show_cursor();
+
+    const Cairo::RefPtr<Cairo::Surface> get_surface() const
+    {
+        return grid_surface_;
+    }
 
     // Fills the given region(inclusive text cells) with the given rgb colour.
     void fill_background(Cairo::RefPtr<Cairo::Context> cr, int left, int top,
@@ -125,12 +134,6 @@ protected:
         fill_background(cr, 0, 0, columns_ - 1, lines_ - 1);
     }
 
-    /// Blanks the entire cached view in the grid's background colour.
-    void clear_view()
-    {
-        fill_background(grid_cr_);
-    }
-
     // As fill_background but in pixel units
     void fill_background_px(Cairo::RefPtr<Cairo::Context> cr,
             int left, int top, int width, int height, guint32 rgb);
@@ -142,7 +145,19 @@ protected:
                 grid_.get_default_background_rgb());
     }
 
-    /// Redraws the entire cached view(starting with clear_view()).
+    // Draws or erases cursor depending on its visibility. cr is usually the
+    // widget's surface, the cursor shouldn't be drawn onto the cached surface.
+    void draw_cursor(Cairo::RefPtr<Cairo::Context> cr);
+protected:
+    void resize_surface();
+
+    /// Blanks the entire cached view in the grid's background colour.
+    void clear_view()
+    {
+        fill_background(grid_cr_);
+    }
+
+    /// Redraws the entire cached view (starting with clear_view() ).
     void redraw_view();
 
     void on_toplevel_size_allocate(Gtk::Allocation &);
@@ -150,6 +165,8 @@ protected:
     void calculate_metrics(RefPtr<Pango::Context> pc);
 
     TextGrid grid_;
+
+    TextGridWidget *current_widget_ {nullptr};
 
     int cell_width_px_, cell_height_px_;
     int columns_, lines_;
@@ -159,10 +176,6 @@ protected:
     Pango::FontDescription font_;
     constexpr static const char *DEFAULT_FONT = "Monospace 11";
 
-    // vector has an element per grid line, first = left, second = right
-    // (inclusive); -1 for no redraw queued
-    std::vector<std::pair<int, int>> changed_lines_;
-
     // For caching the grid display
     Cairo::RefPtr<Cairo::Surface> grid_surface_;
     Cairo::RefPtr<Cairo::Context> grid_cr_;
@@ -170,12 +183,24 @@ protected:
     // If true we needn't bother updating cached view at every change
     bool global_redraw_pending_ {false};
 
+    bool on_cursor_blink();
+
+    void on_cursor_gsetting_changed(const Glib::ustring &key);
+
     int cursor_col_ {0}, cursor_line_ {0};
 
+    sigc::connection cursor_cx_;
+    sigc::connection cursor_blink_cx_, cursor_blink_time_cx_,
+        cursor_blink_timeout_cx_;
+    bool cursor_visible_ {false};
+    bool cursor_blinks_;
+    unsigned cursor_interval_;
+    guint64 cursor_timeout_;
+    gint64 cursor_idle_at_;
+    int cursor_width_ {0};      // 0 for block cursor
     CellAttributes cursor_attr_;
     bool colour_cursor_;        // Whether cursor has its own colour or it
                                 // depends on fg/bg
-    int cursor_width_ {0};      // 0 for block cursor
 };
 
 }

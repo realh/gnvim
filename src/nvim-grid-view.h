@@ -37,7 +37,6 @@ class NvimGridWidget;
 class NvimGridView : public TextGridView {
 public:
     NvimGridView(std::shared_ptr<NvimBridge> nvim, int columns, int lines,
-            Gtk::Widget *widget,
             const std::string &font_name = "");
 
     virtual void on_size_allocate(Gtk::Allocation &) override;
@@ -56,12 +55,19 @@ public:
 
     void on_focus_out_event();
 
-    void set_current_widget(Gtk::Widget *w);
-private:
-    void update_redraw_region(int left, int top, int right, int bottom);
+    void update_font(bool init = false);
+
+    std::shared_ptr<NvimBridge> get_nvim_bridge()
+    {
+        return nvim_;
+    }
 
     bool on_mouse_event(GdkEventType, int button,
             guint modifiers, int x, int y);
+
+    void do_scroll(const std::string &direction, int state);
+private:
+    void update_redraw_region(int left, int top, int right, int bottom);
 
     std::string region_to_string();
 
@@ -87,8 +93,6 @@ private:
      */
     void reset_scroll_region();
 
-    void do_scroll(const std::string &direction, int state);
-
     // Used for both app and sys fonts, using key to work out which
     void on_font_name_changed(const Glib::ustring &key);
 
@@ -102,11 +106,6 @@ private:
     void on_cursor_fg_changed(const Glib::ustring &key);
     void on_cursor_bg_changed(const Glib::ustring &key);
     void on_sync_shada_changed(const Glib::ustring &key);
-
-    // If init is true a resize is not requested
-    void update_font(bool init = false);
-
-    NvimGridWidget *current_widget_ {nullptr};
 
     /* If we've asked nvim to resize in response to size-allocate from GUI we
      * shouldn't then try to resize the GUI in response to nvim's redraw_resize
