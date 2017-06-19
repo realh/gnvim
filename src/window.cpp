@@ -96,12 +96,14 @@ void Window::ready_to_start()
     // For some reason (certain) container widgets don't have create methods
     notebook_ = new Gtk::Notebook();
     show_or_hide_tabs();
+    add(*notebook_);
+    notebook_->show();
 
     int pnum = 0;
     int current = 0;
     for (const auto &tab: bufs_and_tabs_.get_tabs())
     {
-        create_tab_page(tab);
+        create_tab_page(tab, pnum == 0);
         if (tab.handle == bufs_and_tabs_.get_current_tab()->handle)
         {
             current = pnum;
@@ -111,6 +113,7 @@ void Window::ready_to_start()
     notebook_->set_current_page(current);
     notebook_->signal_switch_page().connect([this](Gtk::Widget *w, int)
     {
+        view_->set_current_widget(w);
         const auto &handle = static_cast<TabPage *>(w)->get_vim_handle();
         if (handle != bufs_and_tabs_.get_current_tab()->handle)
         {
@@ -140,28 +143,12 @@ void Window::ready_to_start()
     });
 
     nvim_->start_ui(columns_, lines_);
-    add(*notebook_);
-
-    // Show everything before getting requisition
-    notebook_->show();
 
     /*
     view_->set_can_focus(true);
     view_->grab_focus();
     view_->set_focus_on_click(true);
     */
-
-    if (maximise_)
-    {
-        maximize();
-    }
-    else
-    {
-        int _, w, h;
-        view_->get_preferred_width(_, w);
-        view_->get_preferred_height(_, h);
-        set_default_size(w, h);
-    }
 
     nvim_->io_error_signal().connect(
             sigc::mem_fun(*this, &Window::on_nvim_error));
@@ -174,11 +161,38 @@ void Window::ready_to_start()
     bat_conn_.disconnect();
 }
 
+TabPage *Window::create_tab_page(const TabInfo &info, bool first)
+{
+    auto page = create_tab_page(info, tabs_->end());
+    if (!first)
+        return page;
+    if (maximise_)
+    {
+        maximize();
+    }
+    else
+    {
+        Gtk::Requisition _, nbnat;
+        notebook_->get_preferred_size(_, nbnat);
+        g_debug("Initial notebook size nat %dx%d", nbnat.width, nbnat.height);
+        /*
+        int _, pw, ph;
+        view_->get_preferred_width(_, pw);
+        view_->get_preferred_height(_, ph);
+        g_debug("first page nat size %dx%d", pw, ph);
+        */
+        set_default_size(nbnat.width, nbnat.height);
+    }
+    return page;
+}
+
 TabPage *Window::create_tab_page(const TabInfo &info, TabVector::iterator it)
 {
     // page needs to be a pointer so we can copy it into the lambda
     auto page = new TabPage(view_, info);
     auto &label = page->get_label_widget();
+
+    view_->set_current_widget(page);
 
     page->show_all();
     label.show_all();

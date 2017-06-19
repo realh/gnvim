@@ -67,10 +67,7 @@ protected:
 private:
     using TabVector = std::vector<std::unique_ptr<TabPage>>;
 
-    TabPage *create_tab_page(const TabInfo &info)
-    {
-        return create_tab_page(info, tabs_->end());
-    }
+    TabPage *create_tab_page(const TabInfo &info, bool first = false);
 
     TabPage *create_tab_page(const TabInfo &info, TabVector::iterator it);
 
