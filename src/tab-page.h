@@ -24,22 +24,18 @@
 #include <memory>
 
 #include "bufsandtabs.h"
+#include "nvim-grid-widget.h"
 
 namespace Gnvim
 {
 
-/** Dummy widget for content of a tab page with an associated label.
- *  The real content is displayed by letting nvim change the text in the
- *  window's single GridView, but Gtk::Notebook expects each tab to contain
- *  a different widget, so this provides one that's invisible. It also provides
- *  convenient access to the label.
- */
-class TabPage : public Gtk::Grid {
+// NvimGridWidget associated with a tab page
+class TabPage : public NvimGridWidget {
 public:
-    TabPage(const TabInfo &t) : TabPage(t.handle)
+    TabPage(NvimGridView *view, const TabInfo &t) : TabPage(view, t.handle)
     {}
 
-    TabPage(const VimTabpage &t);
+    TabPage(NvimGridView *view, const VimTabpage &t);
 
     Gtk::Widget &get_label_widget()
     {

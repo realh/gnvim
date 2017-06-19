@@ -76,9 +76,9 @@ Window::~Window()
     //g_debug("Window deleted");
     nvim_->stop();
     // Need to make sure these are deleted in the right order
-    delete grid_;
     delete notebook_;
     delete tabs_;
+    delete view_w_;
     delete view_;
 }
 
@@ -91,13 +91,11 @@ void Window::on_options_read(RequestSet *)
 
 void Window::ready_to_start()
 {
-    // For some reason these container widgets don't have create methods
-    grid_ = new Gtk::Grid();
-    add(*grid_);
+    view_ = new NvimGridView(nvim_, columns_, lines_, get_pango_context());
 
+    // For some reason (certain) container widgets don't have create methods
     notebook_ = new Gtk::Notebook();
     show_or_hide_tabs();
-    grid_->attach(*notebook_, 0, 0, 1, 1);
 
     int pnum = 0;
     int current = 0;
@@ -118,7 +116,7 @@ void Window::ready_to_start()
         {
             nvim_->nvim_set_current_tabpage(handle);
         }
-        view_->grab_focus();
+        //view_w_->grab_focus();
     });
     nvim_->signal_bufenter.connect([this](const VimTabpage &handle)
     {
@@ -141,18 +139,17 @@ void Window::ready_to_start()
         }
     });
 
-    view_ = new NvimGridView(nvim_, columns_, lines_);
-
     nvim_->start_ui(columns_, lines_);
-    grid_->attach(*view_, 0, 1, 1, 1);
+    add(*notebook_);
 
-    // Show everything from the Box downwards before getting requisition
-    view_->show_all();
-    grid_->show();
+    // Show everything before getting requisition
+    notebook_->show();
 
+    /*
     view_->set_can_focus(true);
     view_->grab_focus();
     view_->set_focus_on_click(true);
+    */
 
     if (maximise_)
     {
@@ -160,9 +157,10 @@ void Window::ready_to_start()
     }
     else
     {
-        Gtk::Requisition minimum, natural;
-        grid_->get_preferred_size(minimum, natural);
-        set_default_size(natural.width, natural.height);
+        int _, w, h;
+        view_->get_preferred_width(_, w);
+        view_->get_preferred_height(_, h);
+        set_default_size(w, h);
     }
 
     nvim_->io_error_signal().connect(
@@ -179,7 +177,7 @@ void Window::ready_to_start()
 TabPage *Window::create_tab_page(const TabInfo &info, TabVector::iterator it)
 {
     // page needs to be a pointer so we can copy it into the lambda
-    auto page = new TabPage(info);
+    auto page = new TabPage(view_, info);
     auto &label = page->get_label_widget();
 
     page->show_all();
@@ -212,10 +210,7 @@ void Window::show_or_hide_tabs()
 
 void Window::show_or_hide_tabs(bool show)
 {
-    if (show)
-        notebook_->show_all();
-    else
-        notebook_->hide();
+    notebook_->set_show_tabs(show);
 }
 
 void Window::force_close()

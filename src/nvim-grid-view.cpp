@@ -32,8 +32,8 @@ enum FontSource
 
 NvimGridView::NvimGridView(std::shared_ptr<NvimBridge> nvim,
         int columns, int lines,
-        const std::string &font_name)
-: TextGridView(columns, lines, font_name), nvim_(nvim)
+        RefPtr<Pango::Context> pc)
+: TextGridView(columns, lines), nvim_(nvim)
 {
     auto app_settings = Application::app_gsettings();
     app_settings->signal_changed("font").connect
@@ -93,6 +93,8 @@ NvimGridView::NvimGridView(std::shared_ptr<NvimBridge> nvim,
             (sigc::mem_fun(this, &NvimGridView::on_redraw_scroll));
     nvim_->redraw_end.connect
             (sigc::mem_fun(this, &NvimGridView::on_redraw_end));
+
+    update_font(pc, true);
 }
 
 void NvimGridView::on_size_allocate(Gtk::Allocation &alloc)
@@ -670,11 +672,15 @@ void NvimGridView::update_font(bool init)
 {
     if (!current_widget_)
     {
-        g_critical("Tried to set font with no widget to provide Pango context");
+        g_critical("Tried to update_font with no current_widget");
         return;
     }
+    update_font(current_widget_->get_pango_context(), init);
+}
+
+void NvimGridView::update_font(RefPtr<Pango::Context> pc, bool init)
+{
     auto app_settings = Application::app_gsettings();
-    auto pc = current_widget_->get_pango_context();
     switch(app_settings->get_enum("font-source"))
     {
         case FONT_SOURCE_SYS:

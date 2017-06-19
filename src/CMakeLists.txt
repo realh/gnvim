@@ -9,12 +9,14 @@ set(GNVIM_SOURCES
     msgpack-rpc.cpp
     nvim-bridge.cpp
     nvim-grid-view.cpp
+    nvim-grid-widget.cpp
     request-set.cpp
     resources.cpp
     start-bundle.cpp
     tab-page.cpp
     text-grid.cpp
     text-grid-view.cpp
+    text-grid-widget.cpp
     window.cpp
 )
 
@@ -29,11 +31,13 @@ set(GNVIM_HEADERS
     msgpack-rpc.h
     nvim-bridge.h
     nvim-grid-view.h
+    nvim-grid-widget.h
     request-set.h
     start-bundle.h
     tab-page.h
     text-grid.h
     text-grid-view.h
+    text-grid-widget.h
     window.h
 )
 

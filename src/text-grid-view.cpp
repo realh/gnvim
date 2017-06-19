@@ -130,6 +130,7 @@ void TextGridView::on_size_allocate(Gtk::Allocation &allocation)
 {
     int w = allocation.get_width();
     int h = allocation.get_height();
+    //g_debug("TextGridView size_allocate %d x %d", w, h);
     // Size requests and allocations appear not to include margins
     columns_ = w / cell_width_px_;
     lines_ = h / cell_height_px_;
@@ -157,12 +158,10 @@ void TextGridView::create_cairo_surface(Gtk::Widget *w)
             grid_cr_ = Cairo::Context::create(grid_surface_);
             redraw_view();
         }
-        /*
         else
         {
-            g_debug("No GdkWindow");
+            g_warning("No GdkWindow to create cairo surface");
         }
-        */
     }
     /*
     else
@@ -259,6 +258,7 @@ void TextGridView::calculate_metrics(RefPtr<Pango::Context> pc)
     cell_width_px_ = metrics.get_approximate_digit_width() / PANGO_SCALE;
     cell_height_px_ = (metrics.get_ascent() + metrics.get_descent())
             / PANGO_SCALE;
+    //g_debug("calculate_metrics: %d x %d", cell_width_px_, cell_height_px_);
     grid_.set_cell_size(cell_width_px_, cell_height_px_);
     grid_.set_font(font_);
 }

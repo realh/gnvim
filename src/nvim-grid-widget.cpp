@@ -46,10 +46,11 @@ NvimGridWidget::NvimGridWidget(NvimGridView *view) : TextGridWidget(view)
 
 void NvimGridWidget::on_realize()
 {
+    TextGridWidget::on_realize();
     auto view = static_cast<NvimGridView *>(view_);
     if (!view->get_surface())
     {
-        view->update_font(true);
+        view->update_font(get_pango_context(), true);
         view->create_cairo_surface(this);
     }
 }

@@ -26,6 +26,7 @@
 
 #include "bufsandtabs.h"
 #include "nvim-bridge.h"
+#include "nvim-grid-widget.h"
 #include "request-set.h"
 #include "tab-page.h"
 
@@ -101,8 +102,8 @@ private:
      * safe to delete the glibmm pointer, but using RefPtr doesn't cause that
      * to happen.
      */
-    NvimGridView *view_;
-    Gtk::Grid *grid_;
+    NvimGridView *view_ {nullptr};
+    NvimGridWidget *view_w_ {nullptr};
     Gtk::Notebook *notebook_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;

@@ -14,12 +14,14 @@ gnvim_SOURCES = \
 	msgpack-rpc.cpp		msgpack-rpc.h		\
 	nvim-bridge.cpp		nvim-bridge.h		\
 	nvim-grid-view.cpp	nvim-grid-view.h	\
+	nvim-grid-widget.cpp	nvim-grid-widget.h	\
 	start-bundle.cpp	start-bundle.h		\
 	request-set.cpp		request-set.h		\
 	resources.cpp					\
 	tab-page.cpp		tab-page.h		\
 	text-grid.cpp		text-grid.h		\
 	text-grid-view.cpp	text-grid-view.h	\
+	text-grid-widget.cpp	text-grid-widget.h	\
 	window.cpp		window.h
 
 BUILT_SOURCES = git-version.h resources.cpp

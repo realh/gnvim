@@ -25,13 +25,12 @@
 namespace Gnvim
 {
 
-TabPage::TabPage(const VimTabpage &t)
-    : text_label_(""), handle_(t)
+TabPage::TabPage(NvimGridView *view, const VimTabpage &t)
+    : NvimGridWidget(view), text_label_(""), handle_(t)
 {
     std::ostringstream s;
     s << "Tab " << gint64(t);
     text_label_.set_text(s.str());
-    set_can_focus(false);
 }
 
 }

@@ -37,7 +37,7 @@ class NvimGridWidget;
 class NvimGridView : public TextGridView {
 public:
     NvimGridView(std::shared_ptr<NvimBridge> nvim, int columns, int lines,
-            const std::string &font_name = "");
+            RefPtr<Pango::Context> pc);
 
     virtual void on_size_allocate(Gtk::Allocation &) override;
 
@@ -56,6 +56,8 @@ public:
     void on_focus_out_event();
 
     void update_font(bool init = false);
+
+    void update_font(RefPtr<Pango::Context> pc, bool init = true);
 
     std::shared_ptr<NvimBridge> get_nvim_bridge()
     {
