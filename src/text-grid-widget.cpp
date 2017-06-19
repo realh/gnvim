@@ -123,18 +123,17 @@ bool TextGridWidget::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
     auto alloc = get_allocation();
     int w = alloc.get_width();
     int h = alloc.get_height();
-    auto surf = view_->get_surface();
     cr->save();
     cr->rectangle(0, 0, w, h);
     cr->clip();
     view_->fill_background_px(cr, 0, 0, w, h);
+    cr->restore();
     //double l, t, r, b;
     //cr->get_clip_extents(l, t, r, b);
     //g_debug("redraw clip extents L:%f T:%f R:%f B:%f", l, t, r, b);
     cr->set_source(view_->get_surface(), 0, 0);
     cr->paint();
     view_->draw_cursor(cr);
-    cr->restore();
     return true;
 }
 

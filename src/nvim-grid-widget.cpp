@@ -57,6 +57,7 @@ void NvimGridWidget::on_realize()
 
 void NvimGridWidget::on_size_allocate(Gtk::Allocation &alloc)
 {
+    TextGridWidget::on_size_allocate(alloc);
     view_->on_size_allocate(alloc);
 }
 
@@ -90,13 +91,13 @@ bool NvimGridWidget::on_scroll_event(GdkEventScroll *event)
 bool NvimGridWidget::on_focus_in_event(GdkEventFocus *e)
 {
     get_nvim_grid_view()->on_focus_in_event();
-    return Gtk::DrawingArea::on_focus_in_event(e);
+    return TextGridWidget::on_focus_in_event(e);
 }
 
 bool NvimGridWidget::on_focus_out_event(GdkEventFocus *e)
 {
     get_nvim_grid_view()->on_focus_out_event();
-    return Gtk::DrawingArea::on_focus_out_event(e);
+    return TextGridWidget::on_focus_out_event(e);
 }
 
 }

@@ -97,7 +97,7 @@ void Window::ready_to_start()
     notebook_ = new Gtk::Notebook();
     show_or_hide_tabs();
     add(*notebook_);
-    notebook_->show();
+    notebook_->show_all();
 
     int pnum = 0;
     int current = 0;
@@ -110,7 +110,6 @@ void Window::ready_to_start()
         }
         ++pnum;
     }
-    notebook_->set_current_page(current);
     notebook_->signal_switch_page().connect([this](Gtk::Widget *w, int)
     {
         view_->set_current_widget(w);
@@ -121,6 +120,7 @@ void Window::ready_to_start()
         }
         //view_w_->grab_focus();
     });
+    notebook_->set_current_page(current);
     nvim_->signal_bufenter.connect([this](const VimTabpage &handle)
     {
         if ((*tabs_)[notebook_->get_current_page()]->get_vim_handle() == handle)
@@ -174,7 +174,7 @@ TabPage *Window::create_tab_page(const TabInfo &info, bool first)
     {
         Gtk::Requisition _, nbnat;
         notebook_->get_preferred_size(_, nbnat);
-        g_debug("Initial notebook size nat %dx%d", nbnat.width, nbnat.height);
+        //g_debug("Initial notebook size nat %dx%d", nbnat.width, nbnat.height);
         /*
         int _, pw, ph;
         view_->get_preferred_width(_, pw);
@@ -191,6 +191,7 @@ TabPage *Window::create_tab_page(const TabInfo &info, TabVector::iterator it)
     // page needs to be a pointer so we can copy it into the lambda
     auto page = new TabPage(view_, info);
     auto &label = page->get_label_widget();
+    g_debug("Created tab page %p", page);
 
     view_->set_current_widget(page);
 

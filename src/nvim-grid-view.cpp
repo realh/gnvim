@@ -105,8 +105,10 @@ void NvimGridView::on_size_allocate(Gtk::Allocation &alloc)
     if (old_cols != columns_ || old_lines != lines_)
     {
         ++gui_resize_counter_;
+        /*
         g_debug("size_allocate changing grid from %dx%d to %dx%d, ctr %d",
                 old_cols, old_lines, columns_, lines_, gui_resize_counter_);
+        */
         nvim_->nvim_ui_try_resize(columns_, lines_);
     }
 }
@@ -371,7 +373,7 @@ void NvimGridView::on_redraw_resize(int columns, int lines)
         redraw_region_.top = 0;
         redraw_region_.right = columns_ - 1;
         redraw_region_.bottom = lines_ - 1;
-        g_debug("on_redraw_resize: %s", region_to_string().c_str());
+        //g_debug("on_redraw_resize: %s", region_to_string().c_str());
         columns_ = columns;
         lines_ = lines;
         grid_.resize(columns, lines);
@@ -379,12 +381,12 @@ void NvimGridView::on_redraw_resize(int columns, int lines)
         if (gui_resize_counter_)
         {
             --gui_resize_counter_;
-            g_debug("Reducing counter to %d", gui_resize_counter_);
+            //g_debug("Reducing counter to %d", gui_resize_counter_);
         }
         else if (current_widget_)
         {
             current_widget_->resize_window();
-            g_debug("Resizing window");
+            //g_debug("Resizing window");
         }
     }
 }
@@ -603,9 +605,11 @@ void NvimGridView::on_redraw_scroll(int count)
 
 void NvimGridView::on_redraw_end()
 {
+    /*
     g_debug("q redraw: %s",
             global_redraw_pending_ ?
             "whole grid" : region_to_string(). c_str());
+    */
     if (cursor_rdrw_x_ != cursor_col_ || cursor_rdrw_y_ != cursor_line_)
     {
         update_redraw_region(cursor_col_, cursor_line_,
@@ -621,7 +625,10 @@ void NvimGridView::on_redraw_end()
         global_redraw_pending_ = false;
         redraw_view();
         if (current_widget_)
+        {
+            //g_debug("Global redraw of %p", current_widget_);
             current_widget_->queue_draw();
+        }
     }
     else if (redraw_region_.left <= redraw_region_.right
             && redraw_region_.top <= redraw_region_.bottom
@@ -633,8 +640,10 @@ void NvimGridView::on_redraw_end()
                     * cell_width_px_,
                 (redraw_region_.bottom - redraw_region_.top + 1)
                     * cell_height_px_);
+        /*
         auto alloc = current_widget_->get_allocation();
-        g_debug("qda %d,%d+%dx%d; alloc %dx%d",
+        g_debug("qda %p: %d,%d+%dx%d; alloc %dx%d",
+                current_widget_,
                 redraw_region_.left * cell_width_px_,
                 redraw_region_.top * cell_height_px_,
                 (redraw_region_.right - redraw_region_.left + 1)
@@ -642,11 +651,14 @@ void NvimGridView::on_redraw_end()
                 (redraw_region_.bottom - redraw_region_.top + 1)
                     * cell_height_px_,
                 alloc.get_width(), alloc.get_height());
+        */
     }
+    /*
     else
     {
         g_debug("No qda");
     }
+    */
 }
 
 void NvimGridView::do_scroll(const std::string &direction, int state)
