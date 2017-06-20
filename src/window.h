@@ -82,7 +82,12 @@ private:
 
     void on_redraw_set_title(const std::string &);
 
-    // Geometry hints have a history of breakage and serve almost no useful
+    void on_tabs_listed(const std::vector<TabInfo> &tabv);
+
+    std::vector<TabPage *>::iterator
+    find_page_with_handle(const VimTabpage &handle);
+
+    // Geometry hints have a history of breakage and serve little useful
     // purpose in current desktops
     void set_geometry_hints() {}
 
@@ -100,6 +105,8 @@ private:
      */
     NvimGridView *view_ {nullptr};
     Gtk::Notebook *notebook_;
+    // I think we need our own vector of pages to avoid memory leaks
+    std::vector<TabPage *> pages_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;
 

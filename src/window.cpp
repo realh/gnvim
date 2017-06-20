@@ -76,6 +76,8 @@ Window::~Window()
     nvim_->stop();
     // Need to make sure these are deleted in the right order
     delete notebook_;
+    for (auto page: pages_)
+        delete page;
     delete view_;
 }
 
@@ -132,11 +134,10 @@ void Window::ready_to_start()
                 : nullptr;
         if (cp && gint64(cp->get_vim_handle()) == handle)
             return;
-        auto children = notebook_->get_children();
         unsigned n;
-        for (n = 0; n < children.size(); ++n)
+        for (n = 0; n < pages_.size(); ++n)
         {
-            auto page = static_cast<TabPage *>(children[n]);
+            auto page = pages_[n];
             if (gint64(page->get_vim_handle()) == handle)
             {
                 notebook_->set_current_page(n);
@@ -145,7 +146,7 @@ void Window::ready_to_start()
                 break;
             }
         }
-        if (n == children.size())
+        if (n == pages_.size())
         {
             g_critical("Can't find nvim's current tab in notebook");
         }
@@ -192,18 +193,24 @@ TabPage *Window::create_tab_page(const TabInfo &info, bool first)
 TabPage *Window::create_tab_page(const TabInfo &info, int position)
 {
     // page needs to be a pointer so we can copy it into the lambda
-    auto page = new TabPage(view_, info);
+    TabPage *page;
+    if (position == -1)
+    {
+        pages_.push_back(new TabPage(view_, info));
+        page = pages_[pages_.size() - 1];
+    }
+    else
+    {
+        pages_.insert(pages_.begin() + position, new TabPage(view_, info));
+        page = pages_[position];
+    }
     auto &label = page->get_label_widget();
+    notebook_->insert_page(*page, label, position);
 
     view_->set_current_widget(page);
 
     page->show_all();
     label.show_all();
-
-    if (position == -1)
-        notebook_->append_page(*page, label);
-    else
-        notebook_->insert_page(*page, label, position);
 
     bufs_and_tabs_.get_tab_title(info.handle, [page](const std::string &s)
     {
@@ -269,6 +276,66 @@ bool Window::on_delete_event(GdkEventAny *e)
             return Gtk::ApplicationWindow::on_delete_event(e);
         default:
             return true;
+    }
+}
+
+std::vector<TabPage *>::iterator
+Window::find_page_with_handle(const VimTabpage &handle)
+{
+    return std::find_if(pages_.begin(), pages_.end(),
+        [&handle](const TabPage *gtab)->bool
+        {
+            return gtab->get_vim_handle() == handle;
+        });
+}
+
+void Window::on_tabs_listed(const std::vector<TabInfo> &tabv)
+{
+    // First delete any GUI tabs without corresponding nvim tabs
+    unsigned n = 0;
+    while (n < pages_.size())
+    {
+        auto &handle = pages_[n]->get_vim_handle();
+        if (std::find_if(tabv.begin(), tabv.end(),
+            [&handle](const TabInfo &i)->bool
+            {
+                return i.handle == handle;
+            }) == tabv.end())
+        {
+            ++n;
+        }
+        else
+        {
+            notebook_->remove_page(n);
+            delete pages_[n];
+            pages_.erase(pages_.begin() + n);
+        }
+    }
+
+    // Then create GUI tabs for any new nvim tabs
+    n = 0;
+    for (const auto &vtab: tabv)
+    {
+        if (find_page_with_handle(vtab.handle) == pages_.end())
+        {
+            create_tab_page(vtab, n >= pages_.size() ? -1 : (int) n);
+        }
+        ++n;
+    }
+
+    // Reposition any tabs that have been reordered in nvim
+    // TODO: When we support Notebook::page-reordered signal we should
+    // suppress it temporarily here
+    n = 0;
+    for (const auto &vtab: tabv)
+    {
+        if (pages_[n]->get_vim_handle() != vtab.handle)
+        {
+            auto it = find_page_with_handle(vtab.handle);
+            auto w = *it;
+            std::swap(pages_[n], *it);
+            notebook_->reorder_child(*w, n);
+        }
     }
 }
 
