@@ -39,6 +39,8 @@ public:
     NvimGridView(std::shared_ptr<NvimBridge> nvim, int columns, int lines,
             RefPtr<Pango::Context> pc);
 
+    virtual void set_current_widget(Gtk::Widget *w) override;
+
     virtual void on_size_allocate(Gtk::Allocation &) override;
 
     bool on_key_press_event(GdkEventKey *);

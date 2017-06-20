@@ -37,7 +37,7 @@ NvimGridWidget::NvimGridWidget(NvimGridView *view) : TextGridWidget(view)
             Gdk::FOCUS_CHANGE_MASK |
             Gdk::SCROLL_MASK | Gdk::SMOOTH_SCROLL_MASK);
     set_can_focus();
-    grab_focus();
+    set_focus_on_click(true);
 
     auto sc = get_style_context();
     if (!sc->has_class("gnvim"))
@@ -90,12 +90,14 @@ bool NvimGridWidget::on_scroll_event(GdkEventScroll *event)
 
 bool NvimGridWidget::on_focus_in_event(GdkEventFocus *e)
 {
+    g_debug("Focus in %p", this);
     get_nvim_grid_view()->on_focus_in_event();
     return TextGridWidget::on_focus_in_event(e);
 }
 
 bool NvimGridWidget::on_focus_out_event(GdkEventFocus *e)
 {
+    g_debug("Focus out %p", this);
     get_nvim_grid_view()->on_focus_out_event();
     return TextGridWidget::on_focus_out_event(e);
 }

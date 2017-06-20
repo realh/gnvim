@@ -97,6 +97,12 @@ NvimGridView::NvimGridView(std::shared_ptr<NvimBridge> nvim,
     update_font(pc, true);
 }
 
+void NvimGridView::set_current_widget(Gtk::Widget *w)
+{
+    TextGridView::set_current_widget(w);
+    w->grab_focus();
+}
+
 void NvimGridView::on_size_allocate(Gtk::Allocation &alloc)
 {
     int old_cols = columns_;

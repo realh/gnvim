@@ -65,11 +65,10 @@ protected:
 
     virtual bool on_delete_event(GdkEventAny *) override;
 private:
-    using TabVector = std::vector<std::unique_ptr<TabPage>>;
-
     TabPage *create_tab_page(const TabInfo &info, bool first = false);
 
-    TabPage *create_tab_page(const TabInfo &info, TabVector::iterator it);
+    // position == -1 for end
+    TabPage *create_tab_page(const TabInfo &info, int position);
 
     void show_or_hide_tabs();
 
@@ -100,7 +99,6 @@ private:
      * to happen.
      */
     NvimGridView *view_ {nullptr};
-    NvimGridWidget *view_w_ {nullptr};
     Gtk::Notebook *notebook_;
 
     static RefPtr<Gio::ApplicationCommandLine> null_cl;
@@ -109,8 +107,6 @@ private:
     int columns_, lines_;
     int show_tab_line_;
     sigc::connection delete_event_conn_;
-
-    TabVector *tabs_;
 };
 
 }

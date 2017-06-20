@@ -120,7 +120,7 @@ public:
     /// Here the ints are buffer handles
     sigc::signal<void, int> signal_bufadd;
     sigc::signal<void, int> signal_bufdel;
-    sigc::signal<void, const VimTabpage &> signal_bufenter;
+    sigc::signal<void, int> signal_tabenter;
 
     sigc::signal<void> redraw_start;
     sigc::signal<void, int, int> redraw_resize;
@@ -197,7 +197,7 @@ private:
     std::string augroup_;
     bool augroup_defined_ {false};
 
-    sigc::signal<void> sig_tabenter;
+    //sigc::signal<int> sig_tabenter;
 };
 
 }

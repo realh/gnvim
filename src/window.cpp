@@ -32,8 +32,7 @@ namespace Gnvim
 Window::Window(bool maximise, int width, int height,
         std::shared_ptr<NvimBridge> nvim)
 : nvim_(nvim), bufs_and_tabs_(nvim),
-    maximise_(maximise), columns_(width), lines_(height),
-    tabs_(new std::vector<std::unique_ptr<TabPage>>())
+    maximise_(maximise), columns_(width), lines_(height)
 {
     auto rqset = RequestSet::create([this](RequestSet *rq)
     { on_options_read(rq); });
@@ -77,8 +76,6 @@ Window::~Window()
     nvim_->stop();
     // Need to make sure these are deleted in the right order
     delete notebook_;
-    delete tabs_;
-    delete view_w_;
     delete view_;
 }
 
@@ -103,36 +100,58 @@ void Window::ready_to_start()
     int current = 0;
     for (const auto &tab: bufs_and_tabs_.get_tabs())
     {
-        create_tab_page(tab, pnum == 0);
+        auto page = create_tab_page(tab, pnum == 0);
         if (tab.handle == bufs_and_tabs_.get_current_tab()->handle)
         {
+            g_debug("Initial page is %d %p %ld",
+                    pnum, page, (gint64) tab.handle);
             current = pnum;
         }
         ++pnum;
     }
     notebook_->signal_switch_page().connect([this](Gtk::Widget *w, int)
     {
-        view_->set_current_widget(w);
+        g_debug("Switched from page %p to %p", view_->get_current_widget(), w);
+        if (view_->get_current_widget() != w)
+        {
+            view_->set_current_widget(w);
+        }
         const auto &handle = static_cast<TabPage *>(w)->get_vim_handle();
+        g_debug("Switched from tab handle %ld to %ld",
+                (gint64) bufs_and_tabs_.get_current_tab()->handle,
+                (gint64) handle);
         if (handle != bufs_and_tabs_.get_current_tab()->handle)
         {
             nvim_->nvim_set_current_tabpage(handle);
         }
-        //view_w_->grab_focus();
     });
+
     notebook_->set_current_page(current);
-    nvim_->signal_bufenter.connect([this](const VimTabpage &handle)
+    auto page = notebook_->get_nth_page(current);
+    view_->set_current_widget(page);
+
+    nvim_->signal_tabenter.connect([this](int handle)
     {
-        if ((*tabs_)[notebook_->get_current_page()]->get_vim_handle() == handle)
+        int cpn = notebook_->get_current_page();
+        auto cp = (cpn != -1) ? static_cast<TabPage *>
+                (notebook_->get_nth_page(notebook_->get_current_page()))
+                : nullptr;
+        g_debug("TabEnter changing page from %ld to %ld",
+                cp ? (gint64) cp->get_vim_handle() : -1,
+                (gint64) handle);
+        if (cp && gint64(cp->get_vim_handle()) == handle)
             return;
         auto children = notebook_->get_children();
-        std::size_t n;
+        unsigned n;
         for (n = 0; n < children.size(); ++n)
         {
             auto page = static_cast<TabPage *>(children[n]);
-            if (page->get_vim_handle() == handle)
+            if (gint64(page->get_vim_handle()) == handle)
             {
+                g_debug("TabEnter changing tabnum from %d to %d", cpn, n);
                 notebook_->set_current_page(n);
+                view_->set_current_widget(page);
+                nvim_->nvim_set_current_tabpage(handle);
                 break;
             }
         }
@@ -143,12 +162,6 @@ void Window::ready_to_start()
     });
 
     nvim_->start_ui(columns_, lines_);
-
-    /*
-    view_->set_can_focus(true);
-    view_->grab_focus();
-    view_->set_focus_on_click(true);
-    */
 
     nvim_->io_error_signal().connect(
             sigc::mem_fun(*this, &Window::on_nvim_error));
@@ -163,7 +176,7 @@ void Window::ready_to_start()
 
 TabPage *Window::create_tab_page(const TabInfo &info, bool first)
 {
-    auto page = create_tab_page(info, tabs_->end());
+    auto page = create_tab_page(info, -1);
     if (!first)
         return page;
     if (maximise_)
@@ -186,7 +199,7 @@ TabPage *Window::create_tab_page(const TabInfo &info, bool first)
     return page;
 }
 
-TabPage *Window::create_tab_page(const TabInfo &info, TabVector::iterator it)
+TabPage *Window::create_tab_page(const TabInfo &info, int position)
 {
     // page needs to be a pointer so we can copy it into the lambda
     auto page = new TabPage(view_, info);
@@ -198,16 +211,10 @@ TabPage *Window::create_tab_page(const TabInfo &info, TabVector::iterator it)
     page->show_all();
     label.show_all();
 
-    if (it == tabs_->end())
-    {
-        tabs_->emplace_back(page);
+    if (position == -1)
         notebook_->append_page(*page, label);
-    }
     else
-    {
-        tabs_->emplace(it, page);
-        notebook_->insert_page(*page, label, std::distance(tabs_->begin(), it));
-    }
+        notebook_->insert_page(*page, label, position);
 
     bufs_and_tabs_.get_tab_title(info.handle, [page](const std::string &s)
     {

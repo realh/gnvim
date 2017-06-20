@@ -38,7 +38,12 @@ public:
 
     virtual ~TextGridView();
 
-    void set_current_widget(Gtk::Widget *w);
+    virtual void set_current_widget(Gtk::Widget *w);
+
+    const TextGridWidget *get_current_widget() const
+    {
+        return current_widget_;
+    }
 
     int get_allocated_columns() const
     {

@@ -70,7 +70,7 @@ void BufsAndTabs::got_all_info()
     if (!au_on_)
     {
         nvim_->ensure_augroup();
-        std::ostringstream s;
+        std::ostringstream s(std::ios_base::ate);
         s << "autocmd " << nvim_->get_augroup()
             << " TextChanged,TextChangedI,BufReadPost,"
                 "FileReadPost,FileWritePost * "
@@ -80,6 +80,7 @@ void BufsAndTabs::got_all_info()
             << nvim_->get_channel_id()
             << ", 'modified', str2nr(expand('<abuf>')), &modified)"
             << "|endif";
+        g_debug("gai: %s", s.str().c_str());
         nvim_->nvim_command(s.str());
 
         s.str("autocmd ");
@@ -87,6 +88,7 @@ void BufsAndTabs::got_all_info()
             << " BufAdd * call rpcnotify("
             << nvim_->get_channel_id()
             << ", 'bufadd', str2nr(expand('<abuf>')))";
+        g_debug("gai: %s", s.str().c_str());
         nvim_->nvim_command(s.str());
 
         s.str("autocmd ");
@@ -94,25 +96,27 @@ void BufsAndTabs::got_all_info()
             << " BufDelete * call rpcnotify("
             << nvim_->get_channel_id()
             << ", 'bufdel', str2nr(expand('<abuf>')))";
+        g_debug("gai: %s", s.str().c_str());
         nvim_->nvim_command(s.str());
 
-        // Not sure how to get tab handle directly from aucmd
         s.str("autocmd ");
         s << nvim_->get_augroup()
             << " TabEnter * call rpcnotify("
             << nvim_->get_channel_id()
-            << ", 'tabenter')";
+            << ", 'tabenter', tabpagenr())";
+        g_debug("gai: %s", s.str().c_str());
         nvim_->nvim_command(s.str());
-        nvim_->signal_bufenter.connect([this](const VimTabpage &handle)
+        nvim_->signal_tabenter.connect([this](int handle)
         {
             auto it = std::find_if(tabs_.begin(), tabs_.end(),
-            [&handle](const TabInfo &i) { return i.handle == handle; });
+            [handle](const TabInfo &i) { return (gint64) i.handle == handle; });
             if (it == tabs_.end())
             {
                 g_critical("nvim's current tab is not known to gnvim");
             }
             else
             {
+                g_debug("TabEnter %d", handle);
                 current_tab_ = it;
             }
         });
