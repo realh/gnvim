@@ -80,7 +80,6 @@ void BufsAndTabs::got_all_info()
             << nvim_->get_channel_id()
             << ", 'modified', str2nr(expand('<abuf>')), &modified)"
             << "|endif";
-        g_debug("gai: %s", s.str().c_str());
         nvim_->nvim_command(s.str());
 
         s.str("autocmd ");
@@ -88,7 +87,6 @@ void BufsAndTabs::got_all_info()
             << " BufAdd * call rpcnotify("
             << nvim_->get_channel_id()
             << ", 'bufadd', str2nr(expand('<abuf>')))";
-        g_debug("gai: %s", s.str().c_str());
         nvim_->nvim_command(s.str());
 
         s.str("autocmd ");
@@ -96,7 +94,6 @@ void BufsAndTabs::got_all_info()
             << " BufDelete * call rpcnotify("
             << nvim_->get_channel_id()
             << ", 'bufdel', str2nr(expand('<abuf>')))";
-        g_debug("gai: %s", s.str().c_str());
         nvim_->nvim_command(s.str());
 
         s.str("autocmd ");
@@ -104,7 +101,6 @@ void BufsAndTabs::got_all_info()
             << " TabEnter * call rpcnotify("
             << nvim_->get_channel_id()
             << ", 'tabenter', tabpagenr())";
-        g_debug("gai: %s", s.str().c_str());
         nvim_->nvim_command(s.str());
         nvim_->signal_tabenter.connect([this](int handle)
         {

@@ -100,26 +100,20 @@ void Window::ready_to_start()
     int current = 0;
     for (const auto &tab: bufs_and_tabs_.get_tabs())
     {
-        auto page = create_tab_page(tab, pnum == 0);
+        create_tab_page(tab, pnum == 0);
         if (tab.handle == bufs_and_tabs_.get_current_tab()->handle)
         {
-            g_debug("Initial page is %d %p %ld",
-                    pnum, page, (gint64) tab.handle);
             current = pnum;
         }
         ++pnum;
     }
     notebook_->signal_switch_page().connect([this](Gtk::Widget *w, int)
     {
-        g_debug("Switched from page %p to %p", view_->get_current_widget(), w);
         if (view_->get_current_widget() != w)
         {
             view_->set_current_widget(w);
         }
         const auto &handle = static_cast<TabPage *>(w)->get_vim_handle();
-        g_debug("Switched from tab handle %ld to %ld",
-                (gint64) bufs_and_tabs_.get_current_tab()->handle,
-                (gint64) handle);
         if (handle != bufs_and_tabs_.get_current_tab()->handle)
         {
             nvim_->nvim_set_current_tabpage(handle);
@@ -136,9 +130,6 @@ void Window::ready_to_start()
         auto cp = (cpn != -1) ? static_cast<TabPage *>
                 (notebook_->get_nth_page(notebook_->get_current_page()))
                 : nullptr;
-        g_debug("TabEnter changing page from %ld to %ld",
-                cp ? (gint64) cp->get_vim_handle() : -1,
-                (gint64) handle);
         if (cp && gint64(cp->get_vim_handle()) == handle)
             return;
         auto children = notebook_->get_children();
@@ -148,7 +139,6 @@ void Window::ready_to_start()
             auto page = static_cast<TabPage *>(children[n]);
             if (gint64(page->get_vim_handle()) == handle)
             {
-                g_debug("TabEnter changing tabnum from %d to %d", cpn, n);
                 notebook_->set_current_page(n);
                 view_->set_current_widget(page);
                 nvim_->nvim_set_current_tabpage(handle);
@@ -204,7 +194,6 @@ TabPage *Window::create_tab_page(const TabInfo &info, int position)
     // page needs to be a pointer so we can copy it into the lambda
     auto page = new TabPage(view_, info);
     auto &label = page->get_label_widget();
-    g_debug("Created tab page %p", page);
 
     view_->set_current_widget(page);
 

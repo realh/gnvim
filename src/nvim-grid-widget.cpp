@@ -90,14 +90,12 @@ bool NvimGridWidget::on_scroll_event(GdkEventScroll *event)
 
 bool NvimGridWidget::on_focus_in_event(GdkEventFocus *e)
 {
-    g_debug("Focus in %p", this);
     get_nvim_grid_view()->on_focus_in_event();
     return TextGridWidget::on_focus_in_event(e);
 }
 
 bool NvimGridWidget::on_focus_out_event(GdkEventFocus *e)
 {
-    g_debug("Focus out %p", this);
     get_nvim_grid_view()->on_focus_out_event();
     return TextGridWidget::on_focus_out_event(e);
 }
