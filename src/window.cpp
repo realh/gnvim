@@ -323,6 +323,10 @@ void Window::on_tabs_listed(const std::vector<TabInfo> &tabv)
             delete pages_[n];
             pages_.erase(pages_.begin() + n);
         }
+        else
+        {
+            ++n;
+        }
     }
 
     // Then create GUI tabs for any new nvim tabs
