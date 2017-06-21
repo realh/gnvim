@@ -93,6 +93,8 @@ private:
 
     bool force_close_ {false};
 
+    int ignore_switch_page_ {0};
+
     std::shared_ptr<NvimBridge> nvim_;
     BufsAndTabs bufs_and_tabs_;
     sigc::connection bat_conn_;

@@ -103,7 +103,7 @@ void Window::ready_to_start()
     for (const auto &tab: bufs_and_tabs_.get_tabs())
     {
         create_tab_page(tab, pnum == 0);
-        if (tab.handle == bufs_and_tabs_.get_current_tab()->handle)
+        if (tab.handle == bufs_and_tabs_.get_current_tab_handle())
         {
             current = pnum;
         }
@@ -115,8 +115,10 @@ void Window::ready_to_start()
         {
             view_->set_current_widget(w);
         }
+        if (ignore_switch_page_)
+            return;
         const auto &handle = static_cast<TabPage *>(w)->get_vim_handle();
-        if (handle != bufs_and_tabs_.get_current_tab()->handle)
+        if (handle != bufs_and_tabs_.get_current_tab_handle())
         {
             nvim_->nvim_set_current_tabpage(handle);
         }
@@ -126,31 +128,43 @@ void Window::ready_to_start()
     auto page = notebook_->get_nth_page(current);
     view_->set_current_widget(page);
 
-    nvim_->signal_tabenter.connect([this](int handle)
+    bufs_and_tabs_.signal_tab_enter().connect([this](int handle)
     {
         int cpn = notebook_->get_current_page();
         auto cp = (cpn != -1) ? static_cast<TabPage *>
-                (notebook_->get_nth_page(notebook_->get_current_page()))
+                (notebook_->get_nth_page(cpn))
                 : nullptr;
         if (cp && gint64(cp->get_vim_handle()) == handle)
+        {
+            g_debug("Handle %d is already current in GUI page %d",
+                    handle, cpn);
             return;
+        }
+
         unsigned n;
         for (n = 0; n < pages_.size(); ++n)
         {
             auto page = pages_[n];
             if (gint64(page->get_vim_handle()) == handle)
             {
+                ++ignore_switch_page_;
+                g_debug("Changing current GUI page from %d to %d for handle %d",
+                        cpn, n, handle);
                 notebook_->set_current_page(n);
                 view_->set_current_widget(page);
-                nvim_->nvim_set_current_tabpage(handle);
+                //nvim_->nvim_set_current_tabpage(handle);
+                --ignore_switch_page_;
                 break;
             }
         }
         if (n == pages_.size())
         {
-            g_critical("Can't find nvim's current tab in notebook");
+            g_critical("Can't find nvim's current tab %d in notebook", handle);
         }
     });
+
+    bufs_and_tabs_.signal_tabs_listed().connect
+        (sigc::mem_fun(*this, &Window::on_tabs_listed));
 
     nvim_->start_ui(columns_, lines_);
 
@@ -192,6 +206,11 @@ TabPage *Window::create_tab_page(const TabInfo &info, bool first)
 
 TabPage *Window::create_tab_page(const TabInfo &info, int position)
 {
+    ++ignore_switch_page_;
+    g_debug("create_tab: Inc ignore_switch to %d", ignore_switch_page_);
+
+    g_debug("Creating new page for %ld at position %d",
+            (gint64) info.handle, position);
     // page needs to be a pointer so we can copy it into the lambda
     TabPage *page;
     if (position == -1)
@@ -216,6 +235,10 @@ TabPage *Window::create_tab_page(const TabInfo &info, int position)
     {
         page->set_label_text(s);
     });
+
+    --ignore_switch_page_;
+    g_debug("create_tab: Dec ignore_switch to %d", ignore_switch_page_);
+
     return page;
 }
 
@@ -291,6 +314,15 @@ Window::find_page_with_handle(const VimTabpage &handle)
 
 void Window::on_tabs_listed(const std::vector<TabInfo> &tabv)
 {
+    ++ignore_switch_page_;
+    g_debug("tabs_listed: Inc ignore_switch to %d", ignore_switch_page_);
+
+    g_debug("on_tabs_listed tabv:");
+    for (const auto &vtab: tabv)
+    {
+        g_debug("  handle %ld", (gint64) vtab.handle);
+    }
+
     // First delete any GUI tabs without corresponding nvim tabs
     unsigned n = 0;
     while (n < pages_.size())
@@ -302,13 +334,16 @@ void Window::on_tabs_listed(const std::vector<TabInfo> &tabv)
                 return i.handle == handle;
             }) == tabv.end())
         {
-            ++n;
-        }
-        else
-        {
+            g_debug("Removing tab handle %ld from position %d",
+                    (gint64) handle, n);
             notebook_->remove_page(n);
             delete pages_[n];
             pages_.erase(pages_.begin() + n);
+        }
+        else
+        {
+            g_debug("Tab handle %ld at position %d", (gint64) handle, n);
+            ++n;
         }
     }
 
@@ -323,6 +358,12 @@ void Window::on_tabs_listed(const std::vector<TabInfo> &tabv)
         ++n;
     }
 
+    g_debug("pages_:");
+    for (auto pg: pages_)
+    {
+        g_debug("  %ld", (gint64) pg->get_vim_handle());
+    }
+
     // Reposition any tabs that have been reordered in nvim
     // TODO: When we support Notebook::page-reordered signal we should
     // suppress it temporarily here
@@ -333,10 +374,16 @@ void Window::on_tabs_listed(const std::vector<TabInfo> &tabv)
         {
             auto it = find_page_with_handle(vtab.handle);
             auto w = *it;
+            g_debug("Moving %ld from %ld to %d",
+                gint64(vtab.handle), it - pages_.begin(), n);
             std::swap(pages_[n], *it);
             notebook_->reorder_child(*w, n);
         }
+        ++n;
     }
+
+    --ignore_switch_page_;
+    g_debug("tabs_listed: Dec ignore_switch to %d", ignore_switch_page_);
 }
 
 #if 0

@@ -102,19 +102,22 @@ void BufsAndTabs::got_all_info()
             << nvim_->get_channel_id()
             << ", 'tabenter', tabpagenr())";
         nvim_->nvim_command(s.str());
-        nvim_->signal_tabenter.connect([this](int handle)
+        nvim_->signal_tabenter.connect([this](int tabnum)
         {
-            auto it = std::find_if(tabs_.begin(), tabs_.end(),
-            [handle](const TabInfo &i) { return (gint64) i.handle == handle; });
-            if (it == tabs_.end())
-            {
-                g_critical("nvim's current tab is not known to gnvim");
-            }
-            else
-            {
-                g_debug("TabEnter %d", handle);
-                current_tab_ = it;
-            }
+            g_debug("TabEnter %d, getting handle", tabnum);
+            get_current_tab();
+        });
+
+        s.str("autocmd ");
+        s << nvim_->get_augroup()
+            << " TabClosed,TabNew * call rpcnotify("
+            << nvim_->get_channel_id()
+            << ", 'tabschanged')";
+        nvim_->nvim_command(s.str());
+        nvim_->signal_tabschanged.connect([this]()
+        {
+            g_debug("tabschanged");
+            list_tabs();
         });
 
         au_on_ = true;
@@ -148,7 +151,7 @@ std::vector<BufferInfo>::iterator BufsAndTabs::add_buffer(int handle)
     VimBuffer bh(handle);
 
     const auto &match = std::find_if(buffers_.begin(), buffers_.end(),
-            [bh](const BufferInfo &b) { return b.handle == bh; });
+            [bh](const BufferInfo &b)->bool { return b.handle == bh; });
     if (match == buffers_.end())
     {
         buffers_.emplace_back(bh);
@@ -207,7 +210,7 @@ void BufsAndTabs::on_bufs_listed(const msgpack::object &o)
             {
                 VimBuffer handle(o);
                 current_buffer_ = std::find_if(buffers_.begin(), buffers_.end(),
-                        [handle](const BufferInfo &b)
+                        [handle](const BufferInfo &b)->bool
                         {
                             return b.handle == handle;
                         });
@@ -272,33 +275,97 @@ void BufsAndTabs::on_bufs_list_error(const msgpack::object &o)
     sig_bufs_listed_.emit(nobufs);
 }
 
+std::vector<TabInfo>::iterator BufsAndTabs::get_current_tab_info()
+{
+    auto it = std::find_if(tabs_.begin(), tabs_.end(),
+        [this](const TabInfo &t)->bool
+        {
+            return t.handle == current_tab_;
+        });
+    if (it == tabs_.end())
+    {
+        g_critical("Current tab handle not in gnvim's list");
+    }
+    return it;
+}
+
 void BufsAndTabs::on_tabs_listed(const msgpack::object &o)
 {
+    bool know_current = false;
     const msgpack::object_array &ar = o.via.array;
     tabs_ = std::vector<TabInfo>(ar.size);
     for (std::size_t n = 0; n < ar.size; ++n)
     {
         ar.ptr[n].convert(tabs_[n].handle);
+        if (tabs_[n].handle == current_tab_)
+        {
+            g_debug("Listed tab %ld (current)", (gint64) tabs_[n].handle);
+            know_current = true;
+        }
+        else
+        {
+            g_debug("Listed tab %ld", (gint64) tabs_[n].handle);
+        }
     }
+    sig_tabs_listed_.emit(tabs_);
 
+    // Whatever triggered the tab listing should be followed by TabEnter, but
+    // because we have async I/O we'll get a signal for that before getting
+    // here where we process the list of tabs, so we have to cache the handle
+    // from TabEnter and emit our tab_enter signal here.
+    if (emitted_current_tab_ != current_tab_)
+    {
+        if (know_current)
+        {
+            g_debug("Emitting bat::tab_enter(%ld) from on_tabs_listed",
+                    (gint64) current_tab_);
+            emitted_current_tab_ = current_tab_;
+            sig_tab_enter_.emit(current_tab_);
+        }
+        else
+        {
+            g_debug("current_tab not known, getting it");
+            get_current_tab();
+        }
+    }
+}
+
+void BufsAndTabs::get_current_tab()
+{
     auto prom = MsgpackPromise::create();
     prom->value_signal().connect([this](const msgpack::object &o)
     {
-        VimTabpage handle(o);
-        current_tab_ = std::find_if(tabs_.begin(), tabs_.end(),
-            [handle](const TabInfo &t)
+        o.convert(current_tab_);
+        if (emitted_current_tab_ != current_tab_)
+        {
+            if (std::find_if(tabs_.begin(), tabs_.end(),
+                [this](const TabInfo &i)->bool
+                {
+                    return current_tab_ == i.handle;
+                }) != tabs_.end())
             {
-                return t.handle == handle;
-            });
-        sig_tabs_listed_.emit(tabs_);
+                g_debug("Current tab handle changed to %ld",
+                        (gint64) current_tab_);
+                emitted_current_tab_ = current_tab_;
+                sig_tab_enter_.emit(current_tab_);
+            }
+            else
+            {
+                g_debug("Current tab handle %ld not known to gnvim",
+                        (gint64) current_tab_);
+            }
+        }
+        else
+        {
+            g_debug("Current tab handle %ld unchanged", (gint64) current_tab_);
+        }
     });
     prom->error_signal().connect([this](const msgpack::object &o)
     {
         std::ostringstream s;
         s << o;
         g_critical("Error reading current tab: %s", s.str().c_str());
-        current_tab_ = tabs_.begin();
-        sig_tabs_listed_.emit(tabs_);
+        current_tab_ = tabs_.begin()->handle;
     });
     nvim_->nvim_get_current_tab(prom);
 }

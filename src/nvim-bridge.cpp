@@ -176,25 +176,10 @@ void NvimBridge::map_adapters()
         new MsgpackAdapter<int> (signal_bufdel));
     notify_adapters_.emplace("tabenter",
         new MsgpackAdapter<int> (signal_tabenter));
-    /*
-    sig_tabenter.connect([this]()
-    {
-        auto prom = MsgpackPromise::create();
-        prom->value_signal().connect([this](const msgpack::object &o)
-        {
-            VimTabpage tab;
-            o.convert_if_not_nil(tab);
-            signal_tabenter.emit(tab);
-        });
-        prom->error_signal().connect([this](const msgpack::object &o)
-        {
-            std::ostringstream s;
-            s << o;
-            g_critical("Error reading current tab on TabEnter event: %s",
-                    s.str().c_str());
-        });
-    });
-    */
+    notify_adapters_.emplace("tabenter",
+        new MsgpackAdapter<int> (signal_tabenter));
+    notify_adapters_.emplace("tabschanged",
+        new MsgpackAdapter<void> (signal_tabschanged));
 }
 
 void NvimBridge::start_ui(int width, int height)

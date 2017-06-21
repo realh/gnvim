@@ -105,6 +105,11 @@ public:
         return sig_tabs_listed_;
     }
 
+    sigc::signal<void, int> &signal_tab_enter()
+    {
+        return sig_tab_enter_;
+    }
+
     const std::vector<BufferInfo> &get_buffers() const
     {
         return buffers_;
@@ -120,10 +125,12 @@ public:
         return tabs_;
     }
 
-    const std::vector<TabInfo>::iterator &get_current_tab()
+    const VimTabpage &get_current_tab_handle()
     {
         return current_tab_;
     }
+
+    std::vector<TabInfo>::iterator get_current_tab_info();
 
     /// Call when notified of bufadd.
     /// @returns iterator to the new buffer in the vector
@@ -150,18 +157,22 @@ private:
     void get_buf_info(BufferInfo &binfo, RequestSet &rqset,
             sigc::slot<void, const msgpack::object &> on_err);
 
+    void get_current_tab();
+
     std::shared_ptr<NvimBridge> nvim_;
 
     std::vector<BufferInfo> buffers_;
     std::vector<BufferInfo>::iterator current_buffer_;
 
     std::vector<TabInfo> tabs_;
-    std::vector<TabInfo>::iterator current_tab_;
+    VimTabpage current_tab_;
+    VimTabpage emitted_current_tab_;
 
     sigc::signal<void> sig_got_all_;
     sigc::connection conn_got_all_tabs_, conn_got_all_bufs_;
     sigc::signal<void, const std::vector<BufferInfo> &> sig_bufs_listed_;
     sigc::signal<void, const std::vector<TabInfo> &> sig_tabs_listed_;
+    sigc::signal<void, int> sig_tab_enter_;
 
     bool au_on_ {false};
     bool got_buf_info_, got_tab_info_;

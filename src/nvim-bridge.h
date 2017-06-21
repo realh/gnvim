@@ -121,6 +121,7 @@ public:
     sigc::signal<void, int> signal_bufadd;
     sigc::signal<void, int> signal_bufdel;
     sigc::signal<void, int> signal_tabenter;
+    sigc::signal<void> signal_tabschanged;      // tab closed or created
 
     sigc::signal<void> redraw_start;
     sigc::signal<void, int, int> redraw_resize;
@@ -196,8 +197,6 @@ private:
     } version_;
     std::string augroup_;
     bool augroup_defined_ {false};
-
-    //sigc::signal<int> sig_tabenter;
 };
 
 }
