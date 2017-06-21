@@ -102,9 +102,8 @@ void BufsAndTabs::got_all_info()
             << nvim_->get_channel_id()
             << ", 'tabenter', tabpagenr())";
         nvim_->nvim_command(s.str());
-        nvim_->signal_tabenter.connect([this](int tabnum)
+        nvim_->signal_tabenter.connect([this](int)
         {
-            g_debug("TabEnter %d, getting handle", tabnum);
             get_current_tab();
         });
 
@@ -116,7 +115,6 @@ void BufsAndTabs::got_all_info()
         nvim_->nvim_command(s.str());
         nvim_->signal_tabschanged.connect([this]()
         {
-            g_debug("tabschanged");
             list_tabs();
         });
 
@@ -298,14 +296,7 @@ void BufsAndTabs::on_tabs_listed(const msgpack::object &o)
     {
         ar.ptr[n].convert(tabs_[n].handle);
         if (tabs_[n].handle == current_tab_)
-        {
-            g_debug("Listed tab %ld (current)", (gint64) tabs_[n].handle);
             know_current = true;
-        }
-        else
-        {
-            g_debug("Listed tab %ld", (gint64) tabs_[n].handle);
-        }
     }
     sig_tabs_listed_.emit(tabs_);
 
@@ -317,14 +308,11 @@ void BufsAndTabs::on_tabs_listed(const msgpack::object &o)
     {
         if (know_current)
         {
-            g_debug("Emitting bat::tab_enter(%ld) from on_tabs_listed",
-                    (gint64) current_tab_);
             emitted_current_tab_ = current_tab_;
             sig_tab_enter_.emit(current_tab_);
         }
         else
         {
-            g_debug("current_tab not known, getting it");
             get_current_tab();
         }
     }
@@ -344,20 +332,9 @@ void BufsAndTabs::get_current_tab()
                     return current_tab_ == i.handle;
                 }) != tabs_.end())
             {
-                g_debug("Current tab handle changed to %ld",
-                        (gint64) current_tab_);
                 emitted_current_tab_ = current_tab_;
                 sig_tab_enter_.emit(current_tab_);
             }
-            else
-            {
-                g_debug("Current tab handle %ld not known to gnvim",
-                        (gint64) current_tab_);
-            }
-        }
-        else
-        {
-            g_debug("Current tab handle %ld unchanged", (gint64) current_tab_);
         }
     });
     prom->error_signal().connect([this](const msgpack::object &o)
