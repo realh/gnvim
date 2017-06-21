@@ -156,8 +156,10 @@ std::vector<BufferInfo>::iterator BufsAndTabs::add_buffer(int handle)
         auto last = std::prev(buffers_.end());
         auto rqset = RequestSet::create([last, handle](RequestSet *)
         {
+            /*
             g_debug("Got info about new buffer %d: %s", handle,
                     last->name.c_str());
+            */
 
         });
         get_buf_info(*last, *rqset, [handle](const msgpack::object &o)
