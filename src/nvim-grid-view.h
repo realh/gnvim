@@ -36,8 +36,10 @@ class NvimGridWidget;
 // TextGridView specialised for neovim
 class NvimGridView : public TextGridView {
 public:
+    // lines is always the number of lines displayed in the grid, regardless
+    // of hide_tab_bar
     NvimGridView(std::shared_ptr<NvimBridge> nvim, int columns, int lines,
-            RefPtr<Pango::Context> pc);
+            RefPtr<Pango::Context> pc, bool hide_tab_bar = false);
 
     virtual void set_current_widget(Gtk::Widget *w) override;
 
@@ -70,6 +72,18 @@ public:
             guint modifiers, int x, int y);
 
     void do_scroll(const std::string &direction, int state);
+
+    // If the tab_bar is hidden it's excluded from the grid and only used to
+    // detect when tabs may need reordering
+    void set_hide_tab_bar(bool hide = true)
+    {
+        hide_tab_bar_ = hide;
+    }
+
+    sigc::signal<void> &signal_tabs_redrawn()
+    {
+        return sig_tabs_redrawn_;
+    }
 private:
     void update_redraw_region(int left, int top, int right, int bottom);
 
@@ -135,6 +149,11 @@ private:
     unsigned beam_cursor_width_;
 
     bool sync_shada_;
+
+    bool hide_tab_bar_;
+    bool tabs_redrawn_;
+
+    sigc::signal<void> sig_tabs_redrawn_;
 };
 
 }

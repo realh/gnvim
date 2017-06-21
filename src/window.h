@@ -91,6 +91,8 @@ private:
     // purpose in current desktops
     void set_geometry_hints() {}
 
+    static bool get_gui_tabs_option();
+
     bool force_close_ {false};
 
     int ignore_switch_page_ {0};

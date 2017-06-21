@@ -90,7 +90,12 @@ void Window::on_options_read(RequestSet *)
 
 void Window::ready_to_start()
 {
-    view_ = new NvimGridView(nvim_, columns_, lines_, get_pango_context());
+    view_ = new NvimGridView(nvim_, columns_, lines_, get_pango_context(),
+            get_gui_tabs_option());
+    view_->signal_tabs_redrawn().connect([this]()
+    {
+        bufs_and_tabs_.list_tabs();
+    });
 
     // For some reason (certain) container widgets don't have create methods
     notebook_ = new Gtk::Notebook();
@@ -162,7 +167,7 @@ void Window::ready_to_start()
     bufs_and_tabs_.signal_tabs_listed().connect
         (sigc::mem_fun(*this, &Window::on_tabs_listed));
 
-    nvim_->start_ui(columns_, lines_);
+    nvim_->start_ui(columns_, lines_ + (get_gui_tabs_option() ? 1 : 0));
 
     nvim_->io_error_signal().connect(
             sigc::mem_fun(*this, &Window::on_nvim_error));
@@ -234,11 +239,17 @@ TabPage *Window::create_tab_page(const TabInfo &info, int position)
     return page;
 }
 
+bool Window::get_gui_tabs_option()
+{
+    return Application::app_gsettings()->get_boolean("gui-tabs");
+}
+
 void Window::show_or_hide_tabs()
 {
-    bool show = Application::app_gsettings()->get_boolean("gui-tabs");
+    bool show = get_gui_tabs_option();
     show_or_hide_tabs(show);
-    nvim_->nvim_set_option("showtabline", show ? 0 : show_tab_line_);
+    view_->set_hide_tab_bar(show);
+    nvim_->nvim_set_option("showtabline", show ? 2 : show_tab_line_);
 }
 
 void Window::show_or_hide_tabs(bool show)

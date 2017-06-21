@@ -32,8 +32,8 @@ enum FontSource
 
 NvimGridView::NvimGridView(std::shared_ptr<NvimBridge> nvim,
         int columns, int lines,
-        RefPtr<Pango::Context> pc)
-: TextGridView(columns, lines), nvim_(nvim)
+        RefPtr<Pango::Context> pc, bool hide_tab_bar)
+: TextGridView(columns, lines), nvim_(nvim), hide_tab_bar_(hide_tab_bar)
 {
     auto app_settings = Application::app_gsettings();
     app_settings->signal_changed("font").connect
@@ -95,6 +95,9 @@ NvimGridView::NvimGridView(std::shared_ptr<NvimBridge> nvim,
             (sigc::mem_fun(this, &NvimGridView::on_redraw_end));
 
     update_font(pc, true);
+
+    if (hide_tab_bar_)
+        cursor_line_ = -1;
 }
 
 void NvimGridView::set_current_widget(Gtk::Widget *w)
@@ -350,6 +353,7 @@ std::string NvimGridView::region_to_string()
 
 void NvimGridView::on_redraw_start()
 {
+    tabs_redrawn_ = false;
     cursor_rdrw_x_ = cursor_col_;
     cursor_rdrw_y_ = cursor_line_;
     redraw_region_.left = columns_;
@@ -373,6 +377,8 @@ void NvimGridView::on_redraw_mode_change(const std::string &mode)
 
 void NvimGridView::on_redraw_resize(int columns, int lines)
 {
+    if (hide_tab_bar_)
+        --lines;
     if (columns != columns_ || lines != lines_)
     {
         redraw_region_.left = 0;
@@ -427,6 +433,8 @@ void NvimGridView::on_redraw_update_sp(int colour)
 
 void NvimGridView::on_redraw_cursor_goto(int line, int col)
 {
+    if (hide_tab_bar_)
+        --line;
     //g_debug("cursor_goto %d, %d", col, line);
     // Need to make sure the cursor's old position gets redrawn
     update_redraw_region(cursor_rdrw_x_, cursor_rdrw_y_,
@@ -438,6 +446,12 @@ void NvimGridView::on_redraw_cursor_goto(int line, int col)
 
 void NvimGridView::on_redraw_put(const msgpack::object_array &text_ar)
 {
+    if (cursor_rdrw_y_ < 0)
+    {
+        tabs_redrawn_ = true;
+        return;
+    }
+
     int start_col = cursor_rdrw_x_;
     for (gsize i = 1; i < text_ar.size; ++i)
     {
@@ -484,6 +498,8 @@ void NvimGridView::reset_scroll_region()
 void NvimGridView::update_redraw_region
 (int left, int top, int right, int bottom)
 {
+    if (top < 0)
+        top = 0;
     if (left < redraw_region_.left)
         redraw_region_.left = left;
     if (right - 1 > redraw_region_.right)
@@ -594,6 +610,11 @@ void NvimGridView::on_redraw_highlight_set(const msgpack::object &map_o)
 void NvimGridView::on_redraw_set_scroll_region(int top, int bot,
         int left, int right)
 {
+    if (hide_tab_bar_)
+    {
+        if (top > 0) --top;
+        --bot;
+    }
     scroll_region_.left = left;
     scroll_region_.top = top;
     scroll_region_.right = right;
@@ -665,6 +686,12 @@ void NvimGridView::on_redraw_end()
         g_debug("No qda");
     }
     */
+
+    if (tabs_redrawn_)
+    {
+        tabs_redrawn_ = false;
+        sig_tabs_redrawn_.emit();
+    }
 }
 
 void NvimGridView::do_scroll(const std::string &direction, int state)
