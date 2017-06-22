@@ -41,15 +41,31 @@ TabPage::TabPage(Gtk::Notebook *notebook,
     close_button_.set_focus_on_click(false);
     close_button_.signal_clicked().connect
         (sigc::mem_fun(*this, &TabPage::on_close_button_clicked));
+    close_button_.signal_button_press_event().connect
+        (sigc::mem_fun(*this, &TabPage::on_close_button_pressed));
     box_.pack_end(close_button_, false, false);
 }
 
 void TabPage::on_close_button_clicked()
 {
+    send_tab_command("tabclose");
+}
+
+bool TabPage::on_close_button_pressed(GdkEventButton *event)
+{
+    if (event->button == 3 || (event->button == 1 &&
+                (event->state & Gdk::CONTROL_MASK)))
+    {
+        send_tab_command("tabonly");
+    }
+    return false;
+}
+
+void TabPage::send_tab_command(const char *cmd)
+{
     std::ostringstream s;
     // This assumes GUI tab order is in sync with nvim, which is reasonably safe
-    s << (notebook_->child_property_position(*this).get_value() + 1)
-        << "tabclose";
+    s << (notebook_->child_property_position(*this).get_value() + 1) << cmd;
     get_nvim_bridge()->nvim_command(s.str());
 }
 

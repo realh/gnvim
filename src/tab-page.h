@@ -60,6 +60,10 @@ public:
 private:
     void on_close_button_clicked();
 
+    bool on_close_button_pressed(GdkEventButton *);
+
+    void send_tab_command(const char *cmd);
+
     Gtk::Notebook *notebook_;
     Gtk::Box box_;
     Gtk::Label text_label_;
