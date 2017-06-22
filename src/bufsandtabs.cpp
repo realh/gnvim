@@ -368,6 +368,8 @@ void BufsAndTabs::on_modified_changed(int handle, bool modified)
             break;
         }
     }
+
+    update_tab_labels_for_buf(handle);
 }
 
 bool BufsAndTabs::any_modified() const
@@ -378,6 +380,47 @@ bool BufsAndTabs::any_modified() const
             return true;
     }
     return false;
+}
+
+void BufsAndTabs::update_tab_labels_for_buf(const VimBuffer &buf)
+{
+    // for each tab list its windows, get the buf for each win, and check
+    // whether it == buf. If tab contains buf its label is updated
+    for (auto &tabi: tabs_)
+    {
+        auto &tab = tabi.handle;
+        auto wprom = MsgpackPromise::create();
+        // Note we have to use copies, not references, in the lambdas, because
+        // they won't be called until after this function exits. Additionally
+        // tab is a loop variant.
+        wprom->value_signal().connect(
+        [this, buf, tab](const msgpack::object &o)
+        {
+            auto &ar = o.via.array;
+            // Get buf info for each win
+            for (guint32 n = 0; n < ar.size; ++n)
+            {
+                VimWindow win;
+                ar.ptr[n].convert(win);
+                auto bprom = MsgpackPromise::create();
+                bprom->value_signal().connect(
+                [this, buf, tab, win](const msgpack::object &o)
+                {
+                    VimBuffer buffer;
+                    o.convert(buffer);
+                    if (buffer == buf)
+                    {
+                        get_tab_title(tab, [this, tab](const std::string &s)
+                        {
+                            sig_tab_label_changed_.emit(tab, s);
+                        });
+                    }
+                });
+                nvim_->nvim_win_get_buf(win, bprom);
+            }
+        });
+        nvim_->nvim_tabpage_list_wins(tab, wprom);
+    }
 }
 
 void BufsAndTabs::get_tab_title(const VimTabpage &tab,

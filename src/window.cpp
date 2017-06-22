@@ -167,6 +167,19 @@ void Window::ready_to_start()
     bufs_and_tabs_.signal_tabs_listed().connect
         (sigc::mem_fun(*this, &Window::on_tabs_listed));
 
+    bufs_and_tabs_.signal_tab_label_changed().connect(
+    [this](const VimTabpage &tab, const std::string &s)
+    {
+        for (auto page: pages_)
+        {
+            if (page->get_vim_handle() == tab)
+            {
+                page->set_label_text(s);
+                break;
+            }
+        }
+    });
+
     nvim_->start_ui(columns_, lines_ + (get_gui_tabs_option() ? 1 : 0));
 
     nvim_->io_error_signal().connect(

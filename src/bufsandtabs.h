@@ -110,6 +110,12 @@ public:
         return sig_tab_enter_;
     }
 
+    sigc::signal<void, const VimTabpage &, const std::string &>
+        signal_tab_label_changed()
+    {
+        return sig_tab_label_changed_;
+    }
+
     const std::vector<BufferInfo> &get_buffers() const
     {
         return buffers_;
@@ -159,6 +165,8 @@ private:
 
     void get_current_tab();
 
+    void update_tab_labels_for_buf(const VimBuffer &buf);
+
     std::shared_ptr<NvimBridge> nvim_;
 
     std::vector<BufferInfo> buffers_;
@@ -173,6 +181,8 @@ private:
     sigc::signal<void, const std::vector<BufferInfo> &> sig_bufs_listed_;
     sigc::signal<void, const std::vector<TabInfo> &> sig_tabs_listed_;
     sigc::signal<void, int> sig_tab_enter_;
+    sigc::signal<void, const VimTabpage &, const std::string &>
+        sig_tab_label_changed_;
 
     bool au_on_ {false};
     bool got_buf_info_, got_tab_info_;

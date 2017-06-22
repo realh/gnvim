@@ -115,14 +115,17 @@ public:
         return rpc_->io_error_signal();
     }
 
-    /// Second int should actually be bool
+    // General notifications
+    
+    // Second int should actually be bool
     sigc::signal<void, int, int> signal_modified;
-    /// Here the ints are buffer handles
+    // Here the ints are buffer handles
     sigc::signal<void, int> signal_bufadd;
     sigc::signal<void, int> signal_bufdel;
     sigc::signal<void, int> signal_tabenter;
     sigc::signal<void> signal_tabschanged;      // tab closed or created
 
+    // redraw notifications
     sigc::signal<void> redraw_start;
     sigc::signal<void, int, int> redraw_resize;
     sigc::signal<void> redraw_clear;
