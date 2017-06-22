@@ -62,7 +62,7 @@ private:
 
     bool on_close_button_pressed(GdkEventButton *);
 
-    void send_tab_command(const char *cmd);
+    void send_tab_command(const char *cmd, bool force = false);
 
     Gtk::Notebook *notebook_;
     Gtk::Box box_;

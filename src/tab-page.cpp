@@ -46,26 +46,36 @@ TabPage::TabPage(Gtk::Notebook *notebook,
     box_.pack_end(close_button_, false, false);
 }
 
+// "clicked" signal is much easier than working out whether a press/release
+// is a click, but it only works for button 1 and we need to get the modifiers
+// from the source event
 void TabPage::on_close_button_clicked()
 {
-    send_tab_command("tabclose");
+    auto event = gtk_get_current_event();
+    bool force = event && (event->button.state && Gdk::SHIFT_MASK);
+    auto cmd = (event && (event->button.state && Gdk::CONTROL_MASK))
+        ? "tabonly" : "tabclose";
+    send_tab_command(cmd, force);
 }
 
 bool TabPage::on_close_button_pressed(GdkEventButton *event)
 {
-    if (event->button == 3 || (event->button == 1 &&
-                (event->state & Gdk::CONTROL_MASK)))
+    bool force = event->state & Gdk::SHIFT_MASK;
+    if (event->button == 3)
     {
-        send_tab_command("tabonly");
+        send_tab_command("tabonly", force);
+        return true;
     }
     return false;
 }
 
-void TabPage::send_tab_command(const char *cmd)
+void TabPage::send_tab_command(const char *cmd, bool force)
 {
     std::ostringstream s;
     // This assumes GUI tab order is in sync with nvim, which is reasonably safe
     s << (notebook_->child_property_position(*this).get_value() + 1) << cmd;
+    if (force)
+        s << '!';
     get_nvim_bridge()->nvim_command(s.str());
 }
 

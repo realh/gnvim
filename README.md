@@ -104,8 +104,11 @@ to draw the tabline in text. This is enabled with the `gui-tabs` gsetting.
 
 #### Tab shortcuts
 
-Right-click or ctrl-click a tab close icon to close all other tabs. More useful
-shortcuts will be added in the future.
+* Right-click or ctrl-click a tab close icon to close all other tabs.
+
+* Shift-click to force close tabs with unsaved buffers.
+
+More useful shortcuts will be added in the future.
 
 #### Tab caveats
 
