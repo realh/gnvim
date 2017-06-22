@@ -213,12 +213,13 @@ TabPage *Window::create_tab_page(const TabInfo &info, int position)
     TabPage *page;
     if (position == -1)
     {
-        pages_.push_back(new TabPage(view_, info));
+        pages_.push_back(new TabPage(notebook_, view_, info));
         page = pages_[pages_.size() - 1];
     }
     else
     {
-        pages_.insert(pages_.begin() + position, new TabPage(view_, info));
+        pages_.insert(pages_.begin() + position,
+                new TabPage(notebook_, view_, info));
         page = pages_[position];
     }
     auto &label = page->get_label_widget();

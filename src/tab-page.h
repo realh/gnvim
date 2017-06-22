@@ -32,14 +32,15 @@ namespace Gnvim
 // NvimGridWidget associated with a tab page
 class TabPage : public NvimGridWidget {
 public:
-    TabPage(NvimGridView *view, const TabInfo &t) : TabPage(view, t.handle)
+    TabPage(Gtk::Notebook *notebook, NvimGridView *view, const TabInfo &t)
+        : TabPage(notebook, view, t.handle)
     {}
 
-    TabPage(NvimGridView *view, const VimTabpage &t);
+    TabPage(Gtk::Notebook *notebook, NvimGridView *view, const VimTabpage &t);
 
     Gtk::Widget &get_label_widget()
     {
-        return text_label_;
+        return box_;
     }
 
     void set_label_text(const std::string &s)
@@ -57,7 +58,12 @@ public:
         return handle_;
     }
 private:
+    void on_close_button_clicked();
+
+    Gtk::Notebook *notebook_;
+    Gtk::Box box_;
     Gtk::Label text_label_;
+    Gtk::Button close_button_;
     VimTabpage handle_;
 };
 

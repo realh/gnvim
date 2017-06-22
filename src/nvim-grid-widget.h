@@ -49,7 +49,7 @@ protected:
     virtual bool on_focus_in_event(GdkEventFocus *) override;
 
     virtual bool on_focus_out_event(GdkEventFocus *) override;
-private:
+protected:
     NvimGridView *get_nvim_grid_view()
     {
         return static_cast<NvimGridView *>(view_);

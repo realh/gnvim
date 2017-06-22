@@ -25,12 +25,32 @@
 namespace Gnvim
 {
 
-TabPage::TabPage(NvimGridView *view, const VimTabpage &t)
-    : NvimGridWidget(view), text_label_(""), handle_(t)
+TabPage::TabPage(Gtk::Notebook *notebook,
+        NvimGridView *view, const VimTabpage &t)
+    : NvimGridWidget(view), notebook_(notebook), text_label_(""), handle_(t)
 {
     std::ostringstream s;
     s << "Tab " << gint64(t);
     text_label_.set_text(s.str());
+
+    box_.pack_start(text_label_);
+
+    close_button_.set_image_from_icon_name("window-close-symbolic",
+            Gtk::ICON_SIZE_MENU);
+    close_button_.set_relief(Gtk::RELIEF_NONE);
+    close_button_.set_focus_on_click(false);
+    close_button_.signal_clicked().connect
+        (sigc::mem_fun(*this, &TabPage::on_close_button_clicked));
+    box_.pack_end(close_button_, false, false);
+}
+
+void TabPage::on_close_button_clicked()
+{
+    std::ostringstream s;
+    // This assumes GUI tab order is in sync with nvim, which is reasonably safe
+    s << (notebook_->child_property_position(*this).get_value() + 1)
+        << "tabclose";
+    get_nvim_bridge()->nvim_command(s.str());
 }
 
 }
